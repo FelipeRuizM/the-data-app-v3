@@ -230,6 +230,46 @@ and drops out of averages. Never throws, never shows a negative.
 
 ---
 
+# 2026-08-14 — Phase 1 tooling deviations
+
+Three places where what shipped differs from what `PLAN.md` said. Each is logged
+per `CLAUDE.md` §0 rule 5 rather than changed silently.
+
+## D-24 · oxlint instead of ESLint
+**Spec said:** "ESLint + Prettier."
+**Shipped:** **oxlint + Prettier.**
+
+The Vite React-TS template no longer scaffolds ESLint — it ships `oxlint` with an
+`.oxlintrc.json` already wired. Adopting it costs zero dependencies; switching to
+ESLint would mean adding the parser, the React and hooks plugins and a flat config
+to replace something already working. oxlint covers the same ground here and is
+substantially faster in CI. It already earned its place: it caught a `setState` in
+`componentDidUpdate` in the error boundary, which was fixed properly by keying the
+boundary on the route rather than suppressed.
+
+Prettier is unchanged. Revisit only if a needed rule turns out to be ESLint-only.
+
+## D-25 · Tailwind v4, configured in CSS rather than `tailwind.config.js`
+**Spec said:** "Tailwind config extends from those tokens."
+**Shipped:** Tailwind **v4**, which has no JS config file by default. The token layer
+is `src/styles/tokens.css`, and `@theme inline` in `src/index.css` re-exports those
+custom properties so utilities (`bg-ground`, `text-ink-2`, `text-fig`, …) generate
+straight from them.
+
+This satisfies the intent **more strictly** than a JS config would: the tokens are
+the literal source of the utilities, so a colour can't exist as a utility without
+existing as a token first. "No raw hex in components" is now enforced by
+construction, not convention.
+
+## D-26 · No manual chunking yet
+`vite.config.ts` deliberately has no `manualChunks`. Firebase and Recharts aren't
+imported anywhere until Phases 2 and 4, so configuring splits now would define empty
+chunks — and the object form of that option has moved in the current bundler.
+Code splitting is a **Phase 15** task, where it can be measured against the
+Lighthouse target instead of guessed at.
+
+---
+
 # 2026-08-14 (later) — NQ-1 … NQ-4 resolved
 
 ## D-20 · Exercise catalog is two-tier: global base + per-user additions ✅

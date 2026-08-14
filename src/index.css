@@ -1,0 +1,83 @@
+/* Self-hosted IBM Plex — no CDN request. The published-artifact CSP blocks
+   font CDNs, Lighthouse penalises the extra origin, and a silent fallback
+   would break the tabular-figure alignment the whole design depends on. */
+@import '@fontsource/ibm-plex-sans/latin-400.css';
+@import '@fontsource/ibm-plex-sans/latin-500.css';
+@import '@fontsource/ibm-plex-sans/latin-600.css';
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
+@import '@fontsource/ibm-plex-mono/latin-600.css';
+
+@import 'tailwindcss';
+@import './styles/tokens.css';
+
+/* Tailwind v4 reads design tokens from @theme. Because tokens.css already
+   declares them as --color-* / --font-* / --text-* custom properties, the
+   utility classes (bg-ground, text-ink-2, font-mono, text-fig …) are generated
+   straight from the token layer. That is the "Tailwind extends from tokens"
+   rule in CLAUDE.md §2, enforced by construction rather than by convention. */
+@theme inline {
+  --color-ground: var(--color-ground);
+  --color-rule: var(--color-rule);
+  --color-ink-3: var(--color-ink-3);
+  --color-ink-2: var(--color-ink-2);
+  --color-ink-1: var(--color-ink-1);
+  --color-ink-0: var(--color-ink-0);
+  --color-accent: var(--color-accent);
+  --color-accent-dim: var(--color-accent-dim);
+  --color-cat-1: var(--color-cat-1);
+  --color-cat-2: var(--color-cat-2);
+  --color-cat-3: var(--color-cat-3);
+  --color-cat-4: var(--color-cat-4);
+  --color-cat-5: var(--color-cat-5);
+  --color-cat-6: var(--color-cat-6);
+  --color-cat-none: var(--color-cat-none);
+  --color-seq-1: var(--color-seq-1);
+  --color-seq-2: var(--color-seq-2);
+  --color-seq-3: var(--color-seq-3);
+  --color-seq-4: var(--color-seq-4);
+  --color-seq-5: var(--color-seq-5);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --text-label: var(--text-label);
+  --text-fig: var(--text-fig);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+}
+
+html {
+  background: var(--color-ground);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink-1);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* EVERY number in this app aligns on the decimal. Applied at the root so a
+   component can never forget it. */
+.font-mono,
+[class*='tabular'] {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Real focus states — never `outline: none` (CLAUDE.md §9). */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-ground);
+}
