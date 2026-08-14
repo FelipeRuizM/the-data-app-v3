@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { RouteErrorBoundary } from '../RouteErrorBoundary'
+import { useAuth } from '../../auth/hooks'
 
 /**
  * Nav is derived from a list, not hand-written per page. In Phase 3 the
@@ -13,12 +14,16 @@ const NAV = [
   { to: '/analytics', label: 'Analytics', end: false },
 ] as const
 
+const linkClass = ({ isActive }: { isActive: boolean }) =>
+  'font-mono text-label uppercase tracking-[0.12em] no-underline transition-colors duration-[120ms] ' +
+  (isActive ? 'text-ink-0' : 'text-ink-2 hover:text-ink-1')
+
 export function AppLayout() {
   const location = useLocation()
+  const { role, isAdmin, user, signOut } = useAuth()
 
   return (
     <div className="min-h-dvh bg-ground">
-      {/* Skip link — first tab stop, keyboard users shouldn't traverse nav on every page */}
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-sm focus:border focus:border-accent focus:bg-ground focus:px-3 focus:py-2 focus:font-mono focus:text-xs focus:text-ink-0"
@@ -31,21 +36,46 @@ export function AppLayout() {
           <span className="font-mono text-label uppercase tracking-[0.14em] text-ink-3">
             the data app
           </span>
+
           <nav aria-label="Primary" className="flex flex-wrap gap-x-4 gap-y-1">
             {NAV.map(({ to, label, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  'font-mono text-label uppercase tracking-[0.12em] no-underline transition-colors duration-[120ms] ' +
-                  (isActive ? 'text-ink-0' : 'text-ink-2 hover:text-ink-1')
-                }
-              >
+              <NavLink key={to} to={to} end={end} className={linkClass}>
                 {label}
               </NavLink>
             ))}
+            <NavLink to="/settings" className={linkClass}>
+              Settings
+            </NavLink>
+            {/* Admin is hidden from nav for everyone else AND route-guarded —
+                hiding alone would leave a typed URL working. */}
+            {isAdmin ? (
+              <NavLink to="/admin" className={linkClass}>
+                Admin
+              </NavLink>
+            ) : null}
           </nav>
+
+          <div className="ml-auto flex items-baseline gap-3">
+            {role === 'guest' ? (
+              <span
+                className="font-mono text-label uppercase tracking-[0.12em] text-accent"
+                title="Read-only. Every write control is hidden and the rules reject writes."
+              >
+                guest · read only
+              </span>
+            ) : (
+              <span className="hidden font-mono text-label text-ink-3 sm:inline">
+                {user?.email ?? ''}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="cursor-pointer border-0 bg-transparent p-0 font-mono text-label uppercase tracking-[0.12em] text-ink-2 transition-colors duration-[120ms] hover:text-ink-0"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 

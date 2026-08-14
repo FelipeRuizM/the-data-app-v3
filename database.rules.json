@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "roles": {
+      ".read": "auth != null",
+      ".write": false,
+
+      "$uid": {
+        ".validate": "newData.hasChildren(['role'])",
+        "role": {
+          ".validate": "newData.isString() && newData.val().matches(/^(admin|user|guest)$/)"
+        },
+        "readsProfile": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "config": {
+      ".read": "auth != null && root.child('roles').child(auth.uid).exists()",
+      ".write": "auth != null && root.child('roles').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('roles').child(auth.uid).child('readsProfile').val() === $uid)",
+
+        ".write": "auth != null && auth.uid === $uid && (root.child('roles').child(auth.uid).exists() || auth.uid === 'oaM2fM7K52ak6EzqDNzDzXSRWXr1')"
+      }
+    },
+
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

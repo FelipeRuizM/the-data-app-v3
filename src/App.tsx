@@ -1,81 +1,154 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
+import { AuthProvider } from './auth/AuthProvider'
+import { RequireAdmin, RequireAuth, RequireWrite } from './auth/guards'
+import { missingEnvVars } from './lib/firebase'
+import { Label } from './components/ui'
+import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
 import { Styleguide } from './pages/Styleguide'
 
+/** Build-time config is missing — the single most likely deployment failure. */
+function ConfigError({ missing }: { missing: string[] }) {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-5">
+      <Label>Configuration error</Label>
+      <h1 className="m-0 text-2xl font-semibold text-ink-0">
+        This build is missing its Firebase config.
+      </h1>
+      <p className="m-0 text-ink-1">
+        These variables weren&rsquo;t injected at build time. Add them as repository
+        <em> variables</em> (not secrets) and re-run the deploy.
+      </p>
+      <ul className="m-0 flex list-none flex-col gap-1 p-0">
+        {missing.map((k) => (
+          <li key={k} className="font-mono text-sm text-accent">
+            {k}
+          </li>
+        ))}
+      </ul>
+    </main>
+  )
+}
+
 /**
  * HashRouter, not BrowserRouter. GitHub Pages has no SPA rewrite, so a deep
- * link under BrowserRouter 404s on refresh (CLAUDE.md §2). This is not a
- * preference — swapping it breaks the deployment.
+ * link under BrowserRouter 404s on refresh (CLAUDE.md §2).
  *
- * The route table mirrors CLAUDE.md §4. Pages arrive phase by phase; until then
- * each route renders a Placeholder naming the phase that builds it.
+ * Every route except /login sits inside <RequireAuth>. Write routes add
+ * <RequireWrite> so a guest typing the URL doesn't get a form it can never
+ * submit; /admin adds <RequireAdmin>. The rules are still the real boundary —
+ * these guards only keep the UI honest.
  */
 export function App() {
+  const missing = missingEnvVars()
+  if (missing.length > 0) return <ConfigError missing={missing} />
+
   return (
     <HashRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<Placeholder title="Home" phase="Phase 3" />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
           <Route
-            path="workouts"
-            element={<Placeholder title="Workouts" phase="Phase 4" />}
-          />
-          <Route
-            path="workouts/records"
-            element={<Placeholder title="Records" phase="Phase 8" />}
-          />
-          <Route
-            path="workouts/calculator"
             element={
-              <Placeholder title="Warm-up & feeder calculator" phase="Phase 11" />
+              <RequireAuth>
+                <AppLayout />
+              </RequireAuth>
             }
-          />
-          <Route
-            path="workouts/:id"
-            element={<Placeholder title="Workout detail" phase="Phase 4" />}
-          />
+          >
+            <Route index element={<Placeholder title="Home" phase="Phase 3" />} />
 
-          <Route path="runs" element={<Placeholder title="Runs" phase="Phase 5" />} />
-          <Route
-            path="runs/records"
-            element={<Placeholder title="Run records" phase="Phase 8" />}
-          />
-          <Route
-            path="runs/:id"
-            element={<Placeholder title="Run detail" phase="Phase 5" />}
-          />
+            <Route
+              path="workouts"
+              element={<Placeholder title="Workouts" phase="Phase 4" />}
+            />
+            <Route
+              path="workouts/new"
+              element={
+                <RequireWrite>
+                  <Placeholder title="Log a workout" phase="Phase 6" />
+                </RequireWrite>
+              }
+            />
+            <Route
+              path="workouts/records"
+              element={<Placeholder title="Records" phase="Phase 8" />}
+            />
+            <Route
+              path="workouts/calculator"
+              element={
+                <Placeholder title="Warm-up & feeder calculator" phase="Phase 11" />
+              }
+            />
+            <Route
+              path="workouts/:id"
+              element={<Placeholder title="Workout detail" phase="Phase 4" />}
+            />
+            <Route
+              path="workouts/:id/edit"
+              element={
+                <RequireWrite>
+                  <Placeholder title="Edit workout" phase="Phase 6" />
+                </RequireWrite>
+              }
+            />
 
-          <Route
-            path="reports/:month"
-            element={<Placeholder title="Monthly report" phase="Phase 9" />}
-          />
-          <Route
-            path="analytics"
-            element={<Placeholder title="Analytics" phase="Phase 14" />}
-          />
-          <Route
-            path="settings"
-            element={<Placeholder title="Settings" phase="Phase 12" />}
-          />
-          <Route
-            path="admin"
-            element={<Placeholder title="Admin" phase="Phase 13" />}
-          />
-          <Route
-            path="login"
-            element={<Placeholder title="Sign in" phase="Phase 2" />}
-          />
+            <Route path="runs" element={<Placeholder title="Runs" phase="Phase 5" />} />
+            <Route
+              path="runs/new"
+              element={
+                <RequireWrite>
+                  <Placeholder title="Log a run" phase="Phase 7" />
+                </RequireWrite>
+              }
+            />
+            <Route
+              path="runs/records"
+              element={<Placeholder title="Run records" phase="Phase 8" />}
+            />
+            <Route
+              path="runs/:id"
+              element={<Placeholder title="Run detail" phase="Phase 5" />}
+            />
+            <Route
+              path="runs/:id/edit"
+              element={
+                <RequireWrite>
+                  <Placeholder title="Edit run" phase="Phase 7" />
+                </RequireWrite>
+              }
+            />
 
-          <Route path="styleguide" element={<Styleguide />} />
+            <Route
+              path="reports/:month"
+              element={<Placeholder title="Monthly report" phase="Phase 9" />}
+            />
+            <Route
+              path="analytics"
+              element={<Placeholder title="Analytics" phase="Phase 14" />}
+            />
+            <Route
+              path="settings"
+              element={<Placeholder title="Settings" phase="Phase 12" />}
+            />
+            <Route
+              path="admin"
+              element={
+                <RequireAdmin>
+                  <Placeholder title="Admin" phase="Phase 13" />
+                </RequireAdmin>
+              }
+            />
 
-          {/* Trailing-slash and legacy shapes shouldn't 404 */}
-          <Route path="index.html" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+            <Route path="styleguide" element={<Styleguide />} />
+
+            <Route path="index.html" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </HashRouter>
   )
 }

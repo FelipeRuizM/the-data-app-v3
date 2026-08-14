@@ -9,6 +9,7 @@ import {
   StatFigure,
 } from '../components/ui'
 import { CATEGORY_TOKENS, SEQ_TOKENS } from '../components/ui/tokens'
+import { useAuth } from '../auth/hooks'
 
 /* Every token and every component in isolation. A component that isn't here
    isn't done (CLAUDE.md §5). */
@@ -292,6 +293,51 @@ export function Styleguide() {
           </p>
         </div>
       </Section>
+
+      <RolePanel />
     </div>
+  )
+}
+
+/**
+ * TEMPORARY — remove in Phase 13 (PLAN.md).
+ *
+ * Exists so the auth model can be inspected from the deployed site during
+ * Phase 2 without a debugger: sign in as each account and read this off.
+ */
+function RolePanel() {
+  const { status, user, role, profileUid, isAdmin, canWrite } = useAuth()
+
+  const rows: Array<[string, string]> = [
+    ['status', status],
+    ['uid', user?.uid ?? '—'],
+    ['email', user?.email ?? '—'],
+    ['role', role],
+    ['profileUid', profileUid ?? '—'],
+    ['isAdmin', String(isAdmin)],
+    ['canWrite', String(canWrite)],
+  ]
+
+  return (
+    <Section
+      title="Auth state (temporary)"
+      note="Removed in Phase 13. Here so the role model can be verified from the deployed site by signing in as each account."
+    >
+      <dl className="m-0 grid grid-cols-[7rem_1fr] gap-x-4 gap-y-1">
+        {rows.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="font-mono text-label uppercase tracking-[0.12em] text-ink-3">
+              {k}
+            </dt>
+            <dd className="m-0 font-mono text-sm break-all text-ink-0">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="m-0 max-w-prose text-sm text-ink-2">
+        <span className="text-ink-0">canWrite</span> is the UI courtesy only. The
+        database rules are the real boundary — a guest write is rejected by the server
+        whether or not this says false.
+      </p>
+    </Section>
   )
 }
