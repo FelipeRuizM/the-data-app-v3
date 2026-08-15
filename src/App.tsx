@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { RequireAdmin, RequireAuth, RequireWrite } from './auth/guards'
 import { missingEnvVars } from './lib/firebase'
 import { Label } from './components/ui'
+import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
@@ -58,7 +59,7 @@ export function App() {
               </RequireAuth>
             }
           >
-            <Route index element={<Placeholder title="Home" phase="Phase 3" />} />
+            <Route index element={<Home />} />
 
             <Route
               path="workouts"
