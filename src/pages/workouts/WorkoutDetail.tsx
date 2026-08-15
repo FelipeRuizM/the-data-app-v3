@@ -161,7 +161,7 @@ function Wrap({ children }: { children: React.ReactNode }) {
     <article className="flex flex-col gap-6 py-10">
       <Link
         to="/workouts"
-        className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase no-underline hover:text-ink-1"
+        className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-1"
       >
         ← Workouts
       </Link>
@@ -275,7 +275,7 @@ function Th({
   return (
     <th
       scope="col"
-      className={`border-b border-rule pb-1 text-left font-mono text-label font-normal tracking-[0.12em] text-ink-3 uppercase ${className}`}
+      className={`border-b border-rule pb-1 text-left font-mono text-label font-normal tracking-[0.12em] text-ink-2 uppercase ${className}`}
     >
       {children}
     </th>
@@ -299,7 +299,7 @@ function SetRow({
   return (
     <>
       <tr className={prs.length > 0 ? '' : 'border-b border-rule'}>
-        <td className="py-2 font-mono text-xs text-ink-3">{set.setIndex + 1}</td>
+        <td className="py-2 font-mono text-xs text-ink-2">{set.setIndex + 1}</td>
         <td className={`py-2 font-mono text-sm ${tone}`}>
           {formatSetWeight(set.weight, units)}
         </td>
@@ -311,7 +311,7 @@ function SetRow({
           {set.setType && set.setType !== 'normal' ? (
             <Badge>{set.setType}</Badge>
           ) : (
-            <span className="font-mono text-label text-ink-3">—</span>
+            <span className="font-mono text-label text-ink-2">—</span>
           )}
         </td>
       </tr>

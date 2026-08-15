@@ -107,7 +107,7 @@ export function MonthlyTrendChart({
         })}
       </svg>
 
-      <div className="flex justify-between font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <div className="flex justify-between font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         <span>{formatMonthLong(series[0]!.month)}</span>
         <span>{formatMonthLong(series[series.length - 1]!.month)}</span>
       </div>

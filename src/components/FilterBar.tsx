@@ -92,7 +92,7 @@ export function FilterBar({
       </div>
 
       <details className="group">
-        <summary className="cursor-pointer list-none font-mono text-label tracking-[0.12em] text-ink-3 uppercase hover:text-ink-2">
+        <summary className="cursor-pointer list-none font-mono text-label tracking-[0.12em] text-ink-2 uppercase hover:text-ink-2">
           More filters
         </summary>
 
@@ -142,7 +142,7 @@ export function FilterBar({
       </details>
 
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-rule pt-2">
-        <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+        <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
           {resultCount === totalCount
             ? `${totalCount} ${countNoun}${totalCount === 1 ? '' : 's'}`
             : `${resultCount} of ${totalCount}`}
@@ -207,7 +207,7 @@ function DateInput({
 
   return (
     <label className="flex items-center gap-2">
-      <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         {label}
       </span>
       <input

@@ -421,7 +421,7 @@ function SetRow({
     // data-entry surface — at three rows per set a 25-set session became 75
     // rows of inputs, which is unusable on the device it's logged from.
     <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-2 sm:grid-cols-[1.5rem_1fr_1fr_1fr_auto_auto]">
-      <span className="font-mono text-xs text-ink-3">{index + 1}</span>
+      <span className="font-mono text-xs text-ink-2">{index + 1}</span>
 
       <input
         inputMode="decimal"
@@ -466,7 +466,7 @@ function SetRow({
           type="button"
           onClick={onRemove}
           aria-label={`Remove set ${index + 1}`}
-          className="col-start-4 row-start-1 cursor-pointer border-0 bg-transparent px-1 font-mono text-xs text-ink-3 hover:text-accent sm:col-auto sm:row-auto"
+          className="col-start-4 row-start-1 cursor-pointer border-0 bg-transparent px-1 font-mono text-xs text-ink-2 hover:text-accent sm:col-auto sm:row-auto"
         >
           ×
         </button>

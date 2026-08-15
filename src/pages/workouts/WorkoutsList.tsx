@@ -193,7 +193,7 @@ function WorkoutRow({
         className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 py-4 no-underline"
       >
         <span className="min-w-0 truncate text-ink-0">{workout.title}</span>
-        <span className="font-mono text-xs whitespace-nowrap text-ink-3">
+        <span className="font-mono text-xs whitespace-nowrap text-ink-2">
           {formatDayShort(workout.startTime)}
         </span>
 
@@ -218,7 +218,7 @@ function Metric({ value, unit }: { value: string; unit?: string }) {
   return (
     <span className="font-mono text-xs text-ink-1">
       {value}
-      {unit ? <span className="ml-1 text-ink-3">{unit}</span> : null}
+      {unit ? <span className="ml-1 text-ink-2">{unit}</span> : null}
     </span>
   )
 }

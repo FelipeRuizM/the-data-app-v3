@@ -140,7 +140,7 @@ function Wrap({ children }: { children: React.ReactNode }) {
     <article className="flex flex-col gap-6 py-10">
       <Link
         to="/runs"
-        className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase no-underline hover:text-ink-1"
+        className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-1"
       >
         ← Runs
       </Link>

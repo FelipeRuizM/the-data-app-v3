@@ -1,5 +1,10 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
-import { getAuth, type Auth } from 'firebase/auth'
+import {
+  browserLocalPersistence,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+} from 'firebase/auth'
 import { getDatabase, type Database } from 'firebase/database'
 
 /**
@@ -53,9 +58,30 @@ function getApp(): FirebaseApp {
   return app
 }
 
-/** Lazy so that a config-error screen can render without touching the SDK. */
+/**
+ * Lazy so that a config-error screen can render without touching the SDK.
+ *
+ * `initializeAuth` rather than `getAuth`, and deliberately WITHOUT a
+ * `popupRedirectResolver`.
+ *
+ * `getAuth` wires in the popup/redirect resolver, which loads
+ * `<authDomain>/__/auth/iframe.js` plus Google's `apis.google.com` gapi
+ * bundle on every page — measured at **133 KiB of third-party JavaScript** on
+ * the login screen alone. All of it exists to support `signInWithPopup` and
+ * `signInWithRedirect`, which this app does not have: D-27 made email/password
+ * the only provider. Omitting the resolver drops the iframe, the extra origin,
+ * and the requests.
+ *
+ * If a popup provider is ever reintroduced, this has to change back — calling
+ * `signInWithPopup` without a resolver throws `auth/argument-error` rather
+ * than failing silently, which is the right way round.
+ */
 export function auth(): Auth {
-  if (!authInstance) authInstance = getAuth(getApp())
+  if (!authInstance) {
+    authInstance = initializeAuth(getApp(), {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+    })
+  }
   return authInstance
 }
 

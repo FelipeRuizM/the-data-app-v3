@@ -215,7 +215,7 @@ export function MuscleGroupRadar({ totals }: { totals: MuscleGroupTotals[] }) {
         </table>
       </div>
 
-      <p className="m-0 text-xs text-ink-3">
+      <p className="m-0 text-xs text-ink-2">
         Core and Other are excluded — they distort the balance shape.
       </p>
     </figure>

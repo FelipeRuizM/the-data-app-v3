@@ -19,7 +19,12 @@
   /* ── ground + neutral ramp — the only backgrounds that exist ───────────── */
   --color-ground: #0c0c0f; /* the only background. there is no card layer. */
   --color-rule: #1e1e24; /* hairline rules, chart gridlines */
-  --color-ink-3: #4a4a55; /* axes, disabled, timestamps */
+  /* NOT FOR TEXT. 2.23:1 on the ground — it fails WCAG AA, which Lighthouse
+     caught on the login screen. Axes, gridlines, hairline borders and disabled
+     controls only; disabled controls are exempt from the contrast rule and
+     marks are not text. Anything a person reads uses --color-ink-2 (4.60:1)
+     or brighter. */
+  --color-ink-3: #4a4a55; /* axes, gridlines, disabled */
   --color-ink-2: #7a7a85; /* labels, metadata, mono chrome */
   --color-ink-1: #b6b6c0; /* prose */
   --color-ink-0: #f4f4f6; /* headlines, big figures */
@@ -63,7 +68,11 @@
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
-  --text-fig: 2.75rem; /* the big editorial stat figure */
+  /* The big editorial stat figure. Fluid, because it has to hold "78,174 kg"
+     in a two-column grid at 375px — at a fixed 2.75rem that overflowed the
+     track by 2px, which is how a stat card starts scrolling the page
+     sideways. The upper bound keeps the desktop treatment unchanged. */
+  --text-fig: clamp(2rem, 8.5vw, 2.75rem);
 
   --tracking-label: 0.14em;
 

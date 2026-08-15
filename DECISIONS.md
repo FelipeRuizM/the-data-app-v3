@@ -531,3 +531,66 @@ page with it.
 clipping a block box that actually contains it. Applied to all six sr-only tables in
 the codebase, not just the heatmap's — the other five were latent instances of the
 same bug that happened to hold fewer columns.
+
+---
+
+# 2026-08-15 — Phase 15, the quality pass
+
+## D-34a · Amendment: Recharts is removed, not deferred
+D-34 left the unused dependency in `package.json` "for the Phase 15 sweep". This is
+that sweep: `recharts` is uninstalled, and `CLAUDE.md` §2 and §5 are corrected in the
+same commit to say there is no charting library. Nothing in `src/` referenced it.
+
+## D-36 · Firebase Auth without the popup/redirect resolver ✅
+**Measured, not guessed.** Lighthouse on `#/login` showed **133 KiB of third-party
+JavaScript** on a page whose own bundle is 153 KiB:
+
+```
+93 KiB  the-data-app-v3.firebaseapp.com/__/auth/iframe.js
+34 KiB  apis.google.com/…/gapi_iframes
+ 6 KiB  apis.google.com/js/api.js
+```
+
+All of it exists to serve `signInWithPopup` / `signInWithRedirect`, which this app has
+not had since **D-27** made email/password the only provider. `getAuth()` wires the
+resolver in unconditionally; `initializeAuth(app, { persistence })` without a
+`popupRedirectResolver` does not.
+
+**Result:** third-party requests **3 → 0**, LCP **3.6s → 2.3s**, performance **89 →
+97**.
+
+If a popup provider is ever reintroduced this must change back — and it fails loudly
+rather than silently: `signInWithPopup` without a resolver throws
+`auth/argument-error`.
+
+## D-37 · `--ink-3` is banned from text ✅
+**Found by Lighthouse and axe, not by eye.** `--ink-3` (`#4A4A55`) is **2.23:1** on the
+ground — it fails WCAG AA for text by a wide margin. It had drifted from its documented
+role ("axes, disabled") onto captions, metadata and micro-labels in **83 places**.
+
+**Decision:** ink-3 is for **axes, gridlines, hairline borders and disabled controls
+only** — marks are not text, and disabled controls are exempt from the contrast rule.
+Everything a person reads uses `--ink-2` (4.60:1) or brighter. The token now says so in
+`tokens.css`.
+
+**Not** fixed by brightening ink-3: that would collapse the four-step neutral ramp §5
+depends on. One step of dim-text hierarchy is the price, and it is the cheaper one.
+
+## D-38 · `categoryTextVar` — text colour on a coloured fill is computed, not chosen ✅
+axe also caught the monthly-report calendar at **3.70:1**: dark text on a `cat-1` fill.
+Half the categorical palette needs light text and half needs dark, and `cat-1` is a
+**dark** bronze on purpose — D-17's colourblind validation requires it to sit below
+`cat-2` in lightness.
+
+`categoryTextVar(token)` returns the readable ink for a given fill, and
+`tokens.test.ts` **recomputes every pairing from the hex values**, so a palette edit
+cannot silently push one below 4.5:1. Writing that test immediately caught two real
+bugs: an unknown token resolved to the `cat-none` fill but took the *wrong* ink, and
+`accent` was not in the known set at all.
+
+## D-39 · The stat figure is fluid ✅
+The 2px of horizontal scroll on Analytics was not a measurement artifact — it was
+`--text-fig` at a fixed 2.75rem holding "78,174 kg" in a two-column grid at 375px, so
+the figure pushed its own grid track wider. `clamp(2rem, 8.5vw, 2.75rem)` plus
+`min-w-0` on the stat block fixes the class of bug rather than the one number; the
+desktop treatment is unchanged.

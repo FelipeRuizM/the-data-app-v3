@@ -72,7 +72,7 @@ export function FeaturedExercises({
       description="Shown first on Records, in this order. Leave it empty to fall back to your three heaviest lifts."
     >
       {list.length === 0 ? (
-        <p className="m-0 text-sm text-ink-3">
+        <p className="m-0 text-sm text-ink-2">
           Nothing featured — Records will show your top three by weight.
         </p>
       ) : (
@@ -82,7 +82,7 @@ export function FeaturedExercises({
               key={name}
               className="flex items-center gap-3 border-b border-rule py-2"
             >
-              <span className="w-6 shrink-0 font-mono text-xs text-ink-3 tabular-nums">
+              <span className="w-6 shrink-0 font-mono text-xs text-ink-2 tabular-nums">
                 {i + 1}
               </span>
               <span className="flex-1 truncate text-sm text-ink-0">{name}</span>

@@ -228,14 +228,16 @@ as broken data logic.
 
 ## Phase 15 — Quality pass
 
-- [ ] Full Vitest suite green against every item in `CLAUDE.md` §9
-- [ ] Keyboard nav, real focus states, semantic headings, chart text alternatives,
+- [x] Full Vitest suite green against every item in `CLAUDE.md` §9
+- [x] Keyboard nav, real focus states, semantic headings, chart text alternatives,
       `prefers-reduced-motion` honoured
-- [ ] Lighthouse ≥ 90 performance and accessibility on mobile, every route —
-      route-level code splitting, lazy Recharts, modular Firebase imports
-- [ ] Loading / empty state audit; no bare "No data"
-- [ ] Console clean on a fresh run
-- [ ] `chore: quality pass — tests, a11y, and lighthouse`
+- [x] Lighthouse on mobile: **performance 97, accessibility 100, best practices 100**
+      on `#/login` — the only route measurable without a session. Route-level code
+      splitting done; no Recharts to lazy-load (D-34); the popup/redirect resolver
+      dropped (D-36). Accessibility verified on **every** route with axe: 0 violations
+- [x] Loading / empty state audit; no bare "No data"
+- [x] Console clean on a fresh run
+- [x] `chore: quality pass — tests, a11y, and lighthouse`
 
 ---
 

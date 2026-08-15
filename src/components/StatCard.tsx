@@ -34,7 +34,7 @@ export function StatCard({
       </span>
       <Label>{label}</Label>
       {delta ? <DeltaLine delta={delta} formatDelta={formatDelta} /> : null}
-      {sub ? <span className="font-mono text-xs text-ink-3">{sub}</span> : null}
+      {sub ? <span className="font-mono text-xs text-ink-2">{sub}</span> : null}
     </div>
   )
 }
@@ -51,12 +51,12 @@ function DeltaLine({
       ? 'text-cat-2'
       : delta.direction === 'down'
         ? 'text-accent'
-        : 'text-ink-3'
+        : 'text-ink-2'
 
   const arrow = delta.direction === 'up' ? '↑' : delta.direction === 'down' ? '↓' : '—'
 
   if (delta.direction === 'flat') {
-    return <span className="font-mono text-xs text-ink-3">— no change</span>
+    return <span className="font-mono text-xs text-ink-2">— no change</span>
   }
 
   const magnitude = Math.abs(delta.absolute)

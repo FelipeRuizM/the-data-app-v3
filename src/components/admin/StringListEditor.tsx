@@ -82,7 +82,7 @@ export function StringListEditor({
   return (
     <Section title={title} description={description}>
       {list.length === 0 ? (
-        <p className="m-0 text-sm text-ink-3">
+        <p className="m-0 text-sm text-ink-2">
           Empty — the built-in defaults apply until you add something.
         </p>
       ) : (

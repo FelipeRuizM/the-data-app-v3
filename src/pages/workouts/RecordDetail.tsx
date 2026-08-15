@@ -240,7 +240,7 @@ export function RecordDetail() {
                     {a.metric === 'volume' || a.metric === 'oneRM'
                       ? formatVolume(a.value, units)
                       : formatWeight(a.value, units, { withUnit: false })}
-                    <span className="text-ink-3">
+                    <span className="text-ink-2">
                       {' '}
                       from {Math.round(a.previous * 10) / 10}
                     </span>
@@ -292,7 +292,7 @@ function Wrap({ title, children }: { title: string; children: React.ReactNode })
     <article className="flex flex-col gap-8 py-10">
       <Link
         to="/workouts/records"
-        className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase no-underline hover:text-ink-1"
+        className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-1"
       >
         ← Records
       </Link>
@@ -322,7 +322,7 @@ function Stat({
       <dt>
         <Label>{label}</Label>
       </dt>
-      {sub ? <span className="font-mono text-xs text-ink-3">{sub}</span> : null}
+      {sub ? <span className="font-mono text-xs text-ink-2">{sub}</span> : null}
     </div>
   )
 }

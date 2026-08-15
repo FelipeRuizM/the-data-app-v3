@@ -123,7 +123,7 @@ export function Calculator() {
         <RampTable ramp={ramp} units={units} />
       )}
 
-      <p className="m-0 border-t border-rule pt-4 text-xs text-ink-3">
+      <p className="m-0 border-t border-rule pt-4 text-xs text-ink-2">
         Warm-ups are for blood flow and joint lubrication, not fatigue. Feeders lock in
         the working weight and technique — reps drop as the weight rises so you reach
         the working set fresh. Percentages are editable in Settings.
@@ -154,7 +154,7 @@ function RampTable({ ramp, units }: { ramp: PrescribedSet[]; units: string }) {
               >
                 {s.label}
               </td>
-              <td className="py-3 text-right font-mono text-sm text-ink-3">
+              <td className="py-3 text-right font-mono text-sm text-ink-2">
                 {s.percent}%
               </td>
               <td
@@ -187,7 +187,7 @@ function Th({
   return (
     <th
       scope="col"
-      className={`border-b border-rule pb-1 text-left font-mono text-label font-normal tracking-[0.12em] text-ink-3 uppercase ${className}`}
+      className={`border-b border-rule pb-1 text-left font-mono text-label font-normal tracking-[0.12em] text-ink-2 uppercase ${className}`}
     >
       {children}
     </th>

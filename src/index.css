@@ -71,6 +71,25 @@ body {
   font-variant-numeric: tabular-nums lining-nums;
 }
 
+/* A visually-hidden <table> still lays out at its natural width: on a table,
+   `width: 1px` is a MINIMUM, not a maximum. Tailwind's sr-only relies on
+   `overflow: hidden`, which clips the paint but can still let the element widen
+   the page's scrollable area while layout settles — measured as a 2px sideways
+   scroll on Analytics. `overflow: clip` removes it from scrollable overflow
+   outright. Every chart's text alternative is one of these tables (§9). */
+.sr-only {
+  overflow: clip;
+}
+
+/* …and the table inside one needs `table-layout: fixed`, which is what makes a
+   table actually honour its width. Under the default `auto` layout the width
+   is only a floor, so the alternative table lays out at its content width —
+   1,022px for the heatmap — and intermittently widens the page. */
+.sr-only table {
+  table-layout: fixed;
+  width: 1px;
+}
+
 /* Real focus states — never `outline: none` (CLAUDE.md §9). */
 :focus-visible {
   outline: 2px solid var(--color-accent);

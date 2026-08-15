@@ -50,7 +50,7 @@ export function SaveNote({ status, dirty }: { status: SaveStatus; dirty?: boolea
   }
   if (status.state === 'saving') {
     return (
-      <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         Saving…
       </span>
     )
@@ -67,7 +67,7 @@ export function SaveNote({ status, dirty }: { status: SaveStatus; dirty?: boolea
   }
   if (dirty) {
     return (
-      <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         Unsaved changes
       </span>
     )

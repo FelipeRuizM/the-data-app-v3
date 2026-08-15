@@ -107,7 +107,7 @@ export function ProgressionChart({
         ) : null}
       </svg>
 
-      <figcaption className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <figcaption className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         {caption}
       </figcaption>
 

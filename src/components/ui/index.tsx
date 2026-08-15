@@ -102,9 +102,11 @@ export function StatFigure({
       ? 'text-cat-2'
       : delta?.direction === 'down'
         ? 'text-accent'
-        : 'text-ink-3'
+        : 'text-ink-2'
   return (
-    <div className="flex flex-col gap-1">
+    // min-w-0: a grid item defaults to min-width:auto, so a long figure pushes
+    // its own track wider instead of being allowed to shrink.
+    <div className="flex min-w-0 flex-col gap-1">
       <span className="font-mono text-fig leading-none tracking-tight text-ink-0">
         {value}
         {unit ? (

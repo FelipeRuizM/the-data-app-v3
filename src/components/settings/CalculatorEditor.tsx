@@ -123,12 +123,12 @@ function RampEditor({
       <legend className="p-0">
         <Label>{legend}</Label>
       </legend>
-      <p className="m-0 text-xs text-ink-3">{hint}</p>
+      <p className="m-0 text-xs text-ink-2">{hint}</p>
 
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {ramp.map((r, i) => (
           <li key={i} className="flex items-end gap-2">
-            <span className="w-6 shrink-0 pb-2 font-mono text-xs text-ink-3 tabular-nums">
+            <span className="w-6 shrink-0 pb-2 font-mono text-xs text-ink-2 tabular-nums">
               {i + 1}
             </span>
             <NumberField
@@ -193,7 +193,7 @@ function NumberField({
 
   return (
     <label className="flex flex-1 flex-col gap-1">
-      <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         {label}
       </span>
       <input

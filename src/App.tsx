@@ -1,27 +1,71 @@
+import { lazy } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import { AuthProvider } from './auth/AuthProvider'
 import { RequireAdmin, RequireAuth, RequireWrite } from './auth/guards'
 import { missingEnvVars } from './lib/firebase'
 import { Label } from './components/ui'
-import { Home } from './pages/Home'
-import { MonthlyReport } from './pages/MonthlyReport'
-import { WorkoutDetail } from './pages/workouts/WorkoutDetail'
-import { WorkoutsList } from './pages/workouts/WorkoutsList'
-import { WorkoutForm } from './pages/workouts/WorkoutForm'
-import { Records } from './pages/workouts/Records'
-import { Calculator } from './pages/workouts/Calculator'
-import { RecordDetail } from './pages/workouts/RecordDetail'
-import { RunDetail } from './pages/runs/RunDetail'
-import { RunsList } from './pages/runs/RunsList'
-import { RunForm } from './pages/runs/RunForm'
-import { RunRecords } from './pages/runs/RunRecords'
 import { Login } from './pages/Login'
-import { NotFound } from './pages/NotFound'
-import { Settings } from './pages/Settings'
-import { Analytics } from './pages/Analytics'
-import { Admin } from './pages/Admin'
-import { Styleguide } from './pages/Styleguide'
+
+/**
+ * Every page is its own chunk (§9's Lighthouse target). Firebase, date-fns and
+ * the chart code stop being part of the first paint.
+ *
+ * Login is the exception and stays eager: it is the only route an
+ * unauthenticated visitor can reach, so lazy-loading it would put a fallback in
+ * front of the very first paint for the one case with nothing cached.
+ *
+ * Written out one by one rather than through a helper. A generic wrapper reads
+ * as tidier but erases each page's props — WorkoutForm and RunForm take a
+ * `mode`, and the first attempt at a helper silently typed it away.
+ */
+const Home = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })))
+const MonthlyReport = lazy(() =>
+  import('./pages/MonthlyReport').then((m) => ({ default: m.MonthlyReport })),
+)
+const WorkoutsList = lazy(() =>
+  import('./pages/workouts/WorkoutsList').then((m) => ({ default: m.WorkoutsList })),
+)
+const WorkoutDetail = lazy(() =>
+  import('./pages/workouts/WorkoutDetail').then((m) => ({ default: m.WorkoutDetail })),
+)
+const WorkoutForm = lazy(() =>
+  import('./pages/workouts/WorkoutForm').then((m) => ({ default: m.WorkoutForm })),
+)
+const Records = lazy(() =>
+  import('./pages/workouts/Records').then((m) => ({ default: m.Records })),
+)
+const RecordDetail = lazy(() =>
+  import('./pages/workouts/RecordDetail').then((m) => ({ default: m.RecordDetail })),
+)
+const Calculator = lazy(() =>
+  import('./pages/workouts/Calculator').then((m) => ({ default: m.Calculator })),
+)
+const RunsList = lazy(() =>
+  import('./pages/runs/RunsList').then((m) => ({ default: m.RunsList })),
+)
+const RunDetail = lazy(() =>
+  import('./pages/runs/RunDetail').then((m) => ({ default: m.RunDetail })),
+)
+const RunForm = lazy(() =>
+  import('./pages/runs/RunForm').then((m) => ({ default: m.RunForm })),
+)
+const RunRecords = lazy(() =>
+  import('./pages/runs/RunRecords').then((m) => ({ default: m.RunRecords })),
+)
+const Analytics = lazy(() =>
+  import('./pages/Analytics').then((m) => ({ default: m.Analytics })),
+)
+const Settings = lazy(() =>
+  import('./pages/Settings').then((m) => ({ default: m.Settings })),
+)
+const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })))
+const Styleguide = lazy(() =>
+  import('./pages/Styleguide').then((m) => ({ default: m.Styleguide })),
+)
+const NotFound = lazy(() =>
+  import('./pages/NotFound').then((m) => ({ default: m.NotFound })),
+)
 
 /** Build-time config is missing — the single most likely deployment failure. */
 function ConfigError({ missing }: { missing: string[] }) {

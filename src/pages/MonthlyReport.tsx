@@ -301,7 +301,7 @@ export function MonthlyReport() {
           <MonthlyTrendChart series={series} selectedMonth={month} />
         </section>
 
-        <p className="m-0 border-t border-rule pt-4 text-xs text-ink-3">
+        <p className="m-0 border-t border-rule pt-4 text-xs text-ink-2">
           Recomputed from full history on every visit — including the previous month it
           compares against. Nothing on this page is stored.
         </p>
@@ -336,7 +336,7 @@ function MainExercises({
               {formatVolume(e.volumeKg, units)}
               <span className="ml-1 text-xs text-ink-2">{units}</span>
             </span>
-            <span className="col-span-2 flex gap-4 font-mono text-xs text-ink-3">
+            <span className="col-span-2 flex gap-4 font-mono text-xs text-ink-2">
               <span>{e.sets} sets</span>
               <span>{e.reps} reps</span>
             </span>

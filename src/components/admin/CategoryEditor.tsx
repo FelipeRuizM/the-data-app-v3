@@ -127,7 +127,7 @@ export function CategoryEditor({
   return (
     <Section title={title} description={description}>
       {categories.length === 0 ? (
-        <p className="m-0 text-sm text-ink-3">
+        <p className="m-0 text-sm text-ink-2">
           None yet — the built-in defaults apply until you add one.
         </p>
       ) : (
@@ -205,7 +205,7 @@ export function CategoryEditor({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-1">
-          <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             Add {noun} {configKey === 'runTypes' ? 'type' : 'category'}
           </span>
           <input
@@ -246,7 +246,7 @@ export function CategoryEditor({
         onConfirm={confirm}
         onCancel={close}
       >
-        <p className="m-0 text-xs text-ink-3">
+        <p className="m-0 text-xs text-ink-2">
           Only your own records are rewritten — an account can write nothing but its own
           data. Other profiles keep the old name and show it in neutral grey.
         </p>
@@ -288,7 +288,7 @@ function SwatchPicker({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         Colour
       </span>
       <div className="flex flex-wrap gap-1.5">
@@ -345,7 +345,7 @@ function TextAction({ onClick, children }: { onClick: () => void; children: stri
     <button
       type="button"
       onClick={onClick}
-      className="shrink-0 cursor-pointer border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-ink-3 uppercase transition-colors duration-[120ms] hover:text-accent"
+      className="shrink-0 cursor-pointer border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-ink-2 uppercase transition-colors duration-[120ms] hover:text-accent"
     >
       {children}
     </button>

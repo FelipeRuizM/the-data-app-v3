@@ -74,7 +74,7 @@ export function RunRecords() {
               <span className="font-mono text-2xl tracking-tight whitespace-nowrap text-ink-0">
                 {formatRecord(r)}
               </span>
-              <span className="col-span-2 font-mono text-xs text-ink-3">
+              <span className="col-span-2 font-mono text-xs text-ink-2">
                 {formatDay(r.date)}
               </span>
             </Link>

@@ -125,7 +125,7 @@ function RecentActivity({
       {droppedCount > 0 ? (
         // Surfaced rather than swallowed: a record with an unparseable date is
         // a data problem the owner should know about, not something to hide.
-        <p className="m-0 font-mono text-xs text-ink-3">
+        <p className="m-0 font-mono text-xs text-ink-2">
           {droppedCount} record{droppedCount === 1 ? '' : 's'} skipped — unreadable
           date.
         </p>
@@ -142,7 +142,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 py-4 no-underline"
       >
         <span className="min-w-0 truncate text-ink-0">{item.title}</span>
-        <span className="font-mono text-xs whitespace-nowrap text-ink-3">
+        <span className="font-mono text-xs whitespace-nowrap text-ink-2">
           {formatDayShort(item.startTime)}
         </span>
         <span className="col-span-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">

@@ -168,7 +168,7 @@ export function EntityManager({
     <Section title={title} description={description}>
       {entries.length > 8 ? (
         <label className="flex flex-col gap-1" htmlFor={filterId}>
-          <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             Find
           </span>
           <input
@@ -182,7 +182,7 @@ export function EntityManager({
       ) : null}
 
       {visible.length === 0 ? (
-        <p className="m-0 text-sm text-ink-3">
+        <p className="m-0 text-sm text-ink-2">
           {entries.length === 0 ? 'Nothing here yet.' : 'Nothing matches that.'}
         </p>
       ) : (
@@ -245,7 +245,7 @@ export function EntityManager({
 
                 {isExercise ? (
                   <label className="flex items-center gap-2">
-                    <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+                    <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
                       Muscle group
                     </span>
                     <select
@@ -287,14 +287,14 @@ export function EntityManager({
       )}
 
       {capped ? (
-        <p className="m-0 font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+        <p className="m-0 font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
           Showing {LIST_CAP} of {matching.length} — search to find the rest
         </p>
       ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-1">
-          <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             Add {singular}
           </span>
           <input
@@ -309,7 +309,7 @@ export function EntityManager({
         </label>
         {isExercise ? (
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+            <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
               Muscle group
             </span>
             <select
@@ -352,7 +352,7 @@ export function EntityManager({
         onCancel={close}
       >
         {dialog?.mode === 'rename' && dialog.refs.records > 0 ? (
-          <p className="m-0 text-xs text-ink-3">
+          <p className="m-0 text-xs text-ink-2">
             History joins by name, so every one of those records is rewritten in the
             same write. Nothing is lost.
           </p>
@@ -389,7 +389,7 @@ export function EntityManager({
       >
         {dialog?.mode === 'merge' ? (
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+            <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
               Merge into
             </span>
             <select
@@ -419,7 +419,7 @@ function TextAction({ onClick, children }: { onClick: () => void; children: stri
     <button
       type="button"
       onClick={onClick}
-      className="shrink-0 cursor-pointer border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-ink-3 uppercase transition-colors duration-[120ms] hover:text-accent"
+      className="shrink-0 cursor-pointer border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-ink-2 uppercase transition-colors duration-[120ms] hover:text-accent"
     >
       {children}
     </button>

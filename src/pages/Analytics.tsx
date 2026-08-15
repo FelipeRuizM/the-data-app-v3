@@ -169,7 +169,7 @@ export function Analytics() {
           />
         </div>
         {streaks.longest ? (
-          <p className="m-0 font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <p className="m-0 font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             Longest ran {formatDay(streaks.longest.from)} —{' '}
             {formatDay(streaks.longest.to)}
           </p>

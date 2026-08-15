@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { RouteErrorBoundary } from '../RouteErrorBoundary'
 import { useAuth } from '../../auth/hooks'
@@ -12,6 +13,17 @@ import { CATEGORIES } from '../../categories/registry'
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   'font-mono text-label uppercase tracking-[0.12em] no-underline transition-colors duration-[120ms] ' +
   (isActive ? 'text-ink-0' : 'text-ink-2 hover:text-ink-1')
+
+/** The same quiet mono voice as every other transient state — never a spinner. */
+function RouteFallback() {
+  return (
+    <div className="py-16">
+      <span className="font-mono text-label tracking-[0.14em] text-ink-2 uppercase">
+        Loading…
+      </span>
+    </div>
+  )
+}
 
 export function AppLayout() {
   const location = useLocation()
@@ -28,7 +40,7 @@ export function AppLayout() {
 
       <header className="border-b border-rule">
         <div className="mx-auto flex max-w-4xl flex-wrap items-baseline gap-x-5 gap-y-2 px-5 py-4">
-          <span className="font-mono text-label uppercase tracking-[0.14em] text-ink-3">
+          <span className="font-mono text-label uppercase tracking-[0.14em] text-ink-2">
             the data app
           </span>
 
@@ -69,7 +81,7 @@ export function AppLayout() {
                 guest · read only
               </span>
             ) : (
-              <span className="hidden font-mono text-label text-ink-3 sm:inline">
+              <span className="hidden font-mono text-label text-ink-2 sm:inline">
                 {user?.email ?? ''}
               </span>
             )}
@@ -88,7 +100,13 @@ export function AppLayout() {
         {/* Keyed on pathname so the boundary remounts on navigation — otherwise a
             thrown error sticks and every subsequent page renders the fallback. */}
         <RouteErrorBoundary key={location.pathname}>
-          <Outlet />
+          {/* Every page is a lazy chunk (§9). The boundary sits INSIDE the
+              layout so the header and nav stay put while one arrives —
+              swapping the whole screen for a fallback would make a 40ms chunk
+              fetch look like a page reload. */}
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </RouteErrorBoundary>
       </main>
     </div>

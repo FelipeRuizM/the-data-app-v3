@@ -20,6 +20,11 @@ const updateCalls: Record<string, unknown>[] = []
 vi.mock('firebase/app', () => ({ initializeApp: () => ({}) }))
 
 vi.mock('firebase/auth', () => ({
+  // initializeAuth, not getAuth: the app omits the popup/redirect resolver so
+  // Firebase never loads its auth iframe (133 KiB of third-party JS).
+  initializeAuth: () => ({}),
+  browserLocalPersistence: {},
+  indexedDBLocalPersistence: {},
   getAuth: () => ({}),
   onAuthStateChanged: (_a: unknown, cb: (u: unknown) => void) => {
     cb(currentUser)

@@ -253,12 +253,12 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
               className="m-0 rounded-sm border border-rule border-dashed px-3 py-2 font-mono text-sm text-ink-2"
               aria-live="polite"
             >
-              {livePace} <span className="text-ink-3">/km</span>
+              {livePace} <span className="text-ink-2">/km</span>
             </p>
           </div>
         </div>
 
-        <p className="m-0 text-xs text-ink-3">
+        <p className="m-0 text-xs text-ink-2">
           Pace is calculated from distance and moving time — it isn&rsquo;t typed in, so
           a saved run can never disagree with its own numbers.
         </p>

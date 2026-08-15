@@ -45,7 +45,7 @@ export function ActivityHeatmap({ heatmap }: { heatmap: Heatmap }) {
               <tr key={label}>
                 <th
                   scope="row"
-                  className="pr-2 text-right font-mono text-label font-normal tracking-[0.1em] text-ink-3 uppercase"
+                  className="pr-2 text-right font-mono text-label font-normal tracking-[0.1em] text-ink-2 uppercase"
                 >
                   {label}
                 </th>
@@ -74,7 +74,7 @@ export function ActivityHeatmap({ heatmap }: { heatmap: Heatmap }) {
               {hours.map((hour) => (
                 <td
                   key={hour}
-                  className="pt-1 text-center font-mono text-[9px] text-ink-3 tabular-nums"
+                  className="pt-1 text-center font-mono text-[9px] text-ink-2 tabular-nums"
                 >
                   {/* Every third hour, so the labels don't collide at 375px. */}
                   {hour % 3 === 0 ? String(hour).padStart(2, '0') : ''}
@@ -85,7 +85,7 @@ export function ActivityHeatmap({ heatmap }: { heatmap: Heatmap }) {
         </table>
       </div>
 
-      <figcaption className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+      <figcaption className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
         {heatmap.total} activities by weekday and hour · busiest cell {heatmap.max}
       </figcaption>
 

@@ -1,5 +1,5 @@
 import { Label } from './ui'
-import { categoryVar } from './ui/tokens'
+import { categoryTextVar, categoryVar } from './ui/tokens'
 import type { CalendarDay } from '../utils/workoutUtils'
 
 /** Weeks start Sunday, matching the streak definition (D-15). */
@@ -24,7 +24,7 @@ export function SessionCalendar({ weeks }: { weeks: CalendarDay[][] }) {
             <span
               key={i}
               aria-hidden="true"
-              className="text-center font-mono text-label text-ink-3"
+              className="text-center font-mono text-label text-ink-2"
             >
               {d}
             </span>
@@ -92,7 +92,21 @@ function Day({ day }: { day: CalendarDay }) {
               : day.workouts > 0
                 ? categoryVar('cat-1')
                 : categoryVar('cat-3'),
-        color: total === 0 ? 'var(--color-ink-3)' : 'var(--color-ground)',
+        // Both halves were contrast bugs axe caught. Empty days: ink-2, not
+        // ink-3, because this is a read number and ink-3 is 2.23:1 on the
+        // ground. Filled days: the readable ink for THAT fill — cat-1 is a dark
+        // bronze by design (it has to sit below cat-2 in lightness for
+        // colourblind separation), so dark-on-dark was 3.70:1.
+        color:
+          total === 0
+            ? 'var(--color-ink-2)'
+            : categoryTextVar(
+                day.workouts > 0 && day.runs > 0
+                  ? 'accent'
+                  : day.workouts > 0
+                    ? 'cat-1'
+                    : 'cat-3',
+              ),
       }}
     >
       {day.dayOfMonth}

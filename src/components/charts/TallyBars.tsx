@@ -27,7 +27,7 @@ export function TallyBars({
     return (
       <div className="flex flex-col gap-2">
         <Label as="h3">{title}</Label>
-        <p className="m-0 text-sm text-ink-3">{emptyNote}</p>
+        <p className="m-0 text-sm text-ink-2">{emptyNote}</p>
       </div>
     )
   }
@@ -58,7 +58,7 @@ export function TallyBars({
       </ul>
 
       {items.length > limit ? (
-        <figcaption className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+        <figcaption className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
           Top {limit} of {items.length}
         </figcaption>
       ) : null}

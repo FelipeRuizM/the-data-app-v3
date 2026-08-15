@@ -240,16 +240,16 @@ function RecordRow({
         </span>
 
         <span className="col-span-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             {headline.label}
           </span>
           {headlineDate ? (
-            <span className="font-mono text-xs text-ink-3">
+            <span className="font-mono text-xs text-ink-2">
               {formatDay(headlineDate)}
             </span>
           ) : null}
           {pr.daysSinceLastPR !== null ? (
-            <span className="font-mono text-xs text-ink-3">
+            <span className="font-mono text-xs text-ink-2">
               {pr.daysSinceLastPR}d since last PR
             </span>
           ) : null}

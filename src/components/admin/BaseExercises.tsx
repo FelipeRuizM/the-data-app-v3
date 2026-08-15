@@ -60,14 +60,14 @@ export function BaseExercises({
       description="Shared by every account. Renaming or removing one has to rewrite history in profiles this app cannot write to, so both are done from the console — here you can add and re-file."
     >
       {exercises.length === 0 ? (
-        <p className="m-0 max-w-prose text-sm text-ink-3">
+        <p className="m-0 max-w-prose text-sm text-ink-2">
           The shared catalog is empty. Until it is seeded, every account works from its
           own exercise list, which is exactly what happens today.
         </p>
       ) : (
         <>
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+            <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
               Find
             </span>
             <input
@@ -113,7 +113,7 @@ export function BaseExercises({
           </ul>
 
           {capped ? (
-            <p className="m-0 font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+            <p className="m-0 font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
               Showing {LIST_CAP} of {matching.length} — search to find the rest
             </p>
           ) : null}
@@ -122,7 +122,7 @@ export function BaseExercises({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-1">
-          <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             Add base exercise
           </span>
           <input
@@ -136,7 +136,7 @@ export function BaseExercises({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             Muscle group
           </span>
           <select

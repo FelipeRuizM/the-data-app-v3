@@ -44,7 +44,7 @@ export function RecordsBrokenCard({
             {records.length} personal record{records.length === 1 ? '' : 's'} broken
             this month
           </span>
-          <span className="font-mono text-label tracking-[0.12em] text-ink-3 uppercase">
+          <span className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase">
             <span className="group-open:hidden">Show ▾</span>
             <span className="hidden group-open:inline">Hide ▴</span>
           </span>
@@ -79,14 +79,14 @@ export function RecordsBrokenCard({
                 <Badge pr>{metricLabel(r.metric)}</Badge>
                 <span className="font-mono text-xs text-ink-1">
                   {formatRecordValue(r, units)}
-                  <span className="text-ink-3">
+                  <span className="text-ink-2">
                     {' '}
                     from {formatRecordValue({ ...r, value: r.previous }, units)}
                   </span>
                 </span>
                 <Link
                   to={`/workouts/${r.workoutId}`}
-                  className="font-mono text-xs text-ink-3 no-underline hover:text-ink-1"
+                  className="font-mono text-xs text-ink-2 no-underline hover:text-ink-1"
                 >
                   {formatDay(r.date)}
                 </Link>

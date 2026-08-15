@@ -114,7 +114,7 @@ export function Login() {
         </div>
       </form>
 
-      <p className="m-0 text-xs text-ink-3">
+      <p className="m-0 text-xs text-ink-2">
         Accounts are created by the owner. If you were given guest credentials, that
         access is read-only — every write control is hidden, and the database rules
         reject writes regardless.

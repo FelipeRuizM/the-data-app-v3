@@ -70,7 +70,7 @@ different components.
 | Build | Vite + React + **TypeScript strict** |
 | Styling | Tailwind CSS, extending tokens from `src/styles/tokens.css` |
 | Routing | **HashRouter** — GitHub Pages has no SPA rewrite. Never `BrowserRouter`. |
-| Charts | Recharts (fully restyled — see §5) |
+| Charts | **Hand-drawn SVG / HTML — no charting library** (D-34). Recharts was specified here, never imported, and removed in Phase 15. |
 | Dates | date-fns, only through `src/lib/dates.ts` |
 | Backend | Firebase Web SDK v10+ — Realtime Database + Auth |
 | Hosting | GitHub Pages via GitHub Actions on push to `main` |
@@ -747,7 +747,9 @@ the mono if they ever met.
 
 ### Charts
 
-- Charts inherit the token palette. **No Recharts defaults.** Restyle axes, ticks,
+- Charts inherit the token palette. There is **no charting library** (D-34) — §5's
+  discrete marks and near-invisible axes meant overriding everything recognisable
+  about one, so each chart is drawn directly. Axes, ticks,
   tooltips, and legends completely.
 - **Axes and gridlines recede to near-invisible** (`--rule` / `--ink-3`); data
   advances (`--accent`, `--ink-0`).
@@ -997,7 +999,7 @@ Requirements:
 - Keyboard accessible, real focus states, semantic headings, **charts have text
   alternatives**.
 - **Lighthouse: performance and accessibility ≥ 90 on mobile.** Practically this
-  means route-level code splitting, lazy-loading Recharts, modular Firebase imports,
+  means route-level code splitting, modular Firebase imports,
   and self-hosted subsetted fonts.
 - **No console errors or warnings in a clean run.**
 

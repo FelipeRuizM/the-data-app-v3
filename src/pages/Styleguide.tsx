@@ -169,7 +169,7 @@ export function Styleguide() {
             <Label>Tabular figures — these columns must align</Label>
             <div className="flex gap-10">
               <div className="flex flex-col">
-                <span className="font-mono text-xs text-ink-3">tabular (correct)</span>
+                <span className="font-mono text-xs text-ink-2">tabular (correct)</span>
                 <span className="font-mono text-lg text-ink-0">1,247.50</span>
                 <span className="font-mono text-lg text-ink-0">
                   &nbsp;&nbsp;&nbsp;98.25
@@ -177,7 +177,7 @@ export function Styleguide() {
                 <span className="font-mono text-lg text-ink-0">&nbsp;&nbsp;110.00</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-mono text-xs text-ink-3">
+                <span className="font-mono text-xs text-ink-2">
                   proportional (wrong)
                 </span>
                 <span
@@ -254,7 +254,7 @@ export function Styleguide() {
               </Chip>
             ))}
           </div>
-          <span className="font-mono text-xs text-ink-3">selected: {metric}</span>
+          <span className="font-mono text-xs text-ink-2">selected: {metric}</span>
         </div>
       </Section>
 
