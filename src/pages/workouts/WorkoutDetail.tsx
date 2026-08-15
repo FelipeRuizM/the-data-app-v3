@@ -6,6 +6,7 @@ import { colorTokenFor } from '../../lib/config'
 import { workoutSetCount, workoutVolumeKg } from '../../lib/normalize'
 import { formatSetWeight, formatVolume } from '../../lib/units'
 import { useProfile } from '../../data/useProfile'
+import { useCanWrite } from '../../auth/hooks'
 import type { ExerciseEntry, Units, Workout, WorkoutSet } from '../../types'
 
 /**
@@ -18,6 +19,7 @@ import type { ExerciseEntry, Units, Workout, WorkoutSet } from '../../types'
 export function WorkoutDetail() {
   const { id } = useParams<{ id: string }>()
   const state = useProfile()
+  const canWrite = useCanWrite()
 
   if (state.status === 'loading') {
     return (
@@ -80,6 +82,19 @@ export function WorkoutDetail() {
         workout={workout}
         colorToken={colorTokenFor(config.workoutCategories, workout.category)}
       />
+
+      {/* Hidden entirely without write access — never rendered-then-rejected
+          (CLAUDE.md §2). A guest sees no Edit link at all. */}
+      {canWrite ? (
+        <div>
+          <Link
+            to={`/workouts/${workout.id}/edit`}
+            className="font-mono text-label tracking-[0.12em] text-accent uppercase no-underline"
+          >
+            Edit workout
+          </Link>
+        </div>
+      ) : null}
 
       <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-rule py-6 sm:grid-cols-4">
         <Stat

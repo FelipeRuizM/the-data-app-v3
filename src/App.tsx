@@ -7,6 +7,7 @@ import { Label } from './components/ui'
 import { Home } from './pages/Home'
 import { WorkoutDetail } from './pages/workouts/WorkoutDetail'
 import { WorkoutsList } from './pages/workouts/WorkoutsList'
+import { WorkoutForm } from './pages/workouts/WorkoutForm'
 import { RunDetail } from './pages/runs/RunDetail'
 import { RunsList } from './pages/runs/RunsList'
 import { Login } from './pages/Login'
@@ -70,7 +71,7 @@ export function App() {
               path="workouts/new"
               element={
                 <RequireWrite>
-                  <Placeholder title="Log a workout" phase="Phase 6" />
+                  <WorkoutForm mode="create" />
                 </RequireWrite>
               }
             />
@@ -89,7 +90,7 @@ export function App() {
               path="workouts/:id/edit"
               element={
                 <RequireWrite>
-                  <Placeholder title="Edit workout" phase="Phase 6" />
+                  <WorkoutForm mode="edit" />
                 </RequireWrite>
               }
             />

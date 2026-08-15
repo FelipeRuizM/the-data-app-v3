@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, Ref, ReactNode } from 'react'
 import { categoryVar } from './tokens'
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -33,6 +33,12 @@ export function Rule() {
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'quiet'
+  /**
+   * React 19 passes `ref` to function components as an ordinary prop, so no
+   * forwardRef wrapper is needed — but `ButtonHTMLAttributes` doesn't declare
+   * it, so it's declared here. Used by ConfirmDialog to focus Cancel.
+   */
+  ref?: Ref<HTMLButtonElement> | undefined
 }
 
 export function Button({ variant = 'quiet', className = '', ...rest }: ButtonProps) {
