@@ -5,6 +5,7 @@ import { RequireAdmin, RequireAuth, RequireWrite } from './auth/guards'
 import { missingEnvVars } from './lib/firebase'
 import { Label } from './components/ui'
 import { Home } from './pages/Home'
+import { MonthlyReport } from './pages/MonthlyReport'
 import { WorkoutDetail } from './pages/workouts/WorkoutDetail'
 import { WorkoutsList } from './pages/workouts/WorkoutsList'
 import { WorkoutForm } from './pages/workouts/WorkoutForm'
@@ -117,10 +118,7 @@ export function App() {
               }
             />
 
-            <Route
-              path="reports/:month"
-              element={<Placeholder title="Monthly report" phase="Phase 9" />}
-            />
+            <Route path="reports/:month" element={<MonthlyReport />} />
             <Route
               path="analytics"
               element={<Placeholder title="Analytics" phase="Phase 14" />}
