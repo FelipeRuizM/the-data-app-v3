@@ -188,6 +188,48 @@ export function applyExerciseIds(
 }
 
 /**
+ * Resolve a stored vocabulary id to the config row's CURRENT name (D-42).
+ *
+ * The same rule as `applyExerciseIds`, and the same fallback: an id that
+ * resolves to nothing leaves the stored name alone, because §3.7 requires every
+ * join to be total and §4 requires an unknown category to render neutral rather
+ * than as an error.
+ *
+ * Unlike exercises there is no two-tier merge here — categories and run types
+ * live only in `/config` — so this resolves straight to the row.
+ */
+function currentName(
+  id: string | null,
+  stored: string | null,
+  rows: ReadonlyArray<{ id: string; name: string }>,
+): string | null {
+  if (id === null) return stored
+  return rows.find((r) => r.id === id)?.name ?? stored
+}
+
+/** Adopt the current category name on every workout carrying a resolvable id. */
+export function applyCategoryIds<
+  T extends { category: string | null; categoryId: string | null },
+>(workouts: T[], categories: ReadonlyArray<{ id: string; name: string }>): T[] {
+  if (categories.length === 0) return workouts
+  return workouts.map((w) => {
+    const name = currentName(w.categoryId, w.category, categories)
+    return name === w.category ? w : { ...w, category: name }
+  })
+}
+
+/** The same for a run's type. */
+export function applyRunTypeIds<
+  T extends { type: string | null; typeId: string | null },
+>(runs: T[], runTypes: ReadonlyArray<{ id: string; name: string }>): T[] {
+  if (runTypes.length === 0) return runs
+  return runs.map((r) => {
+    const name = currentName(r.typeId, r.type, runTypes)
+    return name === r.type ? r : { ...r, type: name }
+  })
+}
+
+/**
  * `place` resolution is total: an empty string, a missing field, or a name that
  * doesn't resolve all yield null, which renders as "—" / "No place". Never an
  * error state (§3.4, §3.7).
@@ -208,6 +250,7 @@ export function normalizeWorkout(id: string, raw: RawWorkout): Workout | null {
     endTime,
     place: str(raw.gym),
     category: str(raw.category),
+    categoryId: str(raw.category_id),
     avgHeartRate: zeroIsMissing(raw.avg_heart_rate),
     people: toList(raw.people)
       .map((p) => str(p))
@@ -253,6 +296,7 @@ export function normalizeRun(id: string, raw: RawRun): Run | null {
     description: str(raw.description) ?? '',
     startTime,
     type: str(raw.type),
+    typeId: str(raw.type_id),
     place: str(raw.location),
     distanceKm,
     durationSeconds,

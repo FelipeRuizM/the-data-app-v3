@@ -269,3 +269,17 @@ as broken data logic.
 - [ ] **Run against the live database** — blocked on D-41, the owner-uid mismatch
 - [ ] Enable base-exercise rename in the admin panel — only once records carry ids
 - [x] `feat: exercise ids, written alongside names`
+
+## Phase 17 — Category and run-type ids (D-42)
+
+- [x] `category_id` on workouts and `type_id` on runs, **alongside** the names
+- [x] Parse layer adopts the /config row’s current name; an unresolvable id falls
+      back to the stored name, so §4’s `--cat-none` degradation still holds
+- [x] Both writers stamp the id — but only for a vocabulary that came from the
+      database, never from the code-level defaults (D-43)
+- [x] `scripts/add-category-ids.mjs` — dry-run by default, self-healing (D-44)
+- [x] `add-exercise-ids.mjs` re-stamps stale ids instead of skipping them (D-44)
+- [ ] **Run both against the live database** — still blocked on D-41, and the
+      category script additionally needs real /config rows to point at
+- [ ] Retire the D-32 cascade — only once every profile’s records carry ids
+- [x] `feat: category and run-type ids`

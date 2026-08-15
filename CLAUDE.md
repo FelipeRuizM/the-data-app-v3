@@ -455,13 +455,16 @@ Rules:
 
 Joins are **by name string**, not by ID — with one exception, added additively:
 
-> **Exercises also carry `exercise_id` (D-40).** A workout entry stores the catalog
-> key *alongside* `exercise_title`, never instead of it. The parse layer resolves
+> **Exercises carry `exercise_id` (D-40); workouts carry `category_id` and runs
+> carry `type_id` (D-42).** Each is stored *alongside* the name it accompanies,
+> never instead of it. The parse layer resolves
 > **id → name → merged catalog**, so a renamed catalog row is picked up without any
 > record being rewritten, while D-20's "the user's entry wins on a name collision"
 > still applies. An entry with no id, or an id that resolves to nothing, falls back to
-> the name join exactly as before. **Places, people, categories and run types remain
-> name-joined** — their cascades already work.
+> the name join exactly as before, and §4's "a deleted category degrades to
+> `--cat-none`" holds by construction. **Places and people remain name-joined** —
+> they are per-user, so D-5's cascade already does the whole job. An id is only ever
+> written when a database row exists behind it (D-43).
 
 The brief reports that every `exercise_title`, `people` entry, and `gym`/`location`
 currently resolves against its lookup table (the one empty-string gym aside). **Do not

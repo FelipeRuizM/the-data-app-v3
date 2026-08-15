@@ -8,6 +8,7 @@ import {
   emptySet,
   emptyWorkoutDraft,
   type WorkoutDraft,
+  type BuildResult,
 } from './workoutDraft'
 import type { RawWorkout } from '../types'
 
@@ -357,7 +358,9 @@ describe('buildRawWorkout — exercise_id is written ALONGSIDE the title', () =>
   }
 
   it('writes both fields for a catalogued exercise', () => {
-    const built = buildRawWorkout(draftWith('Bench Press (Barbell)'), idByName)
+    const built = buildRawWorkout(draftWith('Bench Press (Barbell)'), {
+      exercises: idByName,
+    })
     expect(built.ok).toBe(true)
     const entry = (built as { ok: true; raw: RawWorkout }).raw.exercises as Array<{
       exercise_id?: string
@@ -370,7 +373,7 @@ describe('buildRawWorkout — exercise_id is written ALONGSIDE the title', () =>
   })
 
   it('omits the id for an exercise that is not in the catalog yet', () => {
-    const built = buildRawWorkout(draftWith('Something New'), idByName)
+    const built = buildRawWorkout(draftWith('Something New'), { exercises: idByName })
     const entry = (built as { ok: true; raw: RawWorkout }).raw.exercises as Array<{
       exercise_id?: string
       exercise_title?: string
@@ -385,5 +388,46 @@ describe('buildRawWorkout — exercise_id is written ALONGSIDE the title', () =>
       exercise_id?: string
     }>
     expect(entry[0]!.exercise_id).toBeUndefined()
+  })
+})
+
+describe('buildRawWorkout — category_id is written ALONGSIDE the name (D-42)', () => {
+  const categories = new Map([['Push', 'cat-push']])
+
+  function pushDraft(category: string) {
+    const draft = emptyWorkoutDraft(new Date(2026, 3, 8, 16, 50))
+    draft.title = 'Session'
+    draft.place = 'Gym A'
+    draft.category = category
+    draft.endLocal = draft.endLocal.replace('16:50', '17:50')
+    draft.exercises = [
+      {
+        exercise: { exerciseTitle: 'Squat', notes: '' },
+        sets: [{ setType: 'normal', reps: '5', weight: '100', durationSeconds: '' }],
+      },
+    ]
+    return draft
+  }
+
+  const raw = (r: BuildResult) => (r as { ok: true; raw: RawWorkout }).raw
+
+  it('writes both fields for a known category', () => {
+    const built = buildRawWorkout(pushDraft('Push'), { categories })
+    expect(raw(built).category).toBe('Push')
+    expect(raw(built).category_id).toBe('cat-push')
+  })
+
+  it('omits the id for a category not in /config', () => {
+    const built = buildRawWorkout(pushDraft('Improvised'), { categories })
+    expect(raw(built).category).toBe('Improvised')
+    expect(raw(built).category_id).toBeUndefined()
+  })
+
+  it('writes neither field for an uncategorized workout', () => {
+    const built = buildRawWorkout(pushDraft(''), { categories })
+    // 14 of the original 81 records have no category at all, and that stays a
+    // legal shape — never an empty string, never a placeholder id (§3.1).
+    expect(raw(built).category).toBeUndefined()
+    expect(raw(built).category_id).toBeUndefined()
   })
 })

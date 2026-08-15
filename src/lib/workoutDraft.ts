@@ -148,17 +148,36 @@ export type BuildResult =
  * a genuinely new exercise typed into the form — simply gets no id, and the
  * record falls back to the name join exactly as every record did before.
  */
+/** Name → id for a /config vocabulary — workout categories or run types (D-42). */
+export function configIdsByName(
+  rows: ReadonlyArray<{ id: string; name: string }>,
+): Map<string, string> {
+  return new Map(rows.map((r) => [r.name, r.id]))
+}
+
 export function exerciseIdsByName(
   catalog: readonly CatalogExercise[],
 ): Map<string, string> {
   return new Map(catalog.map((e) => [e.name, e.id]))
 }
 
+/**
+ * Name → id maps for the vocabularies a workout references (D-40, D-42).
+ *
+ * An object rather than more positional parameters: two id maps today, and a
+ * third would otherwise mean a fourth argument nobody can read at the call site.
+ */
+export type WorkoutRefs = {
+  exercises?: ReadonlyMap<string, string>
+  categories?: ReadonlyMap<string, string>
+}
+
 export function buildRawWorkout(
   draft: WorkoutDraft,
   /** Omit to write name-only records, which is what every caller did before. */
-  idByName: ReadonlyMap<string, string> = new Map(),
+  refs: WorkoutRefs = {},
 ): BuildResult {
+  const idByName = refs.exercises ?? new Map()
   const errors: DraftValidationError[] = []
 
   const title = draft.title.trim()
@@ -205,7 +224,14 @@ export function buildRawWorkout(
   }
 
   const category = draft.category.trim()
-  if (category !== '') raw.category = category
+  if (category !== '') {
+    raw.category = category
+    // ADDITIVE: the id sits on top of the name, never instead of it (D-42), so
+    // a record stays readable to anything that knows only about names and the
+    // change is undone by deleting one field.
+    const categoryId = refs.categories?.get(category)
+    if (categoryId !== undefined) raw.category_id = categoryId
+  }
 
   // Zero is the "not recorded" sentinel (§3.2/§3.9) — typing 0 must not write
   // a literal 0 that a future read would immediately re-interpret as absent.

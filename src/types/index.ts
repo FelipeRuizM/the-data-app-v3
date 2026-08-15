@@ -38,6 +38,9 @@ export type RawExerciseEntry = {
 }
 
 export type RawWorkout = {
+  /** ADDITIVE, like `exercise_id` — the /config row this record's category
+   *  points at, written alongside `category` and never instead of it (D-42). */
+  category_id?: string
   title?: string
   description?: string
   start_time?: string
@@ -50,6 +53,8 @@ export type RawWorkout = {
 }
 
 export type RawRun = {
+  /** ADDITIVE — the /config runTypes row, alongside `type` (D-42). */
+  type_id?: string
   title?: string
   description?: string
   start_time?: string
@@ -141,7 +146,10 @@ export type Workout = {
   endTime: Date | null
   /** Null when unrecorded, empty, or unresolvable — never an error state. */
   place: string | null
+  /** The category's CURRENT name when `categoryId` resolves; the stored one otherwise. */
   category: string | null
+  /** Null on a record written before the id migration, or an unresolvable id. */
+  categoryId: string | null
   /** `0` in the database means "not recorded" and arrives here as null. */
   avgHeartRate: number | null
   people: string[]
@@ -155,7 +163,10 @@ export type Run = {
   title: string
   description: string
   startTime: Date
+  /** The run type's CURRENT name when `typeId` resolves; the stored one otherwise. */
   type: string | null
+  /** Null on a record written before the id migration, or an unresolvable id. */
+  typeId: string | null
   place: string | null
   distanceKm: number | null
   durationSeconds: number | null

@@ -650,3 +650,65 @@ every figure in §3 was verified against.
 resolved.** A migration writing to the wrong subtree is unrecoverable. Both scripts
 read `VITE_OWNER_UID`, so they will target `oaM2fM7K52ak6EzqDNzDzXSRWXr1` — which is
 correct only if that is where the data now lives.
+
+## D-42 · Categories and run types move to ids too — additively, same shape as D-40 ✅
+**Why these two and not places or people.** The question is never "is this name
+repeated?" but "does a rename here have an unmet need?":
+
+| | Fields | Scope | Cascade today | Gain |
+|---|---|---|---|---|
+| Categories | 67 | **global** | own profile only (D-32) | **cross-profile rename** |
+| Run types | 12 | **global** | own profile only (D-32) | same |
+| Places | 92 | per-user | complete and correct | none |
+| People | 46 records | per-user | complete and correct | none |
+
+Places and people are per-user, so the account owning the vocabulary owns every record
+referencing it — D-5's cascade already does the whole job, and migrating them would
+replace working code with different working code. Categories and run types are global
+vocabulary that an admin can only ever *half*-rename, because the rules forbid writing
+another profile's subtree. An id makes the rename one write in `/config` that every
+id-carrying record follows, in every profile, with nobody's subtree touched.
+
+**`category_id` and `type_id` are additive**, exactly as D-40: written alongside
+`category` / `type`, never instead. Records stay self-describing, an unresolvable id
+falls back to the stored name, and §4's "a deleted category degrades to `--cat-none`"
+still holds by construction.
+
+**Not done: deleting the name fields, or removing the D-32 cascade.** Historical
+records in an unmigrated profile still resolve by name, so the cascade still earns its
+place. Retiring it is a separate decision for after the migration has actually run.
+
+## D-43 · An id is only ever written when a database row exists behind it ✅
+**Found by simulating the migration rather than running it.** `mergeConfig` returns
+`CONFIG_DEFAULTS` when `/config` is empty, and those defaults carry ids (`'push'`,
+`'legs'`) so the admin panel can key on them. But they exist only in `config.ts` —
+stamping one into a record would write a reference to something that has never existed
+in the database.
+
+**Decision:** `AppConfig` carries `fromDatabase: { workoutCategories, runTypes }`, and
+the forms build an id map only for a vocabulary that came from the database. The
+migration script refuses on the same grounds and says why.
+
+The alternative — stamp the default id and let it dangle once real rows appear — would
+have *worked*, because a dangling id falls back to the name. It was rejected anyway:
+teaching the write path that it may reference something nonexistent is the kind of
+habit that is correct until precisely once it isn't.
+
+## D-44 · Migration scripts must be safe to run twice ✅
+**A defect in `add-exercise-ids.mjs` as first shipped.** It skipped any entry that
+already had an `exercise_id`:
+
+```js
+if (entry?.exercise_id) { alreadyStamped++; continue }
+```
+
+Seeding `/config/exercises` and clearing the owner's own tier deletes the rows an
+earlier run pointed at. A second pass would then report "nothing to do" while 385
+entries referenced rows that no longer existed — recoverable only by hand.
+
+**Rule, applied to both scripts:** skip an entry only when its existing id still
+resolves to the name stored beside it. Anything else is re-stamped. "Has an id" is not
+"has a correct id".
+
+**Consequent ordering, which the exercise script's docs now state:** seed `/config`
+and decide `--clear-own-tier` FIRST, stamp ids SECOND.

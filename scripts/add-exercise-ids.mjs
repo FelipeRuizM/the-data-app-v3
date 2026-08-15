@@ -111,19 +111,29 @@ for (const [id, entry] of Object.entries(ownCatalog)) {
   if (name) idByName.set(name, id)
 }
 
+const nameById = new Map([...idByName].map(([name, id]) => [id, name]))
+
 const updates = {}
 let entriesTotal = 0
 let alreadyStamped = 0
-let unresolved = new Map()
+let restamped = 0
+const unresolved = new Map()
 
 for (const [wid, workout] of Object.entries(workouts)) {
   for (const [key, entry] of rawEntries(workout.exercises)) {
     entriesTotal++
     const title = (entry?.exercise_title ?? '').trim()
-    if (entry?.exercise_id) {
+    // "Has an id" is NOT the same as "has a RESOLVABLE id". Seeding /config and
+    // clearing the owner's own tier deletes the rows an earlier run stamped, and
+    // a skip-if-present check would then report "nothing to do" while 385
+    // entries point at rows that no longer exist. Re-stamp a stale id; skip only
+    // one that still resolves to the title stored beside it.
+    const existing = entry?.exercise_id
+    if (existing && nameById.get(existing) === title) {
       alreadyStamped++
       continue
     }
+    if (existing) restamped++
     const id = idByName.get(title)
     if (!id) {
       unresolved.set(title, (unresolved.get(title) ?? 0) + 1)
@@ -136,7 +146,8 @@ for (const [wid, workout] of Object.entries(workouts)) {
 console.log(`\n  catalog          ${idByName.size} distinct names`)
 console.log(`  workouts         ${Object.keys(workouts).length}`)
 console.log(`  exercise entries ${entriesTotal}`)
-console.log(`  already stamped  ${alreadyStamped}`)
+console.log(`  already correct  ${alreadyStamped}`)
+console.log(`  stale, re-stamped ${restamped}`)
 console.log(`  would stamp      ${Object.keys(updates).length}`)
 
 if (unresolved.size > 0) {
@@ -150,7 +161,6 @@ if (unresolved.size > 0) {
 /* Every write must be a no-op in meaning: the id must resolve back to the
    name already stored, or the migration is changing history rather than
    annotating it. */
-const nameById = new Map([...idByName].map(([name, id]) => [id, name]))
 const problems = []
 for (const [path, id] of Object.entries(updates)) {
   const [wid, , key] = path

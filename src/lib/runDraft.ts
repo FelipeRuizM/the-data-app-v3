@@ -154,7 +154,11 @@ function optionalNumber(value: string): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null
 }
 
-export function buildRawRun(draft: RunDraft): BuildRunResult {
+export function buildRawRun(
+  draft: RunDraft,
+  /** Name → /config runTypes id. Omit to write a name-only record (D-42). */
+  typeIdsByName: ReadonlyMap<string, string> = new Map(),
+): BuildRunResult {
   const errors: DraftValidationError[] = []
 
   const title = draft.title.trim()
@@ -203,6 +207,12 @@ export function buildRawRun(draft: RunDraft): BuildRunResult {
     duration_seconds: durationSeconds,
     pace: paceSecPerKm === null ? '' : formatPaceForStorage(paceSecPerKm),
   }
+
+  // ADDITIVE: the id goes alongside the stored type name, never instead of it
+  // (D-42). A renamed run type then reads correctly without this record being
+  // rewritten, and deleting the field undoes the whole change.
+  const typeId = typeIdsByName.get(raw.type ?? '')
+  if (typeId !== undefined) raw.type_id = typeId
 
   // Sentinel fields: omitted when blank AND when a literal 0 is typed, since a
   // stored 0 means "not recorded" and would read back as null regardless.

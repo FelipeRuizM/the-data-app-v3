@@ -2,7 +2,9 @@ import { get, ref } from 'firebase/database'
 import { db } from './firebase'
 import { CONFIG_DEFAULTS, type AppConfig, type ConfigCategory } from './config'
 import {
+  applyCategoryIds,
   applyExerciseIds,
+  applyRunTypeIds,
   mergeExerciseCatalog,
   normalizePeople,
   normalizePlaces,
@@ -79,12 +81,19 @@ export function mergeConfig(raw: unknown): AppConfig {
     return list.length > 0 ? list : fallback
   }
 
+  const hasRows = (value: unknown) => Object.keys(objectOf<unknown>(value)).length > 0
+
   return {
     workoutCategories: categories(
       node['workoutCategories'],
       CONFIG_DEFAULTS.workoutCategories,
     ),
     runTypes: categories(node['runTypes'], CONFIG_DEFAULTS.runTypes),
+    // Only a database-backed vocabulary has ids a record may point at (D-42).
+    fromDatabase: {
+      workoutCategories: hasRows(node['workoutCategories']),
+      runTypes: hasRows(node['runTypes']),
+    },
     muscleGroups: strings(node['muscleGroups'], CONFIG_DEFAULTS.muscleGroups),
     repBasedExercises: strings(
       node['repBasedExercises'],
@@ -133,8 +142,11 @@ export function buildProfile(rawProfile: RawProfile, rawConfig: unknown): LoadRe
       // Once the catalog exists, any entry carrying an exercise_id adopts that
       // row's current name — so a renamed exercise reads correctly everywhere
       // without a single record having been rewritten (D-40).
-      workouts: applyExerciseIds(workouts, exercises),
-      runs,
+      workouts: applyCategoryIds(
+        applyExerciseIds(workouts, exercises),
+        config.workoutCategories,
+      ),
+      runs: applyRunTypeIds(runs, config.runTypes),
       exercises,
       places: normalizePlaces(objectOf<RawNamed>(rawProfile.gyms)),
       people: normalizePeople(objectOf<RawNamed>(rawProfile.people)),

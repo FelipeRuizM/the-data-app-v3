@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import fixture from '../test/fixture.json'
+import { mergeConfig } from './db'
 import type {
   RawRun,
   RawWorkout,
@@ -20,7 +21,9 @@ import {
   weightState,
   workoutVolumeKg,
   zeroIsMissing,
+  applyCategoryIds,
   applyExerciseIds,
+  applyRunTypeIds,
 } from './normalize'
 
 const workouts = Object.entries(fixture.workouts as Record<string, RawWorkout>)
@@ -430,6 +433,7 @@ describe('applyExerciseIds', () => {
       startTime: new Date(2026, 3, 8, 16, 50),
       endTime: null,
       place: null,
+      categoryId: null,
       category: null,
       avgHeartRate: null,
       people: [],
@@ -510,5 +514,118 @@ describe('normalizeWorkout — exercise_id is additive', () => {
       exercises: [{ exercise_title: 'Squat', sets: [] }],
     })
     expect(w!.exercises[0]!.exerciseId).toBeNull()
+  })
+})
+
+/* ── category and run-type ids (D-42) ───────────────────────────────────── */
+
+describe('applyCategoryIds / applyRunTypeIds', () => {
+  const categories = [
+    { id: 'c1', name: 'Press' },
+    { id: 'c2', name: 'Pull' },
+  ]
+  const runTypes = [{ id: 't1', name: 'Easy' }]
+
+  const w = (over: { category: string | null; categoryId: string | null }) => ({
+    id: 'w1',
+    ...over,
+  })
+  const r = (over: { type: string | null; typeId: string | null }) => ({
+    id: 'r1',
+    ...over,
+  })
+
+  it('adopts the config row’s CURRENT name — the point of the id', () => {
+    // The record says "Push"; the /config row it points at is now "Press".
+    const [out] = applyCategoryIds(
+      [w({ category: 'Push', categoryId: 'c1' })],
+      categories,
+    )
+    expect(out!.category).toBe('Press')
+  })
+
+  it('does the same for a run type', () => {
+    const [out] = applyRunTypeIds([r({ type: 'Light', typeId: 't1' })], runTypes)
+    expect(out!.type).toBe('Easy')
+  })
+
+  it('leaves a record with no id alone', () => {
+    const [out] = applyCategoryIds(
+      [w({ category: 'Push', categoryId: null })],
+      categories,
+    )
+    expect(out!.category).toBe('Push')
+  })
+
+  it('keeps the stored name when the id resolves to nothing', () => {
+    // A deleted category must degrade to the neutral treatment, not vanish (§4).
+    const [out] = applyCategoryIds(
+      [w({ category: 'Retired Split', categoryId: 'deleted' })],
+      categories,
+    )
+    expect(out!.category).toBe('Retired Split')
+  })
+
+  it('leaves an uncategorized record uncategorized', () => {
+    const [out] = applyCategoryIds(
+      [w({ category: null, categoryId: null })],
+      categories,
+    )
+    expect(out!.category).toBeNull()
+  })
+
+  it('does nothing when there is no vocabulary to resolve against', () => {
+    const input = [w({ category: 'Push', categoryId: 'c1' })]
+    expect(applyCategoryIds(input, [])).toBe(input)
+  })
+})
+
+describe('normalizeWorkout / normalizeRun — the ids are additive', () => {
+  it('carries category_id through without dropping the name', () => {
+    const out = normalizeWorkout('w1', {
+      start_time: '8 Apr 2026, 16:50',
+      category: 'Push',
+      category_id: 'c1',
+    })
+    expect(out!.categoryId).toBe('c1')
+    expect(out!.category).toBe('Push')
+  })
+
+  it('carries type_id through without dropping the name', () => {
+    const out = normalizeRun('r1', {
+      start_time: '8 Apr 2026, 07:00',
+      type: 'Light',
+      type_id: 't1',
+    })
+    expect(out!.typeId).toBe('t1')
+    expect(out!.type).toBe('Light')
+  })
+
+  it('is null on every record written before the migration', () => {
+    const out = normalizeWorkout('w1', {
+      start_time: '8 Apr 2026, 16:50',
+      category: 'Push',
+    })
+    expect(out!.categoryId).toBeNull()
+  })
+})
+
+describe('config provenance (D-42)', () => {
+  it('reports defaults as NOT database-backed, so no id is ever stamped from them', () => {
+    const config = mergeConfig({})
+    expect(config.fromDatabase.workoutCategories).toBe(false)
+    expect(config.fromDatabase.runTypes).toBe(false)
+    // The defaults still carry ids — the UI keys on them — which is exactly why
+    // provenance has to be tracked separately.
+    expect(config.workoutCategories.length).toBeGreaterThan(0)
+  })
+
+  it('reports stored vocabularies as database-backed', () => {
+    const config = mergeConfig({
+      workoutCategories: { abc: { name: 'Press', colorToken: 'cat-1', order: 0 } },
+    })
+    expect(config.fromDatabase.workoutCategories).toBe(true)
+    // Untouched nodes stay on defaults, and stay unstampable.
+    expect(config.fromDatabase.runTypes).toBe(false)
   })
 })

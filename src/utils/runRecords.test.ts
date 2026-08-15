@@ -10,6 +10,7 @@ function run(over: Partial<Run>): Run {
     title: 'Run',
     description: '',
     startTime: new Date(2026, 0, 1, 7, 0),
+    typeId: null,
     type: null,
     place: null,
     distanceKm: 5,

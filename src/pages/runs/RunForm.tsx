@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { StateBlock } from '../../components/StateBlock'
 import { useAuth } from '../../auth/hooks'
 import { useProfile } from '../../data/useProfile'
+import { configIdsByName } from '../../lib/workoutDraft'
 import { deleteRun, namesNotIn, saveRun } from '../../lib/writes'
 import {
   buildRawRun,
@@ -47,6 +48,14 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
       setDraft(emptyRunDraft(ready.profile.settings))
     }
   }
+
+  /** Name → /config runTypes id (D-42). */
+  const typeIds = useMemo(
+    // Empty unless /config actually holds the run types (D-42).
+    () =>
+      configIdsByName(ready?.config.fromDatabase.runTypes ? ready.config.runTypes : []),
+    [ready],
+  )
 
   const placeNames = useMemo(
     () => (ready ? ready.profile.places.map((p) => p.name) : []),
@@ -120,7 +129,8 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
     e.preventDefault()
     if (!profileUid || !canWrite) return
 
-    const built = buildRawRun(draft)
+    // Pass the run-type vocabulary so the record carries type_id (D-42).
+    const built = buildRawRun(draft, typeIds)
     if (!built.ok) {
       setErrors(built.errors)
       return

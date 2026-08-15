@@ -9,6 +9,7 @@ import { useProfile } from '../../data/useProfile'
 import { deleteWorkout, namesNotIn, saveWorkout } from '../../lib/writes'
 import {
   buildRawWorkout,
+  configIdsByName,
   exerciseIdsByName,
   draftFromWorkout,
   emptyExerciseGroup,
@@ -60,9 +61,20 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
     () => (ready ? ready.profile.exercises.map((e) => e.name) : []),
     [ready],
   )
-  /** Name → catalog id, so a saved record carries exercise_id (D-40). */
+  /** Name → id for each vocabulary a workout references (D-40, D-42). */
   const exerciseIds = useMemo(
     () => exerciseIdsByName(ready ? ready.profile.exercises : []),
+    [ready],
+  )
+  const categoryIds = useMemo(
+    // Empty unless /config actually holds the categories: the code-level
+    // defaults have ids, but no rows behind them (D-42).
+    () =>
+      configIdsByName(
+        ready?.config.fromDatabase.workoutCategories
+          ? ready.config.workoutCategories
+          : [],
+      ),
     [ready],
   )
   const placeNames = useMemo(
@@ -143,7 +155,10 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
     // Pass the catalog so new and edited records carry exercise_id (D-40). An
     // exercise typed in that isn't in the catalog yet gets no id and falls back
     // to the name join, exactly as before.
-    const built = buildRawWorkout(draft, exerciseIds)
+    const built = buildRawWorkout(draft, {
+      exercises: exerciseIds,
+      categories: categoryIds,
+    })
     if (!built.ok) {
       setErrors(built.errors)
       return

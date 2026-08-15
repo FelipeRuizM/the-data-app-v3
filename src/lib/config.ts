@@ -23,6 +23,16 @@ export type ConfigCategory = {
 export type AppConfig = {
   workoutCategories: ConfigCategory[]
   runTypes: ConfigCategory[]
+  /**
+   * Which vocabularies came from the DATABASE rather than from the defaults
+   * below (D-42).
+   *
+   * It matters at exactly one point: a record may only carry a `category_id`
+   * that has a row behind it. The defaults have ids so the UI can key on them,
+   * but those ids exist only in this file — stamping one into a record would
+   * write a reference to something that does not exist.
+   */
+  fromDatabase: { workoutCategories: boolean; runTypes: boolean }
   muscleGroups: string[]
   repBasedExercises: string[]
   shoes: string[]
@@ -71,6 +81,7 @@ const DEFAULT_REP_BASED_EXERCISES = [
 export const CONFIG_DEFAULTS: AppConfig = {
   workoutCategories: DEFAULT_WORKOUT_CATEGORIES,
   runTypes: DEFAULT_RUN_TYPES,
+  fromDatabase: { workoutCategories: false, runTypes: false },
   muscleGroups: DEFAULT_MUSCLE_GROUPS,
   repBasedExercises: DEFAULT_REP_BASED_EXERCISES,
   shoes: ['Adidas Ultraboost 21'],

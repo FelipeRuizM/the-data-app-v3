@@ -37,6 +37,7 @@ function workout(
     startTime,
     endTime: null,
     place: null,
+    categoryId: null,
     category: null,
     avgHeartRate: null,
     people: [],

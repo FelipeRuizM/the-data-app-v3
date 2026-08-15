@@ -24,6 +24,7 @@ function workout(over: Partial<Workout>): Workout {
     startTime: new Date(2026, 7, 14, 17, 0),
     endTime: null,
     place: null,
+    categoryId: null,
     category: null,
     avgHeartRate: null,
     people: [],
@@ -72,6 +73,7 @@ describe('withinRange — inclusive by DAY, not by instant', () => {
 describe('filterWorkouts', () => {
   const push = workout({
     id: 'a',
+    categoryId: null,
     category: 'Push',
     place: 'Place A',
     people: ['Person A'],
@@ -147,8 +149,18 @@ describe('filterWorkouts', () => {
 describe('workoutFilterOptions', () => {
   it('derives options from the records present, sorted', () => {
     const list = [
-      workout({ category: 'Pull', place: 'Place B', people: ['Person B'] }),
-      workout({ category: 'Push', place: 'Place A', people: ['Person A', 'Person B'] }),
+      workout({
+        categoryId: null,
+        category: 'Pull',
+        place: 'Place B',
+        people: ['Person B'],
+      }),
+      workout({
+        categoryId: null,
+        category: 'Push',
+        place: 'Place A',
+        people: ['Person A', 'Person B'],
+      }),
     ]
     const o = workoutFilterOptions(list)
     expect(o.categories).toEqual(['Pull', 'Push'])
@@ -158,18 +170,21 @@ describe('workoutFilterOptions', () => {
   })
 
   it('flags the uncategorized bucket only when one exists', () => {
-    expect(workoutFilterOptions([workout({ category: null })]).hasUncategorized).toBe(
-      true,
-    )
-    expect(workoutFilterOptions([workout({ category: 'Push' })]).hasUncategorized).toBe(
-      false,
-    )
+    expect(
+      workoutFilterOptions([workout({ categoryId: null, category: null })])
+        .hasUncategorized,
+    ).toBe(true)
+    expect(
+      workoutFilterOptions([workout({ categoryId: null, category: 'Push' })])
+        .hasUncategorized,
+    ).toBe(false)
   })
 
   it('keeps a category that /config no longer defines', () => {
     // A deleted category still exists on old records and must stay filterable.
     expect(
-      workoutFilterOptions([workout({ category: 'Retired Split' })]).categories,
+      workoutFilterOptions([workout({ categoryId: null, category: 'Retired Split' })])
+        .categories,
     ).toEqual(['Retired Split'])
   })
 
@@ -212,6 +227,7 @@ function run(over: Partial<Run>): Run {
     title: 'Run',
     description: '',
     startTime: new Date(2026, 7, 14, 7, 0),
+    typeId: null,
     type: null,
     place: null,
     distanceKm: 5,
