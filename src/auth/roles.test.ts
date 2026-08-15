@@ -19,7 +19,7 @@ describe('resolveRole', () => {
   })
 
   it('refuses a signed-in account that has no /roles entry', () => {
-    // The app is invite-only. A Google sign-in alone must not grant a profile.
+    // The app is invite-only. Valid credentials alone must not grant a profile.
     expect(resolveRole(OTHER, OWNER, null)).toBe('none')
     expect(resolveRole(OTHER, OWNER, {})).toBe('none')
   })

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { Button, Label, Rule } from '../components/ui'
+import { Button, Label } from '../components/ui'
 import { useAuth } from '../auth/hooks'
 
 /**
@@ -15,8 +15,7 @@ import { useAuth } from '../auth/hooks'
  * someone back to a sign-in button they just used reads as a broken site.
  */
 export function Login() {
-  const { status, user, role, error, signInWithGoogle, signInAsGuest, signOut } =
-    useAuth()
+  const { status, user, role, error, signIn, signOut } = useAuth()
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,14 +34,14 @@ export function Login() {
     return <Navigate to={from && from !== '/login' ? from : '/'} replace />
   }
 
-  const onGuestSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setBusy(true)
-    await signInAsGuest(email.trim(), password)
+    await signIn(email.trim(), password)
     setBusy(false)
   }
 
-  // Signed in with a real Google account, but nobody invited them.
+  // Credentials were valid, but nobody provisioned this account in /roles.
   if (user) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-5 px-5">
@@ -84,31 +83,17 @@ export function Login() {
         </p>
       ) : null}
 
-      <Button variant="primary" onClick={() => void signInWithGoogle()}>
-        Continue with Google
-      </Button>
-
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <Rule />
-        </div>
-        <Label>or guest access</Label>
-        <div className="flex-1">
-          <Rule />
-        </div>
-      </div>
-
-      <form className="flex flex-col gap-3" onSubmit={(e) => void onGuestSubmit(e)}>
+      <form className="flex flex-col gap-4" onSubmit={(e) => void onSubmit(e)}>
         <label className="flex flex-col gap-1">
           <Label>Email</Label>
           <input
             type="email"
             autoComplete="username"
             required
+            autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="rounded-sm border border-rule bg-transparent px-3 py-2 font-mono text-sm text-ink-0 placeholder:text-ink-3"
-            placeholder="guest@…"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -123,14 +108,15 @@ export function Login() {
           />
         </label>
         <div>
-          <Button type="submit" disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in as guest'}
+          <Button type="submit" variant="primary" disabled={busy}>
+            {busy ? 'Signing in…' : 'Sign in'}
           </Button>
         </div>
       </form>
 
       <p className="m-0 text-xs text-ink-3">
-        Guest access is read-only. Every write control is hidden, and the database rules
+        Accounts are created by the owner. If you were given guest credentials, that
+        access is read-only — every write control is hidden, and the database rules
         reject writes regardless.
       </p>
     </main>

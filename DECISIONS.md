@@ -230,6 +230,40 @@ and drops out of averages. Never throws, never shows a negative.
 
 ---
 
+# 2026-08-14 — Email/password only
+
+## D-27 · Email/password is the only provider — **supersedes part of D-3**
+**Decision:** drop the Google provider entirely. **Every role — admin, user and
+guest — signs in with email and password.**
+
+D-3 specified "Google *and* email/password", with Google as the normal path and
+email/password existing only so a shared guest credential was possible. That split
+is now gone. What D-3 got right is unchanged: four roles, invite-only, a login wall,
+and guest as a read-only role.
+
+**Why this is simpler, not just different:**
+- One code path, one form, one set of error messages. The login page was a Google
+  button with a demoted secondary form; it is now a single form.
+- Invite-only is more honest. With Google, anyone on earth could complete a sign-in
+  and only *then* be told they aren't provisioned. Now an account has to be created
+  by the owner in the Firebase console before sign-in can succeed at all — the
+  `/roles` check becomes a second gate rather than the only one.
+- No popup flow, so no popup-blocked / popup-closed failure modes to handle.
+
+**Consequences:**
+- `signInWithGoogle` and `signInAsGuest` are replaced by a single `signIn(email,
+  password)`. `GoogleAuthProvider` and `signInWithPopup` are gone.
+- The Google provider can be disabled in the Firebase console.
+- Sign-in errors deliberately collapse `invalid-credential`, `wrong-password`,
+  `user-not-found` and `invalid-email` into **one** message. Distinguishing "no such
+  account" from "wrong password" would tell an attacker which emails are registered.
+- **This is very likely why the owner UID changed** from `3WonULS2gRZwtJ6OAh7YpM1Sn9v1`
+  to `oaM2fM7K52ak6EzqDNzDzXSRWXr1`: the former was the Google identity, the latter is
+  the email/password account. The data migration in NQ/D-20 notes is what reconciles
+  them.
+
+---
+
 # 2026-08-14 — Phase 1 tooling deviations
 
 Three places where what shipped differs from what `PLAN.md` said. Each is logged

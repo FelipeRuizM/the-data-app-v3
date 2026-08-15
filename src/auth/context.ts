@@ -16,8 +16,8 @@ export type AuthState = {
   isAdmin: boolean
   canWrite: boolean
   error: string | null
-  signInWithGoogle: () => Promise<void>
-  signInAsGuest: (email: string, password: string) => Promise<void>
+  /** Email/password is the only provider — every role signs in this way (D-27). */
+  signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
 

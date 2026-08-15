@@ -29,9 +29,10 @@ D-3 replaced the auth model wholesale, and that reshapes the build:
 
 - The app is now **multi-tenant with a login wall**, not one owner's data with public
   read. Every route except `#/login` requires authentication.
-- Auth grew from "Google sign-in plus an owner check" into **two providers, four
-  roles, a shared guest account, and a `/roles` node**. It is now its own phase, and
-  it has to land before any read path, because reads are scoped to a profile.
+- Auth grew from "Google sign-in plus an owner check" into **four roles, a shared
+  guest account, and a `/roles` node**. It is now its own phase, and it has to land
+  before any read path, because reads are scoped to a profile. Per D-27 the provider
+  is **email/password only** — Google is not used at all.
 - Settings split into **two panels backed by two locations** — per-account
   `/users/{uid}/settings` and global `/config` — so one Settings phase became two.
 - The monthly report is **one cross-category page** (D-8), not one per category.
@@ -64,7 +65,7 @@ as broken data logic.
 ## Phase 2 — Auth, roles, and the login wall  ·  *substantially bigger than before*
 
 - [ ] Firebase init from `import.meta.env`, modular v10 imports
-- [ ] **Enable both providers**: Google, and email/password for the guest credential
+- [x] **Email/password provider only** (D-27) — no Google, no registration flow
 - [ ] `#/login` — the only route reachable unauthenticated; everything else redirects
 - [ ] `useRole()` → `admin | user | guest | none`; `useCanWrite(profileUid)`;
       `useIsAdmin()`. **`useIsOwner()` must not exist** (`CLAUDE.md` §2)

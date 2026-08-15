@@ -21,8 +21,6 @@ vi.mock('firebase/auth', () => ({
     cb(currentUser)
     return () => {}
   },
-  GoogleAuthProvider: class {},
-  signInWithPopup: vi.fn(),
   signInWithEmailAndPassword: vi.fn(),
   signOut: vi.fn(),
 }))

@@ -23,10 +23,11 @@ const KNOWN_ROLES = ['admin', 'user', 'guest'] as const
 /**
  * Resolve a signed-in UID to a role.
  *
- * The app is **invite-only** (D-3): signing in with Google is not enough. An
- * account with no `/roles` entry resolves to `none` and sees the login screen
- * saying it isn't provisioned — otherwise any stranger with a Google account
- * would silently get a writable profile.
+ * The app is **invite-only** (D-3): valid credentials are not enough. An account
+ * with no `/roles` entry resolves to `none` and sees the login screen saying it
+ * isn't provisioned — otherwise anyone the owner had ever created an account for,
+ * or any future provider misconfiguration, would silently yield a writable
+ * profile.
  *
  * The owner UID is a deliberate bootstrap exception: `/roles` is unwritable from
  * the client by design, so without this the owner would be locked out of their

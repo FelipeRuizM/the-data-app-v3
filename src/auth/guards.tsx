@@ -16,7 +16,7 @@ function Resolving() {
  * The login wall. Every route except #/login sits behind this (D-3).
  *
  * `none` covers both signed-out visitors and signed-in accounts that aren't
- * provisioned — the app is invite-only, so a Google sign-in alone is not access.
+ * provisioned — the app is invite-only, so valid credentials alone are not access.
  */
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { status, role } = useAuth()

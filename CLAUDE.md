@@ -118,11 +118,18 @@ visitor except the login screen.
 | **guest** | one shared account | **read-only**, pointed at the owner's profile |
 | **none** | not signed in | the login screen, and nothing else |
 
-- **Providers: Google *and* email/password.** Google alone cannot express a shared
-  guest login, so the email/password provider must be enabled in the Firebase console.
-  Google is the normal path; the guest credential is email/password.
-- **Invite-only. There is no public sign-up.** Accounts are provisioned by the owner.
-  Do not build a registration flow.
+- **Provider: email/password ONLY** (D-27, which supersedes D-3 on this point).
+  **There is no Google provider** — every role signs in the same way, through
+  `signIn(email, password)`. Do not reintroduce `signInWithPopup` or
+  `GoogleAuthProvider`.
+- **Invite-only. There is no public sign-up.** Accounts are created by the owner in
+  the Firebase console. **Do not build a registration flow.** With email/password
+  this is a genuine gate: sign-in cannot succeed at all for an account the owner
+  never created, and `/roles` is then a second gate on top.
+- **Sign-in errors collapse to one message** for `invalid-credential`,
+  `wrong-password`, `user-not-found` and `invalid-email`. Distinguishing "no such
+  account" from "wrong password" would tell an attacker which emails are registered.
+  Keep them collapsed.
 - **Guest reads the owner's profile.** Accepted consequence: anyone holding the guest
   credential can read real workout titles, training-partner names and places.
 - Every mutating control — add, edit, delete, settings, calculator saves, reorder —

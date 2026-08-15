@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
-  GoogleAuthProvider,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  signInWithPopup,
   signOut as fbSignOut,
   type User,
 } from 'firebase/auth'
@@ -63,16 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signInWithGoogle = useCallback(async () => {
-    setError(null)
-    try {
-      await signInWithPopup(auth(), new GoogleAuthProvider())
-    } catch (e) {
-      setError(messageFor(e))
-    }
-  }, [])
-
-  const signInAsGuest = useCallback(async (email: string, password: string) => {
+  /**
+   * The only way in. Email/password for every role — admin, user and guest
+   * alike (D-27). Accounts are created by the owner in the Firebase console;
+   * there is no registration path, and there is no Google provider.
+   */
+  const signIn = useCallback(async (email: string, password: string) => {
     setError(null)
     try {
       await signInWithEmailAndPassword(auth(), email, password)
@@ -98,11 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin: isAdminFn(role),
       canWrite: canWriteFn(uid, role, profileUid),
       error,
-      signInWithGoogle,
-      signInAsGuest,
+      signIn,
       signOut,
     }
-  }, [status, user, entry, error, signInWithGoogle, signInAsGuest, signOut])
+  }, [status, user, entry, error, signIn, signOut])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
@@ -111,19 +104,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 function messageFor(e: unknown): string {
   const code = typeof e === 'object' && e && 'code' in e ? String(e.code) : ''
   switch (code) {
-    case 'auth/popup-closed-by-user':
-    case 'auth/cancelled-popup-request':
-      return 'Sign-in was cancelled.'
     case 'auth/invalid-credential':
     case 'auth/wrong-password':
     case 'auth/user-not-found':
+    case 'auth/invalid-email':
+      // Deliberately one message for all four: distinguishing "no such account"
+      // from "wrong password" tells an attacker which emails are registered.
       return 'That email and password combination is not right.'
     case 'auth/too-many-requests':
       return 'Too many attempts. Wait a minute and try again.'
     case 'auth/network-request-failed':
       return 'Network problem — check your connection and try again.'
-    case 'auth/popup-blocked':
-      return 'Your browser blocked the sign-in popup. Allow popups and retry.'
+    case 'auth/user-disabled':
+      return 'That account has been disabled.'
     default:
       return 'Sign-in failed. Try again.'
   }
