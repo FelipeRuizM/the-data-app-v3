@@ -15,7 +15,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 
 export function AppLayout() {
   const location = useLocation()
-  const { role, isAdmin, user, signOut } = useAuth()
+  const { role, isAdmin, canWrite, user, signOut } = useAuth()
 
   return (
     <div className="min-h-dvh bg-ground">
@@ -44,9 +44,13 @@ export function AppLayout() {
             <NavLink to="/analytics" className={linkClass}>
               Analytics
             </NavLink>
-            <NavLink to="/settings" className={linkClass}>
-              Settings
-            </NavLink>
+            {/* Settings is per-account and entirely mutating controls, so the
+                read-only guest has nothing to do there (§4). */}
+            {canWrite ? (
+              <NavLink to="/settings" className={linkClass}>
+                Settings
+              </NavLink>
+            ) : null}
             {/* Admin is hidden from nav for everyone else AND route-guarded —
                 hiding alone would leave a typed URL working. */}
             {isAdmin ? (

@@ -184,17 +184,17 @@ as broken data logic.
 
 ## Phase 12 — Settings (per-account)
 
-- [ ] Units toggle (display layer only, D-18)
-- [ ] Reorderable featured exercises
-- [ ] **Bodyweight value** — wired into volume, never into a record
-- [ ] Calculator percentages and rounding increment
-- [ ] Default shoes / default watch
-- [ ] CRUD the user's **own** exercise tier (name + muscle group, incl. `Core`), places,
+- [x] Units toggle (display layer only, D-18)
+- [x] Reorderable featured exercises
+- [x] **Bodyweight value** — wired into volume, never into a record
+- [x] Calculator percentages and rounding increment
+- [x] Default shoes / default watch
+- [x] CRUD the user's **own** exercise tier (name + muscle group, incl. `Core`), places,
       people. Creating an exercise never writes to `/config` (D-20)
-- [ ] **Rename cascade** as one atomic multi-path update with an affected-record count;
+- [x] **Rename cascade** as one atomic multi-path update with an affected-record count;
       **deletion blocked while referenced**, "rename and merge" offered (D-5)
-- [ ] Sign out
-- [ ] `feat: per-account settings`
+- [x] Sign out
+- [x] `feat: per-account settings`
 
 ## Phase 13 — Admin panel (global config)
 

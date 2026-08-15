@@ -385,3 +385,51 @@ than in custom claims or a UID allowlist inside the rules.
 Trade-off accepted: role lookup costs one extra read, and rules reference
 `root.child('roles')`, which is slightly slower to evaluate. Both are negligible at
 this data size.
+
+---
+
+# 2026-08-15 — Phase 12, per-account settings
+
+## D-28 · A base exercise can be re-filed from Settings, but not renamed or deleted ✅
+**Question:** D-20 makes the exercise catalog two-tier and says a user may "re-file a
+base exercise into a different muscle group without an admin". What, concretely, does
+the Settings page let a user do to a *base* entry?
+
+**Decision:** changing its muscle group is allowed and writes a **user-tier entry with
+the same name**, which shadows the shared one because the merge is by name and the
+user's entry wins. Renaming and deleting a base entry are **not** offered — D-20 makes
+both admin-only, because a base rename cascades across *every* profile. Those rows
+render with a `shared` badge and no Rename/Delete action.
+
+**Why not disable the buttons instead:** every mutating control the viewer cannot use
+is absent, not disabled (§2). A greyed-out Rename would advertise an action that will
+never become available on this page.
+
+## D-29 · The featured shortlist is curation, not history ✅
+**Question:** `settings/featuredExercises` references exercises by name, like the set
+log does. Does a featured entry count as a reference for the D-5 rules?
+
+**Decision:** **no.** It is rewritten by a rename and cleaned up by a delete, but it
+never blocks a delete and it is **not counted in the affected-record number** the
+confirm dialog states.
+
+Both halves matter. Blocking a delete on a shortlist entry would be absurd — nothing
+is lost by dropping a name from a curated list. And counting it would overstate the
+blast radius: "12 records" when eleven are workouts and the twelfth is a shortlist row
+is the kind of number that stops being trusted.
+
+## D-30 · The cascade reads RAW nodes, not the loaded profile ✅
+**Question:** the rename plan addresses paths like
+`workouts/{id}/exercises/2/exercise_title`. Where do those indices come from?
+
+**Decision:** the cascade re-reads `workouts`, `runs` and `settings` from the database
+at the moment of the write, and addresses paths using the **database's own keys**.
+
+It cannot use the normalized profile already in memory: §3.8 lets RTDB return a list
+as an object with numeric-string keys, and the parse layer deliberately produces a
+dense, re-sorted, null-filtered array. Its indices are therefore not always the stored
+ones, and writing against them would rename **the wrong exercise**. The cascade is the
+one operation in the app that legitimately needs the wire shape.
+
+The same traversal produces both the count shown in the confirm and the update that is
+applied, so a delete can never disagree with a rename about what counts as a reference.

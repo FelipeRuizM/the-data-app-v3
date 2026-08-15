@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Button, Label } from './ui'
 
@@ -19,6 +19,8 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
   onCancel,
+  children,
+  confirmDisabled = false,
 }: {
   open: boolean
   title: string
@@ -26,6 +28,10 @@ export function ConfirmDialog({
   confirmLabel: string
   onConfirm: () => void
   onCancel: () => void
+  /** Extra controls between the body and the buttons — the merge picker (D-5). */
+  children?: ReactNode
+  /** For a dialog whose action needs a choice made first. */
+  confirmDisabled?: boolean
 }) {
   const cancelRef = useRef<HTMLButtonElement>(null)
 
@@ -63,11 +69,12 @@ export function ConfirmDialog({
         <p id="confirm-dialog-body" className="m-0 text-sm text-ink-1">
           {body}
         </p>
+        {children}
         <div className="flex justify-end gap-2">
           <Button ref={cancelRef} onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={onConfirm}>
+          <Button variant="primary" onClick={onConfirm} disabled={confirmDisabled}>
             {confirmLabel}
           </Button>
         </div>

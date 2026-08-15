@@ -19,6 +19,7 @@ import { RunRecords } from './pages/runs/RunRecords'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
+import { Settings } from './pages/Settings'
 import { Styleguide } from './pages/Styleguide'
 
 /** Build-time config is missing — the single most likely deployment failure. */
@@ -119,9 +120,15 @@ export function App() {
               path="analytics"
               element={<Placeholder title="Analytics" phase="Phase 14" />}
             />
+            {/* Per-account, and every control on it is a mutating one — so a
+                guest is bounced rather than shown a page it cannot use (§4). */}
             <Route
               path="settings"
-              element={<Placeholder title="Settings" phase="Phase 12" />}
+              element={
+                <RequireWrite>
+                  <Settings />
+                </RequireWrite>
+              }
             />
             <Route
               path="admin"
