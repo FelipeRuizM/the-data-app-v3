@@ -8,9 +8,12 @@ import { Home } from './pages/Home'
 import { WorkoutDetail } from './pages/workouts/WorkoutDetail'
 import { WorkoutsList } from './pages/workouts/WorkoutsList'
 import { WorkoutForm } from './pages/workouts/WorkoutForm'
+import { Records } from './pages/workouts/Records'
+import { RecordDetail } from './pages/workouts/RecordDetail'
 import { RunDetail } from './pages/runs/RunDetail'
 import { RunsList } from './pages/runs/RunsList'
 import { RunForm } from './pages/runs/RunForm'
+import { RunRecords } from './pages/runs/RunRecords'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
@@ -76,10 +79,8 @@ export function App() {
                 </RequireWrite>
               }
             />
-            <Route
-              path="workouts/records"
-              element={<Placeholder title="Records" phase="Phase 8" />}
-            />
+            <Route path="workouts/records" element={<Records />} />
+            <Route path="workouts/records/:exercise" element={<RecordDetail />} />
             <Route
               path="workouts/calculator"
               element={
@@ -105,10 +106,7 @@ export function App() {
                 </RequireWrite>
               }
             />
-            <Route
-              path="runs/records"
-              element={<Placeholder title="Run records" phase="Phase 8" />}
-            />
+            <Route path="runs/records" element={<RunRecords />} />
             <Route path="runs/:id" element={<RunDetail />} />
             <Route
               path="runs/:id/edit"

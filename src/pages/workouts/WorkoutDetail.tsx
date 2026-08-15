@@ -7,14 +7,20 @@ import { workoutSetCount, workoutVolumeKg } from '../../lib/normalize'
 import { formatSetWeight, formatVolume } from '../../lib/units'
 import { useProfile } from '../../data/useProfile'
 import { useCanWrite } from '../../auth/hooks'
+import {
+  achievementsBySet,
+  computePRAchievements,
+  metricLabel,
+  type PRMetric,
+} from '../../utils/prEngine'
 import type { ExerciseEntry, Units, Workout, WorkoutSet } from '../../types'
 
 /**
  * One workout in full: every exercise, every set with its type badge, notes,
  * heart rate, people, place (§4).
  *
- * PR badges are deliberately absent — the records engine is Phase 8, and a fake
- * badge here would be worse than none.
+ * PR badges come from the records engine (§6.2), computed on every render and
+ * never stored. They were deferred in Phase 4 until the engine existed.
  */
 export function WorkoutDetail() {
   const { id } = useParams<{ id: string }>()
@@ -71,6 +77,10 @@ export function WorkoutDetail() {
   }
 
   const { units, bodyweightKg } = profile.settings
+
+  // Backfilled from Phase 4, where these were deliberately deferred until the
+  // records engine existed rather than shown as placeholders.
+  const badges = achievementsBySet(computePRAchievements(profile.workouts), workout.id)
   const volume = workoutVolumeKg(workout, bodyweightKg)
   const hasBodyweightSets = workout.exercises.some((e) =>
     e.sets.some((s) => s.weight.kind === 'bodyweight'),
@@ -137,6 +147,7 @@ export function WorkoutDetail() {
               key={`${entry.exerciseTitle}-${i}`}
               entry={entry}
               units={units}
+              badges={badges}
             />
           ))}
         </ol>
@@ -209,7 +220,15 @@ function Stat({
   )
 }
 
-function ExerciseBlock({ entry, units }: { entry: ExerciseEntry; units: Units }) {
+function ExerciseBlock({
+  entry,
+  units,
+  badges,
+}: {
+  entry: ExerciseEntry
+  units: Units
+  badges: Map<string, PRMetric[]>
+}) {
   return (
     <li className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
@@ -233,7 +252,12 @@ function ExerciseBlock({ entry, units }: { entry: ExerciseEntry; units: Units })
         </thead>
         <tbody>
           {entry.sets.map((set, i) => (
-            <SetRow key={i} set={set} units={units} />
+            <SetRow
+              key={i}
+              set={set}
+              units={units}
+              prs={badges.get(`${entry.exerciseTitle}::${set.setIndex}`) ?? []}
+            />
           ))}
         </tbody>
       </table>
@@ -258,29 +282,57 @@ function Th({
   )
 }
 
-function SetRow({ set, units }: { set: WorkoutSet; units: Units }) {
+function SetRow({
+  set,
+  units,
+  prs,
+}: {
+  set: WorkoutSet
+  units: Units
+  prs: PRMetric[]
+}) {
   // A warmup or feeder set is scaffolding, not the work — dim it so the working
   // sets carry the eye.
   const dim = set.setType === 'warmup' || set.setType === 'feeder'
   const tone = dim ? 'text-ink-2' : 'text-ink-0'
 
   return (
-    <tr className="border-b border-rule">
-      <td className={`py-2 font-mono text-xs text-ink-3`}>{set.setIndex + 1}</td>
-      <td className={`py-2 font-mono text-sm ${tone}`}>
-        {formatSetWeight(set.weight, units)}
-      </td>
-      <td className={`py-2 font-mono text-sm ${tone}`}>{set.reps ?? '—'}</td>
-      <td className="py-2 font-mono text-sm text-ink-2">
-        {set.durationSeconds === null ? '—' : `${set.durationSeconds}s`}
-      </td>
-      <td className="py-2 text-right">
-        {set.setType && set.setType !== 'normal' ? (
-          <Badge>{set.setType}</Badge>
-        ) : (
-          <span className="font-mono text-label text-ink-3">—</span>
-        )}
-      </td>
-    </tr>
+    <>
+      <tr className={prs.length > 0 ? '' : 'border-b border-rule'}>
+        <td className="py-2 font-mono text-xs text-ink-3">{set.setIndex + 1}</td>
+        <td className={`py-2 font-mono text-sm ${tone}`}>
+          {formatSetWeight(set.weight, units)}
+        </td>
+        <td className={`py-2 font-mono text-sm ${tone}`}>{set.reps ?? '—'}</td>
+        <td className="py-2 font-mono text-sm text-ink-2">
+          {set.durationSeconds === null ? '—' : `${set.durationSeconds}s`}
+        </td>
+        <td className="py-2 text-right">
+          {set.setType && set.setType !== 'normal' ? (
+            <Badge>{set.setType}</Badge>
+          ) : (
+            <span className="font-mono text-label text-ink-3">—</span>
+          )}
+        </td>
+      </tr>
+
+      {/* PR badges get their own full-width row rather than sharing the Type
+          cell: three badges at 375px squeezed the numeric columns until the
+          headers collided. */}
+      {prs.length > 0 ? (
+        <tr className="border-b border-rule">
+          <td />
+          <td colSpan={4} className="pb-2">
+            <span className="flex flex-wrap gap-1">
+              {prs.map((metric) => (
+                <Badge key={metric} pr>
+                  {metricLabel(metric)}
+                </Badge>
+              ))}
+            </span>
+          </td>
+        </tr>
+      ) : null}
+    </>
   )
 }

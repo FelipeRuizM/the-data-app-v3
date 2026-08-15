@@ -187,9 +187,32 @@ describe('WorkoutDetail', () => {
     expect(screen.getByText('No workout with that id.')).toBeInTheDocument()
   })
 
-  it('shows no PR badges — the records engine is Phase 8', async () => {
+  it('shows PR badges from the records engine, and only on genuinely-broken records', async () => {
+    // Replaces the Phase 4 guard that asserted NO badges existed. That guard
+    // existed to stop a placeholder creeping in before the engine was real;
+    // now the engine exists, so the assertion inverts.
+    const { computePRAchievements } = await import('../../utils/prEngine')
+    const { buildProfile } = await import('../../lib/db')
+    const { profile } = buildProfile(fixture as never, {})
+    const expected = computePRAchievements(profile.workouts).filter(
+      (a) => a.workoutId === firstWorkoutId,
+    )
+
     renderDetail(firstWorkoutId)
     await settled(() => screen.queryAllByRole('table').length)
-    expect(screen.queryByText(/PR$/)).not.toBeInTheDocument()
+
+    const badges = screen.queryAllByText(/ PR$/)
+    expect(badges).toHaveLength(expected.length)
+  })
+
+  it('never badges the first session of an exercise', async () => {
+    // The oldest workout can only establish baselines, never break records.
+    const { buildProfile } = await import('../../lib/db')
+    const { profile } = buildProfile(fixture as never, {})
+    const oldest = [...profile.workouts].sort((a, b) => +a.startTime - +b.startTime)[0]!
+
+    renderDetail(oldest.id)
+    await settled(() => screen.queryAllByRole('table').length)
+    expect(screen.queryAllByText(/ PR$/)).toHaveLength(0)
   })
 })
