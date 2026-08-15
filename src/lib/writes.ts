@@ -1,6 +1,6 @@
 import { push, ref, remove, update } from 'firebase/database'
 import { db } from './firebase'
-import type { RawWorkout } from '../types'
+import type { RawRun, RawWorkout } from '../types'
 
 /**
  * The write path. Deliberately thin — validation and shaping already happened
@@ -19,17 +19,25 @@ function newKey(path: string): string {
   return key
 }
 
-export type SaveWorkoutParams = {
+export type SaveParams<T> = {
   uid: string
   /** Present when editing; absent when creating. */
   id?: string | null
-  raw: RawWorkout
+  raw: T
   /** Place/person names not already in the profile's own lists (§4 "create-on-the-fly"). */
   newPlaces: string[]
   newPeople: string[]
 }
 
-export async function saveWorkout(params: SaveWorkoutParams): Promise<{ id: string }> {
+/**
+ * Shared because it is genuinely the same operation on a different path —
+ * unlike the filter and draft modules, where workouts and runs differ in
+ * substance. The only variable here is the collection name.
+ */
+async function saveRecord<T>(
+  collection: 'workouts' | 'runs',
+  params: SaveParams<T>,
+): Promise<{ id: string }> {
   const { uid, id, raw, newPlaces, newPeople } = params
   const updates: Record<string, unknown> = {}
 
@@ -40,15 +48,24 @@ export async function saveWorkout(params: SaveWorkoutParams): Promise<{ id: stri
     updates[`users/${uid}/people/${newKey(`users/${uid}/people`)}`] = { name }
   }
 
-  const workoutId = id ?? newKey(`users/${uid}/workouts`)
-  updates[`users/${uid}/workouts/${workoutId}`] = raw
+  const recordId = id ?? newKey(`users/${uid}/${collection}`)
+  updates[`users/${uid}/${collection}/${recordId}`] = raw
 
   await update(ref(db()), updates)
-  return { id: workoutId }
+  return { id: recordId }
 }
+
+export const saveWorkout = (params: SaveParams<RawWorkout>) =>
+  saveRecord('workouts', params)
+
+export const saveRun = (params: SaveParams<RawRun>) => saveRecord('runs', params)
 
 export async function deleteWorkout(uid: string, id: string): Promise<void> {
   await remove(ref(db(), `users/${uid}/workouts/${id}`))
+}
+
+export async function deleteRun(uid: string, id: string): Promise<void> {
+  await remove(ref(db(), `users/${uid}/runs/${id}`))
 }
 
 /** Names present in `values` but not already in `existing` — case-sensitive, matching how joins work everywhere else (§3.7). */

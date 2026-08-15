@@ -10,6 +10,7 @@ import { WorkoutsList } from './pages/workouts/WorkoutsList'
 import { WorkoutForm } from './pages/workouts/WorkoutForm'
 import { RunDetail } from './pages/runs/RunDetail'
 import { RunsList } from './pages/runs/RunsList'
+import { RunForm } from './pages/runs/RunForm'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
@@ -100,7 +101,7 @@ export function App() {
               path="runs/new"
               element={
                 <RequireWrite>
-                  <Placeholder title="Log a run" phase="Phase 7" />
+                  <RunForm mode="create" />
                 </RequireWrite>
               }
             />
@@ -113,7 +114,7 @@ export function App() {
               path="runs/:id/edit"
               element={
                 <RequireWrite>
-                  <Placeholder title="Edit run" phase="Phase 7" />
+                  <RunForm mode="edit" />
                 </RequireWrite>
               }
             />

@@ -6,6 +6,7 @@ import { colorTokenFor } from '../../lib/config'
 import { parseStoredPace } from '../../lib/normalize'
 import { formatDistance } from '../../lib/units'
 import { useProfile } from '../../data/useProfile'
+import { useCanWrite } from '../../auth/hooks'
 import type { Run } from '../../types'
 
 /**
@@ -20,6 +21,7 @@ import type { Run } from '../../types'
 export function RunDetail() {
   const { id } = useParams<{ id: string }>()
   const state = useProfile()
+  const canWrite = useCanWrite()
 
   if (state.status === 'loading') {
     return (
@@ -73,6 +75,19 @@ export function RunDetail() {
   return (
     <Wrap>
       <Header run={run} colorToken={colorTokenFor(config.runTypes, run.type)} />
+
+      {/* Hidden entirely without write access — never rendered-then-rejected
+          (CLAUDE.md §2). */}
+      {canWrite ? (
+        <div>
+          <Link
+            to={`/runs/${run.id}/edit`}
+            className="font-mono text-label tracking-[0.12em] text-accent uppercase no-underline"
+          >
+            Edit run
+          </Link>
+        </div>
+      ) : null}
 
       <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-rule py-6 sm:grid-cols-4">
         <Stat label="Distance" value={formatDistance(run.distanceKm)} />

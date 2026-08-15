@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { namesNotIn } from './writes'
-import type { RawWorkout } from '../types'
+import type { RawRun, RawWorkout } from '../types'
 
 describe('namesNotIn', () => {
   it('returns names that are not already in the existing list', () => {
@@ -53,7 +53,7 @@ vi.mock('firebase/database', () => ({
   }),
 }))
 
-const { saveWorkout, deleteWorkout } = await import('./writes')
+const { saveWorkout, saveRun, deleteWorkout, deleteRun } = await import('./writes')
 
 const minimalRaw: RawWorkout = {
   title: 'Leg day',
@@ -135,5 +135,61 @@ describe('deleteWorkout', () => {
   it('removes exactly the one workout path for the given uid and id', async () => {
     await deleteWorkout('owner', 'workout-1')
     expect(removeCalls).toEqual(['users/owner/workouts/workout-1'])
+  })
+})
+
+describe('saveRun / deleteRun — same guarantees, different collection', () => {
+  const minimalRun: RawRun = {
+    title: 'Morning run',
+    description: '',
+    start_time: '8 Apr 2026, 07:00',
+    type: 'Other',
+    location: 'Place A',
+    distance_km: 5,
+    duration_seconds: 1800,
+    pace: '6:00',
+  }
+
+  it('writes the run under users/<uid>/runs, not workouts', async () => {
+    const { id } = await saveRun({
+      uid: 'owner',
+      id: null,
+      raw: minimalRun,
+      newPlaces: [],
+      newPeople: [],
+    })
+    expect(updateCalls[0]![`users/owner/runs/${id}`]).toBe(minimalRun)
+    expect(Object.keys(updateCalls[0]!).some((p) => p.includes('/workouts/'))).toBe(
+      false,
+    )
+  })
+
+  it('creates a new place in the SAME atomic write', async () => {
+    await saveRun({
+      uid: 'owner',
+      id: null,
+      raw: minimalRun,
+      newPlaces: ['Trailhead'],
+      newPeople: [],
+    })
+    expect(updateCalls).toHaveLength(1)
+    const gymPath = Object.keys(updateCalls[0]!).find((p) => p.includes('/gyms/'))!
+    expect(updateCalls[0]![gymPath]).toEqual({ name: 'Trailhead' })
+  })
+
+  it('writes to the same id when editing', async () => {
+    const { id } = await saveRun({
+      uid: 'owner',
+      id: 'run-1',
+      raw: minimalRun,
+      newPlaces: [],
+      newPeople: [],
+    })
+    expect(id).toBe('run-1')
+  })
+
+  it('deletes exactly the one run path', async () => {
+    await deleteRun('owner', 'run-1')
+    expect(removeCalls).toEqual(['users/owner/runs/run-1'])
   })
 })
