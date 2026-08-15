@@ -41,7 +41,7 @@ export function CategoryEditor({
   uid: string
   configKey: CategoryKey
   title: string
-  description: string
+  description?: string | undefined
   categories: ConfigCategory[]
   /** What a record is called here — "workout" or "run". */
   noun: string

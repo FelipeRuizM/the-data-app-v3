@@ -112,12 +112,14 @@ describe('sections', () => {
     }
   })
 
-  it('says weeks run Sunday to Saturday, so the streak rule is legible (D-15)', async () => {
+  it('shows both the current and the longest streak (D-15)', async () => {
     renderPage()
     await ready()
     const section = screen.getByRole('heading', { name: 'Streaks' }).closest('section')!
-    expect(section).toHaveTextContent(/Sunday to Saturday/i)
-    expect(section).toHaveTextContent(/rest day never breaks/i)
+    expect(section).toHaveTextContent(/Weeks?, current/i)
+    expect(section).toHaveTextContent(/Weeks, longest/i)
+    // The explanatory note was removed (D-48) — the figures carry the section.
+    expect(section).not.toHaveTextContent(/Sunday to Saturday/i)
   })
 })
 

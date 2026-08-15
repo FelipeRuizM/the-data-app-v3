@@ -16,7 +16,7 @@ export function Section({
   first = false,
 }: {
   title: string
-  description?: string
+  description?: string | undefined
   children: ReactNode
   first?: boolean
 }) {

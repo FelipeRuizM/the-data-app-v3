@@ -42,42 +42,30 @@ describe('calculateRunRecords', () => {
     expect(pace.value).toBe(300)
   })
 
-  it('picks the highest for distance, duration, elevation and steps', () => {
+  it('picks the highest for distance and duration', () => {
     const records = calculateRunRecords([
-      run({
-        id: 'a',
-        distanceKm: 5,
-        durationSeconds: 1800,
-        elevationGainM: 10,
-        steps: 5000,
-      }),
-      run({
-        id: 'b',
-        distanceKm: 12,
-        durationSeconds: 4000,
-        elevationGainM: 300,
-        steps: 14000,
-      }),
+      run({ id: 'a', distanceKm: 5, durationSeconds: 1800 }),
+      run({ id: 'b', distanceKm: 12, durationSeconds: 4000 }),
     ])
-    for (const key of [
-      'longestDistance',
-      'longestDuration',
-      'mostElevation',
-      'mostSteps',
-    ] as const) {
+    for (const key of ['longestDistance', 'longestDuration'] as const) {
       expect(records.find((r) => r.key === key)!.runId, key).toBe('b')
     }
   })
 
   it('skips metrics that were never recorded rather than reporting a zero', () => {
-    const records = calculateRunRecords([run({ elevationGainM: null, steps: null })])
-    expect(records.find((r) => r.key === 'mostElevation')).toBeUndefined()
-    expect(records.find((r) => r.key === 'mostSteps')).toBeUndefined()
+    const records = calculateRunRecords([
+      run({ distanceKm: null, durationSeconds: null }),
+    ])
+    expect(records.find((r) => r.key === 'longestDistance')).toBeUndefined()
+    expect(records.find((r) => r.key === 'longestDuration')).toBeUndefined()
   })
 
-  it('treats a real 0 elevation as eligible — flat runs count', () => {
-    const records = calculateRunRecords([run({ elevationGainM: 0 })])
-    expect(records.find((r) => r.key === 'mostElevation')!.value).toBe(0)
+  it('has no elevation or steps record — both were retired (D-46)', () => {
+    const keys = calculateRunRecords([run({ elevationGainM: 300, steps: 14000 })]).map(
+      (r) => r.key,
+    )
+    expect(keys).not.toContain('mostElevation')
+    expect(keys).not.toContain('mostSteps')
   })
 
   it('returns nothing for an empty history', () => {

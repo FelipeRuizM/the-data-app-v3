@@ -40,6 +40,7 @@ function workout(
     categoryId: null,
     category: null,
     avgHeartRate: null,
+    calories: null,
     people: [],
     exercises: exercises.map((e) => ({
       exerciseId: null,

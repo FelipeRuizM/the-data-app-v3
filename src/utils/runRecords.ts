@@ -9,8 +9,7 @@ import type { Run } from '../types'
  * badge engine — §6 is entirely set-shaped and has no run analogue.
  */
 
-export type RunRecordKey =
-  'fastestPace' | 'longestDistance' | 'longestDuration' | 'mostElevation' | 'mostSteps'
+export type RunRecordKey = 'fastestPace' | 'longestDistance' | 'longestDuration'
 
 export type RunRecord = {
   key: RunRecordKey
@@ -38,8 +37,7 @@ const SPECS: Spec[] = [
   },
   { key: 'longestDistance', label: 'Longest distance', pick: (r) => r.distanceKm },
   { key: 'longestDuration', label: 'Longest duration', pick: (r) => r.durationSeconds },
-  { key: 'mostElevation', label: 'Most elevation gain', pick: (r) => r.elevationGainM },
-  { key: 'mostSteps', label: 'Most steps', pick: (r) => r.steps },
+  // Elevation and steps were retired here with the rest of the app (D-46).
 ]
 
 export function calculateRunRecords(runs: readonly Run[]): RunRecord[] {

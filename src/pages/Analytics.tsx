@@ -154,10 +154,7 @@ export function Analytics() {
         </div>
       </Section>
 
-      <Section
-        title="Streaks"
-        note="Consecutive weeks with at least one activity of any kind. Weeks run Sunday to Saturday, so a rest day never breaks one."
-      >
+      <Section title="Streaks">
         <div className="grid grid-cols-2 gap-x-6 gap-y-8">
           <StatFigure
             value={String(streaks.current)}
@@ -181,14 +178,11 @@ export function Analytics() {
       </Section>
 
       <Section title="Month by month">
-        <MonthlyTrendChart series={series} />
+        <MonthlyTrendChart series={series} units={profile.settings.units} />
       </Section>
 
       {hasWorkouts ? (
-        <Section
-          title="Muscle-group balance"
-          note="Workouts only. Core and Other sit outside the radar — they distort the balance shape rather than describing it."
-        >
+        <Section title="Muscle-group balance">
           <SetsPerGroupChart totals={view.muscleGroups} />
           <MuscleGroupRadar totals={radarGroups(view.muscleGroups)} />
         </Section>

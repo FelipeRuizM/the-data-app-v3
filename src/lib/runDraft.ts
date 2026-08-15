@@ -29,6 +29,12 @@ export type RunDraft = {
   avgHeartRate: string
   calories: string
   difficulty: string
+  /**
+   * RETIRED (D-46). No input renders these — they are carried from the loaded
+   * record straight back to the database so that dropping them from the form
+   * cannot delete them from the 12 runs that have them. `saveRun` replaces the
+   * whole record, so "not in the draft" would mean "gone" on the next edit.
+   */
   elevationGainM: string
   maxElevationM: string
   steps: string
@@ -225,6 +231,10 @@ export function buildRawRun(
   // Non-sentinel numerics: a typed 0 is a real value (11 of 12 historical runs
   // record 0 steps and 0 max elevation), so only blanks are omitted.
   if (difficulty !== null) raw.difficulty = difficulty
+
+  // Retired fields, written back exactly as they arrived (D-46). A new run
+  // carries blanks here and so stores nothing; an edited historical run keeps
+  // every number it already had.
 
   const elevationGain = optionalNumber(draft.elevationGainM)
   if (elevationGain !== null) raw.elevation_gain_m = elevationGain

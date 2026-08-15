@@ -151,18 +151,17 @@ describe('featured exercises', () => {
     expect(written).toHaveLength(stored.length)
   })
 
-  it('refuses a name that is not a real exercise, since joins are by name', async () => {
-    const user = userEvent.setup()
+  it('offers only real exercises, so a dangling name cannot be entered', async () => {
     renderSettings()
     await ready()
 
-    await user.type(screen.getByLabelText('Add an exercise'), 'Not A Lift')
-    await user.click(screen.getByRole('button', { name: 'Add to featured' }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      /No exercise by that name/,
-    )
-    expect(updateCalls).toHaveLength(0)
+    // A select, not a text field (D-49): joins are by name (§3.7), and the
+    // "no exercise by that name" guard is now unreachable by construction.
+    const picker = screen.getByLabelText('Add an exercise') as HTMLSelectElement
+    expect(picker.tagName).toBe('SELECT')
+    const offered = [...picker.options].map((o) => o.value).filter((v) => v !== '')
+    expect(offered.length).toBeGreaterThan(0)
+    expect(offered).not.toContain('Not A Lift')
   })
 })
 

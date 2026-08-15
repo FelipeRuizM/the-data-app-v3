@@ -436,6 +436,7 @@ describe('applyExerciseIds', () => {
       categoryId: null,
       category: null,
       avgHeartRate: null,
+      calories: null,
       people: [],
       exercises: entries,
       durationMinutes: null,

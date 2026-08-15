@@ -139,7 +139,7 @@ describe('Calculator', () => {
     renderCalc()
     await settled(() => screen.queryAllByLabelText(/Exercise/).length)
 
-    await user.type(screen.getByLabelText(/Exercise/), 'Bench Press (Barbell)')
+    await user.selectOptions(screen.getByLabelText(/Exercise/), 'Bench Press (Barbell)')
     await settled(() => screen.queryAllByRole('button', { name: /use record/i }).length)
 
     await user.click(screen.getByRole('button', { name: /use record/i }))

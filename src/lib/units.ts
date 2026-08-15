@@ -51,6 +51,30 @@ export function formatVolume(kg: number | null, units: Units): string {
   return value.toLocaleString('en-US')
 }
 
+/**
+ * A lifetime or per-month volume as a big unit rather than kilograms.
+ *
+ * Career volume runs to seven digits — "1,284,930" is a wall of numerals that
+ * defeats the one-huge-figure treatment §5 asks for on stat blocks. Tonnes
+ * gives the same magnitude in three or four characters.
+ *
+ * The lb analogue is the short ton (2,000 lb), because a lb reader has no use
+ * for a metric tonne and the unit must stay consistent with the setting (D-18 —
+ * display layer only, storage is always `weight_kg`).
+ */
+export function formatVolumeLarge(
+  kg: number | null,
+  units: Units,
+): { value: string; unit: string } {
+  if (kg === null || !Number.isFinite(kg)) return { value: '—', unit: '' }
+  const perBigUnit = units === 'lb' ? 2000 : 1000
+  const big = toDisplayWeight(kg, units) / perBigUnit
+  // One decimal only while it carries information — 0.4 t is a real reading,
+  // 1,284.9 t is noise on a figure that size.
+  const value = big < 100 ? big.toFixed(1) : Math.round(big).toLocaleString('en-US')
+  return { value, unit: units === 'lb' ? 'tons' : 't' }
+}
+
 export function formatDistance(km: number | null): string {
   if (km === null || !Number.isFinite(km)) return '—'
   return `${km.toFixed(2)} km`

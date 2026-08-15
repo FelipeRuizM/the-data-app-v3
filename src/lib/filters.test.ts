@@ -27,6 +27,7 @@ function workout(over: Partial<Workout>): Workout {
     categoryId: null,
     category: null,
     avgHeartRate: null,
+    calories: null,
     people: [],
     exercises: [],
     durationMinutes: null,

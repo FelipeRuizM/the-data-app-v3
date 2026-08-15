@@ -99,23 +99,9 @@ export function RunDetail() {
           unit={run.avgHeartRate === null ? undefined : 'bpm'}
         />
         <Stat
-          label="Elevation gain"
-          value={run.elevationGainM === null ? '—' : String(run.elevationGainM)}
-          unit={run.elevationGainM === null ? undefined : 'm'}
-        />
-        <Stat
-          label="Max elevation"
-          value={run.maxElevationM === null ? '—' : String(run.maxElevationM)}
-          unit={run.maxElevationM === null ? undefined : 'm'}
-        />
-        <Stat
           label="Difficulty"
           value={run.difficulty === null ? '—' : String(run.difficulty)}
           unit={run.difficulty === null ? undefined : '/10'}
-        />
-        <Stat
-          label="Steps"
-          value={run.steps === null ? '—' : run.steps.toLocaleString('en-US')}
         />
         <Stat
           label="Calories"

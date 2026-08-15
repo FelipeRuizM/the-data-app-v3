@@ -64,7 +64,6 @@ export function Admin() {
         uid={profileUid}
         configKey="workoutCategories"
         title="Workout categories"
-        description="Your training splits, and the colour each one carries everywhere in the app."
         categories={config.workoutCategories}
         noun="workout"
       />
@@ -73,14 +72,12 @@ export function Admin() {
         uid={profileUid}
         configKey="runTypes"
         title="Run types"
-        description="The same idea for runs."
         categories={config.runTypes}
         noun="run"
       />
 
       <StringListEditor
         title="Muscle groups"
-        description="What exercises can be filed under. Excluded from the monthly radar: Core and Other, which distort the balance shape."
         values={config.muscleGroups}
         addLabel="Add group"
         ordered
@@ -94,7 +91,6 @@ export function Admin() {
 
       <StringListEditor
         title="Rep-based exercises"
-        description="Exercises ranked on reps rather than weight — bodyweight work, where the load never changes. These show Max Reps as their headline record."
         values={config.repBasedExercises}
         addLabel="Add exercise"
         suggestions={profile.exercises.map((e) => e.name)}
@@ -105,7 +101,6 @@ export function Admin() {
 
       <StringListEditor
         title="Shoes"
-        description="Offered when logging a run. Each account picks its own default in Settings."
         values={config.shoes}
         addLabel="Add shoes"
         onSave={(next) => saveNamedCatalog('shoes', next)}
@@ -113,7 +108,6 @@ export function Admin() {
 
       <StringListEditor
         title="Watches"
-        description="Same, for watches."
         values={config.watches}
         addLabel="Add watch"
         onSave={(next) => saveNamedCatalog('watches', next)}
@@ -127,10 +121,6 @@ function Page({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col gap-10 py-10">
       <div className="flex flex-col gap-2">
         <Label as="h1">Admin</Label>
-        <p className="m-0 max-w-prose text-sm text-ink-2">
-          Global vocabulary — shared by every account. Anything personal lives in
-          Settings.
-        </p>
       </div>
       {children}
     </div>

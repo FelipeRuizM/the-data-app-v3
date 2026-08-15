@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Label } from '../../components/ui'
-import { ComboInput } from '../../components/ComboInput'
+import { SelectInput } from '../../components/SelectInput'
 import { StateBlock } from '../../components/StateBlock'
 import { useProfile } from '../../data/useProfile'
 import { formatWeight } from '../../lib/units'
@@ -93,7 +93,7 @@ export function Calculator() {
             />
           </label>
 
-          <ComboInput
+          <SelectInput
             label="Exercise (optional)"
             value={exercise}
             onChange={setExercise}

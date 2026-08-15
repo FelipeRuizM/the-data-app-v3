@@ -3,6 +3,7 @@ import {
   formatDistance,
   formatSetWeight,
   formatVolume,
+  formatVolumeLarge,
   formatWeight,
   kgToLb,
 } from './units'
@@ -70,5 +71,24 @@ describe('formatDistance / kgToLb', () => {
   })
   it('converts kg to lb', () => {
     expect(kgToLb(1)).toBeCloseTo(2.2046, 3)
+  })
+})
+
+describe('formatVolumeLarge — tonnes rather than kilograms', () => {
+  it('renders a career total in tonnes, one decimal below a hundred', () => {
+    expect(formatVolumeLarge(14820, 'kg')).toEqual({ value: '14.8', unit: 't' })
+  })
+
+  it('drops the decimal once it stops carrying information', () => {
+    expect(formatVolumeLarge(1284930, 'kg')).toEqual({ value: '1,285', unit: 't' })
+  })
+
+  it('uses short tons in lb mode — a lb reader has no use for a tonne', () => {
+    // 907.18 kg = 2,000 lb = exactly one short ton.
+    expect(formatVolumeLarge(907.18474, 'lb')).toEqual({ value: '1.0', unit: 'tons' })
+  })
+
+  it('renders an em dash for null, like every other formatter here', () => {
+    expect(formatVolumeLarge(null, 'kg')).toEqual({ value: '—', unit: '' })
   })
 })

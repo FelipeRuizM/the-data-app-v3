@@ -247,7 +247,13 @@ string keys (`"0"`–`"36"`, from an original import); ~44 use Firebase push IDs
 | `exercises` | always | array — see below |
 | `category` | 67/81 | `"Push"` \| `"Pull"` \| `"Legs"`. **14 records have no category** |
 | `avg_heart_rate` | 56/81 | number. Absent = not recorded. **[corrected]** one record has `0` — the sentinel is **not** runs-only, normalize `0 → null` here too (§3.9) |
+| `calories` | 0/81 | **new, additive (D-45)**. Same `0 → null` sentinel |
 | `people` | 43/81 | **array of name strings**, denormalized, joins to `people` by name |
+
+> **`end_time` is derived on write (D-47).** The form asks for a **duration** and
+> defaults the start to now; `end_time = start + duration`, written in the identical
+> §3.6 format. Both timestamps are still stored, always — the *schema* is untouched,
+> only the question the form asks changed.
 
 `exercises[]` entries:
 
@@ -276,6 +282,13 @@ title, description, start_time, type, location, distance_km, duration_seconds,
 pace, avg_heart_rate, calories, difficulty (1–10), elevation_gain_m,
 max_elevation_m, steps, people?, shoes?, watch?
 ```
+
+> **`elevation_gain_m`, `max_elevation_m` and `steps` are RETIRED (D-46).** Nothing
+> asks for, renders or aggregates them. They are **not deleted** — all 12 records keep
+> theirs, and the edit form carries them through untouched, because `saveRun` replaces
+> the whole record and "not in the draft" would mean "deleted on next edit". The app
+> types keep the three fields marked *retained, not supported*: **do not add a
+> consumer.**
 
 **How runs are logged (D-16).** Strava records the run on the watch; the owner then
 transcribes the values into the app. `duration_seconds` is Strava's **moving time**.
@@ -564,11 +577,31 @@ is the activity strip alone.
   headers. Defined once as tokens (§5), assigned via `settings`. **Uncategorized gets
   a neutral treatment, never an error state.**
 - **Detail** — full breakdown: every exercise, every set with its type badge, notes,
-  duration, HR, people, place, and the PR badges earned that session (§6.2). For
-  runs: pace, elevation, difficulty, steps, calories.
+  duration, HR, people, place, calories, and the PR badges earned that session
+  (§6.2). For runs: pace, difficulty, calories (D-46 retired elevation and steps).
 - **Records** sub-page → §6
 - **Monthly report** sub-page → §7
 - **Calculator** (workouts only) → §8
+
+### Form conventions — the log forms are the primary surface
+
+These are durable rules, not one-off tweaks. The forms are used on a phone, standing
+in a gym, between sets.
+
+- **A `<select>` wherever the value comes from a known set** (D-49) — place, category,
+  run type, exercise, shoes, watch, difficulty, set type, duration. Use `SelectInput`,
+  never a raw `<datalist>`. It keeps a stored value the catalog no longer holds, so a
+  retired category survives an edit instead of being silently rewritten.
+  - `allowCreate` **only** for the per-user catalogs §4 requires it on: **places and
+    exercises**. Categories, run types, shoes and watches are `/config` vocabulary —
+    inventing one from a log form writes a name with no row, no colour and no id
+    (D-43).
+  - Reps, weight, heart rate, calories and a run's moving time stay typed numbers.
+    They are continuous, not a known set.
+- **Ask for a duration, not an end time** (D-47). Start defaults to now and lives
+  behind a "Change date & time" disclosure; `end_time` is derived. See §3.1.
+- **A new set inherits the previous one** (D-50) — `setLike`, a copy and not an alias.
+- **"+ Add exercise" sits below the exercise list**, not above it (D-50).
 
 ### Analytics
 
@@ -918,7 +951,8 @@ lower is better — pace being the obvious one.
 - **Workouts section**: volume (Σ `weight_kg × reps` over every set), total reps,
   total sets, avg volume per session.
 - **Runs section**: distance, **avg pace = total run seconds ÷ total km** — a derived
-  rate, **not a mean of per-run paces** — elevation gain, calories.
+  rate, **not a mean of per-run paces** — calories. (Elevation gain was retired,
+  D-46.)
 
 > **Workout and Run sections are hidden entirely, not zeroed, when neither this month
 > nor last month had that activity type.** A lifter who never runs must not see a
@@ -948,7 +982,7 @@ a per-exercise line-item breakdown.
 ### Layer 4 — run list
 
 That month's runs, **newest first**, as compact cards: type, distance, duration,
-pace, elevation, HR, calories. **No aggregation** — this layer is a list.
+pace, HR, calories. **No aggregation** — this layer is a list.
 
 ### Trend charts
 

@@ -178,7 +178,7 @@ describe('RunsList', () => {
 })
 
 describe('RunDetail', () => {
-  it('renders derived pace, elevation, difficulty, steps, calories, shoes and watch', async () => {
+  it('renders derived pace, difficulty, calories, shoes and watch', async () => {
     renderDetail(firstRunId)
     await settled(() => screen.queryAllByText('Distance').length)
     for (const label of [
@@ -186,15 +186,20 @@ describe('RunDetail', () => {
       'Pace',
       'Duration',
       'Avg heart rate',
-      'Elevation gain',
-      'Max elevation',
       'Difficulty',
-      'Steps',
       'Calories',
       'Shoes',
       'Watch',
     ]) {
       expect(screen.getByText(label)).toBeInTheDocument()
+    }
+  })
+
+  it('no longer shows elevation or steps (D-46)', async () => {
+    renderDetail(firstRunId)
+    await settled(() => screen.queryAllByText('Distance').length)
+    for (const label of ['Elevation gain', 'Max elevation', 'Steps']) {
+      expect(screen.queryByText(label), label).toBeNull()
     }
   })
 

@@ -1,25 +1,35 @@
 import { useId, useState } from 'react'
 import { Chip, Label } from '../ui'
 import { formatMonthLong } from '../../lib/dates'
+import { formatVolumeLarge } from '../../lib/units'
 import type { MonthlySeriesPoint } from '../../utils/workoutUtils'
+import type { Units } from '../../types'
 
 type TrendMetric = 'activities' | 'volumeKg' | 'sets' | 'distanceKm' | 'totalMinutes'
 
-const METRICS: Array<{
+/** Units only reach the volume row, but the list is built per-render anyway. */
+function metrics(units: Units): Array<{
   key: TrendMetric
   label: string
   format: (v: number) => string
-}> = [
-  { key: 'activities', label: 'activities', format: (v) => String(Math.round(v)) },
-  {
-    key: 'volumeKg',
-    label: 'volume',
-    format: (v) => Math.round(v).toLocaleString('en-US'),
-  },
-  { key: 'sets', label: 'sets', format: (v) => String(Math.round(v)) },
-  { key: 'distanceKm', label: 'distance', format: (v) => `${v.toFixed(1)} km` },
-  { key: 'totalMinutes', label: 'time', format: (v) => `${(v / 60).toFixed(1)}h` },
-]
+}> {
+  return [
+    { key: 'activities', label: 'activities', format: (v) => String(Math.round(v)) },
+    {
+      key: 'volumeKg',
+      label: 'volume',
+      // Tonnes, matching the Analytics headline — a five-digit axis label is
+      // exactly the kind of chrome §5 wants receding, not shouting.
+      format: (v) => {
+        const { value, unit } = formatVolumeLarge(v, units)
+        return `${value} ${unit}`
+      },
+    },
+    { key: 'sets', label: 'sets', format: (v) => String(Math.round(v)) },
+    { key: 'distanceKm', label: 'distance', format: (v) => `${v.toFixed(1)} km` },
+    { key: 'totalMinutes', label: 'time', format: (v) => `${(v / 60).toFixed(1)}h` },
+  ]
+}
 
 /**
  * One point per calendar month across ALL history, with the selected month
@@ -32,13 +42,16 @@ const METRICS: Array<{
 export function MonthlyTrendChart({
   series,
   selectedMonth,
+  units,
 }: {
   series: MonthlySeriesPoint[]
   /** Omitted on Analytics, where there is no month in focus to highlight. */
   selectedMonth?: Date
+  units: Units
 }) {
   const [metric, setMetric] = useState<TrendMetric>('activities')
   const titleId = useId()
+  const METRICS = metrics(units)
 
   // A single point is a number, not a trend.
   if (series.length < 2) return null

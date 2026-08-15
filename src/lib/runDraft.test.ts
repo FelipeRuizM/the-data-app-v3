@@ -268,3 +268,18 @@ describe('draftFromRun / buildRawRun — round-trip through the real fixture', (
     expect(rebuilt.raw.shoes).toBe('Adidas Ultraboost 21')
   })
 })
+
+describe('retired fields survive an edit (D-46, §0.3)', () => {
+  it('writes back every stored elevation and step count untouched', () => {
+    // `saveRun` replaces the whole record, so dropping these from the form
+    // without carrying them through would delete real data on the next edit.
+    for (const [id, raw] of Object.entries(fixtureRuns)) {
+      const original = normalizeRun(id, raw)!
+      const rebuilt = buildRawRun(draftFromRun(original, settings))
+      if (!rebuilt.ok) throw new Error(`expected success for ${id}`)
+      expect(rebuilt.raw.elevation_gain_m, id).toBe(raw.elevation_gain_m)
+      expect(rebuilt.raw.max_elevation_m, id).toBe(raw.max_elevation_m)
+      expect(rebuilt.raw.steps, id).toBe(raw.steps)
+    }
+  })
+})

@@ -147,18 +147,28 @@ describe('RunForm — create', () => {
     expect('calories' in raw).toBe(false)
   })
 
-  it('writes a typed 0 for steps — that is a real value, not a sentinel', async () => {
+  it('no longer asks for elevation or steps (D-46)', async () => {
+    renderForm('create')
+    await settled(() => screen.queryAllByRole('button', { name: /log run/i }).length)
+
+    for (const label of ['Steps', 'Elevation gain (m)', 'Max elevation (m)']) {
+      expect(screen.queryByLabelText(label), label).toBeNull()
+    }
+  })
+
+  it('writes nothing for the retired fields on a brand-new run', async () => {
     const user = userEvent.setup()
     renderForm('create')
     await settled(() => screen.queryAllByRole('button', { name: /log run/i }).length)
 
     await fillValidRun(user)
-    await user.type(screen.getByLabelText('Steps'), '0')
     await user.click(screen.getByRole('button', { name: /log run/i }))
 
     await waitFor(() => expect(updateCalls).toHaveLength(1))
     const raw = updateCalls[0]![runPathIn(updateCalls[0]!)] as Record<string, unknown>
-    expect(raw['steps']).toBe(0)
+    for (const key of ['steps', 'elevation_gain_m', 'max_elevation_m']) {
+      expect(key in raw, key).toBe(false)
+    }
   })
 
   it('prefills shoes and watch from the account defaults (D-16)', async () => {

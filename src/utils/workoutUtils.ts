@@ -58,7 +58,6 @@ export type RunTotals = {
   distanceKm: number
   /** Total seconds ÷ total km — a derived RATE, never a mean of per-run paces. */
   avgPaceSecPerKm: number | null
-  elevationGainM: number
   calories: number
 }
 
@@ -137,7 +136,6 @@ export function summariseMonth(profile: Profile, month: Date): MonthlySummary {
       // jog the same as a 20km long run.
       avgPaceSecPerKm:
         distanceKm > 0 && runSeconds > 0 ? runSeconds / distanceKm : null,
-      elevationGainM: monthRuns.reduce((n, r) => n + (r.elevationGainM ?? 0), 0),
       calories: monthRuns.reduce((n, r) => n + (r.calories ?? 0), 0),
     },
     monthWorkouts,

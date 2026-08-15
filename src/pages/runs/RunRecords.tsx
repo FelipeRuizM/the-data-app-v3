@@ -93,10 +93,6 @@ function formatRecord(r: RunRecord): string {
       return formatDistance(r.value)
     case 'longestDuration':
       return formatDuration(r.value / 60)
-    case 'mostElevation':
-      return `${Math.round(r.value)} m`
-    case 'mostSteps':
-      return r.value.toLocaleString('en-US')
   }
 }
 

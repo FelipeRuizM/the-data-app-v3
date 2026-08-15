@@ -1,19 +1,23 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Label } from '../../components/ui'
-import { ComboInput, PeoplePicker } from '../../components/ComboInput'
+import { PeoplePicker } from '../../components/ComboInput'
+import { SelectInput } from '../../components/SelectInput'
+import { StartTimeDisclosure } from '../../components/StartTimeDisclosure'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { StateBlock } from '../../components/StateBlock'
 import { useAuth } from '../../auth/hooks'
 import { useProfile } from '../../data/useProfile'
+import { formatDuration } from '../../lib/dates'
 import { deleteWorkout, namesNotIn, saveWorkout } from '../../lib/writes'
 import {
+  DURATION_CHOICES,
   buildRawWorkout,
   configIdsByName,
   exerciseIdsByName,
   draftFromWorkout,
   emptyExerciseGroup,
-  emptySet,
+  setLike,
   emptyWorkoutDraft,
   type DraftValidationError,
   type ExerciseGroupDraft,
@@ -239,38 +243,36 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Start">
-            <input
-              type="datetime-local"
-              value={draft.startLocal}
-              onChange={(e) => set({ startLocal: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="End">
-            <input
-              type="datetime-local"
-              value={draft.endLocal}
-              onChange={(e) => set({ endLocal: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ComboInput
-            label="Place"
-            value={draft.place}
-            onChange={(v) => set({ place: v })}
-            options={placeNames}
-            placeholder="Where?"
+          <DurationField
+            value={draft.durationMinutes}
+            onChange={(v) => set({ durationMinutes: v })}
           />
-          <ComboInput
+          <SelectInput
             label="Category"
             value={draft.category}
             onChange={(v) => set({ category: v })}
             options={categoryNames}
-            placeholder="Push, Pull, Legs…"
+            placeholder="Uncategorized"
+          />
+        </div>
+
+        {/* The date is pre-answered, not removed: it defaults to now, which is
+            right for a session you have just finished, and stays reachable for
+            the one you're catching up on (D-47). */}
+        <StartTimeDisclosure
+          value={draft.startLocal}
+          onChange={(v) => set({ startLocal: v })}
+        />
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <SelectInput
+            label="Place"
+            value={draft.place}
+            onChange={(v) => set({ place: v })}
+            options={placeNames}
+            placeholder="No place"
+            allowCreate
+            createLabel="Add a new place…"
           />
         </div>
 
@@ -284,6 +286,15 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
               className={inputClass}
             />
           </Field>
+          <Field label="Calories">
+            <input
+              inputMode="numeric"
+              value={draft.calories}
+              placeholder="Leave blank if not recorded"
+              onChange={(e) => set({ calories: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
         </div>
 
         <PeoplePicker
@@ -294,18 +305,7 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
       </section>
 
       <section className="flex flex-col gap-6">
-        <div className="flex items-baseline justify-between">
-          <Label as="h2">Exercises</Label>
-          <button
-            type="button"
-            onClick={() =>
-              set({ exercises: [...draft.exercises, emptyExerciseGroup()] })
-            }
-            className="cursor-pointer border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-accent uppercase"
-          >
-            + Exercise
-          </button>
-        </div>
+        <Label as="h2">Exercises</Label>
 
         {draft.exercises.map((group, gi) => (
           <fieldset key={gi} className="m-0 flex flex-col gap-3 border-0 p-0">
@@ -313,7 +313,7 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
 
             <div className="flex items-end gap-2">
               <div className="flex-1">
-                <ComboInput
+                <SelectInput
                   label={`Exercise ${gi + 1}`}
                   value={group.exercise.exerciseTitle}
                   onChange={(v) =>
@@ -322,7 +322,9 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
                     })
                   }
                   options={catalog}
-                  placeholder="Start typing…"
+                  placeholder="Pick an exercise"
+                  allowCreate
+                  createLabel="Add a new exercise…"
                 />
               </div>
               {draft.exercises.length > 1 ? (
@@ -367,7 +369,13 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
               <div>
                 <button
                   type="button"
-                  onClick={() => patchGroup(gi, { sets: [...group.sets, emptySet()] })}
+                  // Prefilled from the set above it — straight sets are the
+                  // overwhelming majority of the real log.
+                  onClick={() =>
+                    patchGroup(gi, {
+                      sets: [...group.sets, setLike(group.sets.at(-1))],
+                    })
+                  }
                   className="cursor-pointer border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-accent uppercase"
                 >
                   + Set
@@ -376,6 +384,20 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
             </div>
           </fieldset>
         ))}
+
+        {/* Below the list, not above it: you reach for this after logging what
+            you just did, so it should be where your eye already is. */}
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              set({ exercises: [...draft.exercises, emptyExerciseGroup()] })
+            }
+            className="cursor-pointer rounded-sm border border-rule bg-transparent px-3 py-2 font-mono text-label tracking-[0.12em] text-accent uppercase"
+          >
+            + Add exercise
+          </button>
+        </div>
       </section>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-rule pt-5">
@@ -418,6 +440,46 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label>{label}</Label>
       {children}
     </label>
+  )
+}
+
+/**
+ * Session length, as a pick rather than a keyboard (D-47).
+ *
+ * A duration that isn't one of the offered steps — an edited record whose
+ * timestamps say 67 minutes — is prepended rather than snapped, for the same
+ * reason `SelectInput` keeps an unknown stored value: rounding someone's data
+ * as a side effect of opening the edit form is not a rounding, it's a rewrite.
+ */
+function DurationField({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (next: string) => void
+}) {
+  const minutes = Number(value)
+  const known = DURATION_CHOICES.includes(minutes)
+  const choices =
+    value !== '' && Number.isFinite(minutes) && minutes > 0 && !known
+      ? [minutes, ...DURATION_CHOICES]
+      : DURATION_CHOICES
+
+  return (
+    <Field label="Duration">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+      >
+        <option value="">—</option>
+        {choices.map((m) => (
+          <option key={m} value={m}>
+            {formatDuration(m)}
+          </option>
+        ))}
+      </select>
+    </Field>
   )
 }
 

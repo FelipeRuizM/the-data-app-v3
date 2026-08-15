@@ -712,3 +712,120 @@ resolves to the name stored beside it. Anything else is re-stamped. "Has an id" 
 
 **Consequent ordering, which the exercise script's docs now state:** seed `/config`
 and decide `--clear-own-tier` FIRST, stamp ids SECOND.
+
+## D-45 · Workouts gain a `calories` field ✅
+Purely additive, and the least eventful decision here: absent on all 81 historical
+records, optional going forward, no migration (§0.3).
+
+It follows the **same 0-is-missing sentinel** as `avg_heart_rate` and the run fields
+(§3.2, §3.9) — a stored `0` normalizes to `null`, and the writer omits a typed `0`
+rather than storing one that would read back as absent anyway. That is not a
+generalisation for its own sake: it is what every other "not recorded" number in this
+schema already means, and letting one field disagree is how a `0` eventually gets
+averaged into something.
+
+Surfaced on the workout detail page and asked for on the form. **Deliberately not added
+to the monthly report** — the Workouts section is a four-card grid and a fifth card
+would sit alone on a row. It can join later if it earns the space.
+
+## D-46 · Elevation and steps are retired from runs — but never deleted ⚠
+The owner asked for both gone. The straightforward reading — drop them from the type
+layer — would have **destroyed real data**, and the mechanism is not obvious:
+`saveRun` writes `updates[path] = raw`, a full-record replace. A field the draft no
+longer carries is a field the next edit deletes. All 12 historical runs carry
+`elevation_gain_m`, `max_elevation_m` and `steps`.
+
+**Decision: retire at every surface, retain in the record.** Nothing renders,
+aggregates or asks for them — the form fields, both detail stats, the monthly
+elevation card, the run-list metric, and the `mostElevation` / `mostSteps` run records
+are all gone. `RunDraft` still carries the three values from the loaded record straight
+back to the database, untouched, and a test asserts that round-trip over every fixture
+run.
+
+So the app behaves exactly as asked, and §0.3 holds: no migration, nothing destroyed,
+and the whole thing is undone by re-adding the inputs. A new run writes none of them.
+
+`Run.elevationGainM` / `maxElevationM` / `steps` are marked **retained, not
+supported** — do not add a consumer.
+
+## D-47 · One duration replaces the start and end fields ✅
+Two `datetime-local` inputs were the most expensive thing on the form and the least
+informative: the answer to "when did it end" is always "when it started, plus how long
+it took". The form now defaults the start to **now** and asks only for a **duration**,
+picked from 5-minute steps.
+
+**The schema does not change.** `end_time` is *derived* — `start + duration`, written
+in the same `d MMM yyyy, HH:mm` format — so a new record stays byte-compatible with
+the original 81 (§3.1, §3.6). A test round-trips every fixture workout through
+`draftFromWorkout` → `buildRawWorkout` and asserts both timestamps come back
+unchanged.
+
+**One deliberate addition beyond the request: the start time stays reachable**, behind
+a collapsed "Change date & time" control. Removing it outright would make a session
+you forgot to log yesterday unloggable and a mistyped date unfixable — on an app whose
+entire purpose is a historical log. The default flow still asks exactly one question,
+which is what was wanted; the escape hatch costs one line of chrome and prevents two
+dead ends.
+
+An out-of-step duration on an existing record (67 minutes) is **offered as-is rather
+than snapped** to the nearest choice. Rounding someone's data as a side effect of
+opening the edit form is a rewrite, not a rounding.
+
+## D-48 · The explanatory prose comes out ✅
+Removed: the Streaks note, the Muscle-group balance note, the "Core and Other are
+excluded" line under the Training-balance radar, and every `description` on the admin
+panel including its page intro.
+
+The rules they described are all still true and still enforced in code — `weeklyStreaks`
+still passes `weekStartsOn: 0` explicitly, `radarGroups` still excludes Core and Other.
+What changed is that the page stopped narrating them. §5 asks for figures to be large
+and chrome to recede; a paragraph of justification above a stat block is chrome.
+
+`description` is now optional on `Section`, `StringListEditor` and `CategoryEditor`.
+
+## D-49 · A `<select>` wherever the value comes from a known set ✅
+Places, categories, run types, exercises, shoes, watches and difficulty were free-text
+`ComboInput`s built on `<datalist>`. On a phone that opens a keyboard for a value that
+is always one of five things, and typing a name from memory is the only way to produce
+a dangling join (§3.7).
+
+New `SelectInput`, with two rules that make it safe on existing records:
+
+1. **A stored value the catalog no longer holds stays selectable** and stays selected.
+   A retired category still sits on old records; dropping it from the list would
+   silently rewrite the record on the next save.
+2. **`allowCreate` preserves create-on-the-fly** for the per-user catalogs §4 requires
+   it on — places and exercises. Picking "add a new one" swaps in a text field.
+
+**Vocabularies the admin panel owns get no create option.** Inventing a category from a
+log form produces a name with no `/config` row, and therefore no colour and no id
+(D-43) — the form was previously happy to do this.
+
+`ComboInput` survives for the one genuine free-entry case: naming a brand-new global in
+`StringListEditor`, where there is no set to pick from.
+
+Reps, weight, heart rate, calories and a run's moving time stay as typed numbers. They
+are continuous values, not a known set, and the rule does not reach them.
+
+## D-50 · A new set inherits the previous one; the add button moves below the list ✅
+Two small changes to the same surface, both from the same observation: 1,027 of the
+1,274 real sets are `normal`, and a session is mostly the same numbers repeated.
+
+- **`setLike`** copies the previous set's weight, reps, duration and type into the new
+  one. A copy, not an alias — editing the new set must not edit the old one, which is
+  its own test.
+- **"+ Add exercise" moved below the exercise list.** You reach for it after logging
+  what you just did, so it belongs where your eye already is. A test asserts the
+  document order so it cannot drift back.
+
+## D-51 · Volume displays in tonnes ✅
+Career volume is a seven-digit number, and §5 puts it in a one-huge-figure stat block.
+`formatVolumeLarge` renders it as tonnes — one decimal below 100, none above — for the
+Analytics headline and the monthly trend chart's volume axis.
+
+**In lb mode it is short tons (2,000 lb), not tonnes.** A lb reader has no use for a
+metric tonne, and D-18 makes units a display-layer choice that has to stay internally
+consistent. Storage is unchanged and always `weight_kg`.
+
+`formatVolume` stays for the places where a kilogram figure is still the right
+granularity — session volume, per-exercise volume, PR values.

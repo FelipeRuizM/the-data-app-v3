@@ -119,6 +119,11 @@ export function WorkoutDetail() {
           value={workout.avgHeartRate === null ? '—' : String(workout.avgHeartRate)}
           unit={workout.avgHeartRate === null ? undefined : 'bpm'}
         />
+        <Stat
+          label="Calories"
+          value={workout.calories === null ? '—' : String(workout.calories)}
+          unit={workout.calories === null ? undefined : 'kcal'}
+        />
       </dl>
 
       {hasBodyweightSets && bodyweightKg === null ? (

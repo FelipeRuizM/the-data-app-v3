@@ -251,15 +251,6 @@ export function MonthlyReport() {
                 formatDelta={(s) => `${Math.round(s)}s`}
               />
               <StatCard
-                label="Elevation gain"
-                value={Math.round(current.runs.elevationGainM).toLocaleString('en-US')}
-                unit="m"
-                delta={computeDelta(
-                  current.runs.elevationGainM,
-                  previous.runs.elevationGainM,
-                )}
-              />
-              <StatCard
                 label="Calories"
                 value={Math.round(current.runs.calories).toLocaleString('en-US')}
                 delta={computeDelta(current.runs.calories, previous.runs.calories)}
@@ -298,7 +289,7 @@ export function MonthlyReport() {
 
         <section className="flex flex-col gap-6">
           <Label as="h2">Trends</Label>
-          <MonthlyTrendChart series={series} selectedMonth={month} />
+          <MonthlyTrendChart series={series} selectedMonth={month} units={units} />
         </section>
 
         <p className="m-0 border-t border-rule pt-4 text-xs text-ink-2">

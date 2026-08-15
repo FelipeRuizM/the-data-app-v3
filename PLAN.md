@@ -283,3 +283,38 @@ as broken data logic.
       category script additionally needs real /config rows to point at
 - [ ] Retire the D-32 cascade — only once every profile’s records carry ids
 - [x] `feat: category and run-type ids`
+
+## Phase 18 — Logging ergonomics and a data-model trim (D-45 … D-51)
+
+Owner-requested, not from the original brief. The log forms are the surface the app is
+actually used through, and most of this is about making them answerable one-handed.
+
+**Forms**
+
+- [x] `SelectInput` — a `<select>` wherever the value comes from a known set (D-49),
+      keeping an unknown stored value selectable and `allowCreate` for places and
+      exercises only
+- [x] Start defaults to now behind a disclosure; the form asks for a **duration** and
+      derives `end_time` (D-47) — round-tripped over every fixture workout
+- [x] A new set is prefilled from the previous one (D-50)
+- [x] "+ Add exercise" moved below the exercise list (D-50)
+- [x] Run difficulty is a 1–10 picker
+
+**Data model**
+
+- [x] `calories` on workouts — additive, same `0 → null` sentinel (D-45)
+- [x] Elevation and steps retired from runs at every surface, **retained in the
+      record** so an edit cannot delete them (D-46)
+
+**Analytics**
+
+- [x] Total volume in tonnes, short tons in lb mode (D-51)
+- [x] Explanatory prose removed from Streaks, Muscle-group balance, the radar and the
+      whole admin panel (D-48)
+
+- [x] `feat: logging ergonomics, workout calories, retired run fields`
+
+**Not done, deliberately:** workout calories is not a monthly-report stat card — the
+Workouts section is a four-card grid and a fifth would sit alone. The elevation and
+steps values are still in the database and still round-trip; only the app stopped
+using them.

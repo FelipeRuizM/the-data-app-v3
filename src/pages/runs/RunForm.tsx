@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Label } from '../../components/ui'
-import { ComboInput, PeoplePicker } from '../../components/ComboInput'
+import { PeoplePicker } from '../../components/ComboInput'
+import { SelectInput } from '../../components/SelectInput'
+import { StartTimeDisclosure } from '../../components/StartTimeDisclosure'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { StateBlock } from '../../components/StateBlock'
 import { useAuth } from '../../auth/hooks'
@@ -211,29 +213,27 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Start">
-            <input
-              type="datetime-local"
-              value={draft.startLocal}
-              onChange={(e) => set({ startLocal: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
-          <ComboInput
+          <SelectInput
             label="Type"
             value={draft.type}
             onChange={(v) => set({ type: v })}
             options={typeNames}
-            placeholder="Other, Light…"
+            placeholder="Untyped"
+          />
+          <SelectInput
+            label="Place"
+            value={draft.place}
+            onChange={(v) => set({ place: v })}
+            options={placeNames}
+            placeholder="No place"
+            allowCreate
+            createLabel="Add a new place…"
           />
         </div>
 
-        <ComboInput
-          label="Place"
-          value={draft.place}
-          onChange={(v) => set({ place: v })}
-          options={placeNames}
-          placeholder="Where?"
+        <StartTimeDisclosure
+          value={draft.startLocal}
+          onChange={(v) => set({ startLocal: v })}
         />
       </section>
 
@@ -292,37 +292,20 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
               className={inputClass}
             />
           </Field>
+          {/* 1–10 is a known set, so it picks rather than types. */}
           <Field label="Difficulty (1–10)">
-            <input
-              inputMode="numeric"
+            <select
               value={draft.difficulty}
               onChange={(e) => set({ difficulty: e.target.value })}
               className={inputClass}
-            />
-          </Field>
-          <Field label="Elevation gain (m)">
-            <input
-              inputMode="numeric"
-              value={draft.elevationGainM}
-              onChange={(e) => set({ elevationGainM: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Max elevation (m)">
-            <input
-              inputMode="numeric"
-              value={draft.maxElevationM}
-              onChange={(e) => set({ maxElevationM: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Steps">
-            <input
-              inputMode="numeric"
-              value={draft.steps}
-              onChange={(e) => set({ steps: e.target.value })}
-              className={inputClass}
-            />
+            >
+              <option value="">—</option>
+              {DIFFICULTY_CHOICES.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
       </section>
@@ -330,17 +313,19 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
       <section className="flex flex-col gap-4">
         <Label as="h2">Gear</Label>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ComboInput
+          <SelectInput
             label="Shoes"
             value={draft.shoes}
             onChange={(v) => set({ shoes: v })}
             options={ready.config.shoes}
+            placeholder="None"
           />
-          <ComboInput
+          <SelectInput
             label="Watch"
             value={draft.watch}
             onChange={(v) => set({ watch: v })}
             options={ready.config.watches}
+            placeholder="None"
           />
         </div>
 
@@ -384,6 +369,8 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
 
 const inputClass =
   'w-full rounded-sm border border-rule bg-transparent px-3 py-2 text-sm text-ink-0 placeholder:text-ink-3'
+
+const DIFFICULTY_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

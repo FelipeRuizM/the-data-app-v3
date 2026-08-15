@@ -48,6 +48,8 @@ export type RawWorkout = {
   gym?: string
   category?: string
   avg_heart_rate?: number
+  /** ADDITIVE (D-45). Absent on all 81 historical records — purely new, no migration. */
+  calories?: number
   people?: RawList<string>
   exercises?: RawList<RawExerciseEntry>
 }
@@ -66,6 +68,12 @@ export type RawRun = {
   avg_heart_rate?: number
   calories?: number
   difficulty?: number
+  /**
+   * RETIRED from the app (D-46) — no longer asked for, aggregated or displayed.
+   * They stay in this type, and on the 12 historical records, because §0.3
+   * forbids destroying stored data: a save is a full-record replace, so the
+   * edit form carries these through untouched rather than deleting them.
+   */
   elevation_gain_m?: number
   max_elevation_m?: number
   steps?: number
@@ -152,6 +160,8 @@ export type Workout = {
   categoryId: string | null
   /** `0` in the database means "not recorded" and arrives here as null. */
   avgHeartRate: number | null
+  /** Same 0-is-missing rule as runs (D-45). Null on every historical record. */
+  calories: number | null
   people: string[]
   exercises: ExerciseEntry[]
   /** Null when non-positive or implausible (D-19). */
@@ -177,6 +187,11 @@ export type Run = {
   avgHeartRate: number | null
   calories: number | null
   difficulty: number | null
+  /**
+   * RETIRED (D-46). Nothing renders or aggregates these — they exist only so
+   * `draftFromRun` → `buildRawRun` round-trips them back to the database
+   * untouched. Do not add a consumer; the field is retained, not supported.
+   */
   elevationGainM: number | null
   maxElevationM: number | null
   steps: number | null

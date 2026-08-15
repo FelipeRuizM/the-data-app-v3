@@ -46,21 +46,57 @@ export type ExerciseGroupDraft = {
 export type WorkoutDraft = {
   title: string
   description: string
-  /** `datetime-local` value: "YYYY-MM-DDTHH:mm". */
+  /**
+   * `datetime-local` value: "YYYY-MM-DDTHH:mm". Defaults to now and is edited
+   * behind a disclosure rather than as a field of its own (D-47) — the common
+   * case is logging a session you have just finished.
+   */
   startLocal: string
-  endLocal: string
+  /**
+   * Whole minutes. `end_time` is DERIVED from this (D-47) — the schema still
+   * stores both timestamps, so nothing about the record shape changes; the form
+   * just stopped asking a question whose answer is start + duration.
+   */
+  durationMinutes: string
   /** Empty writes `""` — `gym` is ALWAYS present in the schema, never omitted. */
   place: string
   /** Empty omits `category` (14/81 real records have no category). */
   category: string
   /** Empty, or "0", omits `avg_heart_rate` — 0 is the "not recorded" sentinel. */
   avgHeartRate: string
+  /** Same sentinel rule as heart rate. New field, absent everywhere (D-45). */
+  calories: string
   people: string[]
   exercises: ExerciseGroupDraft[]
 }
 
+/** What a new workout defaults to, in minutes. */
+export const DEFAULT_DURATION_MINUTES = 60
+
+/**
+ * The offered durations, 5-minute steps up to four hours. A `<select>` rather
+ * than a number field because a session length is a pick from a known set in
+ * practice, and this is the one field every log now has to answer.
+ */
+export const DURATION_CHOICES: readonly number[] = Array.from(
+  { length: 48 },
+  (_, i) => (i + 1) * 5,
+)
+
 export function emptySet(): SetDraft {
   return { setType: 'normal', reps: '', weight: '', durationSeconds: '' }
+}
+
+/**
+ * A new set inherits the previous one's numbers.
+ *
+ * Straight sets are the overwhelming majority of the real log — 1,027 of 1,274
+ * sets are `normal` — so re-typing the same weight and reps four times is the
+ * single most repetitive act in the app. The values are a starting point, not a
+ * commitment: every field is still editable.
+ */
+export function setLike(previous: SetDraft | undefined): SetDraft {
+  return previous ? { ...previous } : emptySet()
 }
 
 export function emptyExerciseGroup(): ExerciseGroupDraft {
@@ -94,10 +130,11 @@ export function emptyWorkoutDraft(defaultStart?: Date): WorkoutDraft {
     title: '',
     description: '',
     startLocal: toLocalInputValue(start),
-    endLocal: toLocalInputValue(start),
+    durationMinutes: String(DEFAULT_DURATION_MINUTES),
     place: '',
     category: '',
     avgHeartRate: '',
+    calories: '',
     people: [],
     exercises: [emptyExerciseGroup()],
   }
@@ -109,10 +146,22 @@ export function draftFromWorkout(w: Workout): WorkoutDraft {
     title: w.title,
     description: w.description,
     startLocal: toLocalInputValue(w.startTime),
-    endLocal: toLocalInputValue(w.endTime ?? w.startTime),
+    // Measured off the stored timestamps rather than `durationMinutes`, which
+    // nulls out an implausible span (D-19) — editing such a record should show
+    // what it actually holds, not an empty field.
+    durationMinutes:
+      w.endTime === null
+        ? ''
+        : String(
+            Math.max(
+              0,
+              Math.round((w.endTime.getTime() - w.startTime.getTime()) / 60_000),
+            ),
+          ),
     place: w.place ?? '',
     category: w.category ?? '',
     avgHeartRate: w.avgHeartRate === null ? '' : String(w.avgHeartRate),
+    calories: w.calories === null ? '' : String(w.calories),
     people: w.people,
     exercises: w.exercises.map((e) => ({
       exercise: { exerciseTitle: e.exerciseTitle, notes: e.notes ?? '' },
@@ -186,15 +235,18 @@ export function buildRawWorkout(
   const start = fromLocalInputValue(draft.startLocal)
   if (!start) errors.push({ field: 'startLocal', message: 'Start time is required.' })
 
-  const end = fromLocalInputValue(draft.endLocal)
-  if (!end) errors.push({ field: 'endLocal', message: 'End time is required.' })
-
-  if (start && end && end.getTime() <= start.getTime()) {
-    errors.push({
-      field: 'endLocal',
-      message: 'End time must be after the start time.',
-    })
+  // `end_time` is derived, so the only failure mode left is a duration that
+  // isn't a positive number of minutes — the old "end before start" error
+  // cannot happen by construction (D-47).
+  const minutes = Number(draft.durationMinutes)
+  const validMinutes =
+    draft.durationMinutes.trim() !== '' && Number.isFinite(minutes) && minutes > 0
+  if (!validMinutes) {
+    errors.push({ field: 'durationMinutes', message: 'Duration is required.' })
   }
+
+  const end =
+    start && validMinutes ? new Date(start.getTime() + minutes * 60_000) : null
 
   const exerciseGroups = draft.exercises.filter(
     (g) => g.exercise.exerciseTitle.trim() !== '',
@@ -238,6 +290,13 @@ export function buildRawWorkout(
   const hr = Number(draft.avgHeartRate)
   if (draft.avgHeartRate.trim() !== '' && Number.isFinite(hr) && hr > 0) {
     raw.avg_heart_rate = hr
+  }
+
+  // New field (D-45), and it follows the same sentinel rule: a typed 0 would
+  // read back as null anyway, so it is omitted rather than stored.
+  const calories = Number(draft.calories)
+  if (draft.calories.trim() !== '' && Number.isFinite(calories) && calories > 0) {
+    raw.calories = calories
   }
 
   if (draft.people.length > 0) raw.people = [...draft.people]

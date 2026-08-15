@@ -47,14 +47,6 @@ export function MonthRunList({
                 <Metric value={formatPace(r.paceSecPerKm)} unit="/km" />
                 <Metric value={formatDuration(r.durationMinutes)} />
                 <Metric
-                  value={
-                    r.elevationGainM === null
-                      ? '—'
-                      : String(Math.round(r.elevationGainM))
-                  }
-                  unit="m"
-                />
-                <Metric
                   value={r.avgHeartRate === null ? '—' : String(r.avgHeartRate)}
                   unit="bpm"
                 />

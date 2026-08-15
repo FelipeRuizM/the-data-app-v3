@@ -7,6 +7,8 @@ import {
   emptyExerciseGroup,
   emptySet,
   emptyWorkoutDraft,
+  setLike,
+  type SetDraft,
   type WorkoutDraft,
   type BuildResult,
 } from './workoutDraft'
@@ -19,10 +21,11 @@ function minimalValidDraft(over: Partial<WorkoutDraft> = {}): WorkoutDraft {
     title: 'Leg day',
     description: '',
     startLocal: '2026-04-08T16:50',
-    endLocal: '2026-04-08T17:50',
+    durationMinutes: '60',
     place: '',
     category: '',
     avgHeartRate: '',
+    calories: '',
     people: [],
     exercises: [
       {
@@ -44,26 +47,15 @@ describe('buildRawWorkout — validation', () => {
     expect(fields).toContain('exercises')
   })
 
-  it('requires end to be after start', () => {
-    const result = buildRawWorkout(
-      minimalValidDraft({
-        startLocal: '2026-04-08T17:00',
-        endLocal: '2026-04-08T16:00',
-      }),
-    )
+  it('requires a duration', () => {
+    const result = buildRawWorkout(minimalValidDraft({ durationMinutes: '' }))
     expect(result.ok).toBe(false)
     if (result.ok) throw new Error('expected failure')
-    expect(result.errors.some((e) => e.field === 'endLocal')).toBe(true)
+    expect(result.errors.some((e) => e.field === 'durationMinutes')).toBe(true)
   })
 
-  it('rejects end equal to start — a zero-length session', () => {
-    const result = buildRawWorkout(
-      minimalValidDraft({
-        startLocal: '2026-04-08T17:00',
-        endLocal: '2026-04-08T17:00',
-      }),
-    )
-    expect(result.ok).toBe(false)
+  it('rejects a zero-length session', () => {
+    expect(buildRawWorkout(minimalValidDraft({ durationMinutes: '0' })).ok).toBe(false)
   })
 
   it('requires at least one exercise with a title', () => {
@@ -345,9 +337,6 @@ describe('buildRawWorkout — exercise_id is written ALONGSIDE the title', () =>
     const draft = emptyWorkoutDraft(new Date(2026, 3, 8, 16, 50))
     draft.title = 'Session'
     draft.place = 'Gym A'
-    // emptyWorkoutDraft starts and ends at the same instant; a workout needs a
-    // positive duration to validate (D-19).
-    draft.endLocal = draft.endLocal.replace('16:50', '17:50')
     draft.exercises = [
       {
         exercise: { exerciseTitle: title, notes: '' },
@@ -399,7 +388,6 @@ describe('buildRawWorkout — category_id is written ALONGSIDE the name (D-42)',
     draft.title = 'Session'
     draft.place = 'Gym A'
     draft.category = category
-    draft.endLocal = draft.endLocal.replace('16:50', '17:50')
     draft.exercises = [
       {
         exercise: { exerciseTitle: 'Squat', notes: '' },
@@ -429,5 +417,94 @@ describe('buildRawWorkout — category_id is written ALONGSIDE the name (D-42)',
     // legal shape — never an empty string, never a placeholder id (§3.1).
     expect(raw(built).category).toBeUndefined()
     expect(raw(built).category_id).toBeUndefined()
+  })
+})
+
+describe('duration replaces the end-time field (D-47)', () => {
+  const raw = (r: BuildResult) => (r as { ok: true; raw: RawWorkout }).raw
+
+  it('derives end_time from start + duration, in the stored format', () => {
+    const built = buildRawWorkout(
+      minimalValidDraft({ startLocal: '2026-04-08T16:50', durationMinutes: '70' }),
+    )
+    expect(raw(built).start_time).toBe('8 Apr 2026, 16:50')
+    expect(raw(built).end_time).toBe('8 Apr 2026, 18:00')
+  })
+
+  it('carries the derived end across midnight and a month boundary', () => {
+    const built = buildRawWorkout(
+      minimalValidDraft({ startLocal: '2026-04-30T23:30', durationMinutes: '60' }),
+    )
+    // Unpadded day, three-letter English month, HH:mm, no seconds (§3.6).
+    expect(raw(built).end_time).toBe('1 May 2026, 00:30')
+  })
+
+  it('a new draft is submittable without touching the date at all', () => {
+    // The whole point of D-47: log a session you just finished by answering
+    // title, exercises and sets. Nothing else is required.
+    const draft = emptyWorkoutDraft(new Date(2026, 3, 8, 16, 50))
+    draft.title = 'Leg day'
+    draft.exercises = [
+      {
+        exercise: { exerciseTitle: 'Squat (Barbell)', notes: '' },
+        sets: [{ setType: 'normal', reps: '5', weight: '100', durationSeconds: '' }],
+      },
+    ]
+    const built = buildRawWorkout(draft)
+    expect(built.ok).toBe(true)
+    expect(raw(built).end_time).toBe('8 Apr 2026, 17:50')
+  })
+
+  it('round-trips a real record through draft and back without moving its end', () => {
+    for (const [id, rawWorkout] of Object.entries(fixtureWorkouts)) {
+      const workout = normalizeWorkout(id, rawWorkout)!
+      const rebuilt = buildRawWorkout(draftFromWorkout(workout))
+      if (!rebuilt.ok) throw new Error(`expected success for ${id}`)
+      expect(rebuilt.raw.start_time, id).toBe(rawWorkout.start_time)
+      expect(rebuilt.raw.end_time, id).toBe(rawWorkout.end_time)
+    }
+  })
+})
+
+describe('setLike — a new set inherits the previous one', () => {
+  it('copies every value, so a straight set is one tap', () => {
+    const previous: SetDraft = {
+      setType: 'normal',
+      reps: '8',
+      weight: '80',
+      durationSeconds: '45',
+    }
+    expect(setLike(previous)).toEqual(previous)
+  })
+
+  it('does not alias the previous set — editing one must not edit both', () => {
+    const previous = emptySet()
+    const next = setLike(previous)
+    next.reps = '12'
+    expect(previous.reps).toBe('')
+  })
+
+  it('falls back to an empty set for the first set of an exercise', () => {
+    expect(setLike(undefined)).toEqual(emptySet())
+  })
+})
+
+describe('workout calories (D-45)', () => {
+  const raw = (r: BuildResult) => (r as { ok: true; raw: RawWorkout }).raw
+
+  it('writes a real value', () => {
+    expect(raw(buildRawWorkout(minimalValidDraft({ calories: '420' }))).calories).toBe(
+      420,
+    )
+  })
+
+  it('omits the field when blank', () => {
+    expect('calories' in raw(buildRawWorkout(minimalValidDraft()))).toBe(false)
+  })
+
+  it('omits a typed 0 — it is the "not recorded" sentinel, not a real zero', () => {
+    expect(
+      'calories' in raw(buildRawWorkout(minimalValidDraft({ calories: '0' }))),
+    ).toBe(false)
   })
 })

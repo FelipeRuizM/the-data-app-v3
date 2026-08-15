@@ -1,4 +1,4 @@
-import { formatDistance, formatVolume } from '../lib/units'
+import { formatDistance, formatVolume, formatVolumeLarge } from '../lib/units'
 import { colorTokenFor, type AppConfig } from '../lib/config'
 import { workoutVolumeKg } from '../lib/normalize'
 import type { ActivityItem, Profile } from '../types'
@@ -61,16 +61,17 @@ const workouts: CategoryDefinition = {
       people: w.people,
       avgHeartRate: w.avgHeartRate,
     })),
+  // Tonnes, not kilograms: career volume is a seven-digit number and the
+  // headline is a stat figure, not a table cell.
   headline: (profile) => ({
     label: 'Total volume',
-    value: formatVolume(
+    ...formatVolumeLarge(
       profile.workouts.reduce(
         (kg, w) => kg + workoutVolumeKg(w, profile.settings.bodyweightKg),
         0,
       ),
       profile.settings.units,
     ),
-    unit: profile.settings.units,
   }),
 }
 

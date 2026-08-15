@@ -252,6 +252,9 @@ export function normalizeWorkout(id: string, raw: RawWorkout): Workout | null {
     category: str(raw.category),
     categoryId: str(raw.category_id),
     avgHeartRate: zeroIsMissing(raw.avg_heart_rate),
+    // Same sentinel as everywhere else: a stored 0 means "not recorded", never
+    // a session that burned nothing (§3.9, D-45).
+    calories: zeroIsMissing(raw.calories),
     people: toList(raw.people)
       .map((p) => str(p))
       .filter((p): p is string => p !== null),
@@ -305,6 +308,8 @@ export function normalizeRun(id: string, raw: RawRun): Run | null {
     avgHeartRate: zeroIsMissing(raw.avg_heart_rate),
     calories: zeroIsMissing(raw.calories),
     difficulty: num(raw.difficulty),
+    // Retained, not supported (D-46) — parsed only so an edit can write them
+    // back unchanged. Nothing downstream reads these three.
     elevationGainM: num(raw.elevation_gain_m),
     maxElevationM: num(raw.max_elevation_m),
     steps: num(raw.steps),

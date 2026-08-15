@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button, Chip, Label } from '../components/ui'
-import { ComboInput } from '../components/ComboInput'
+import { SelectInput } from '../components/SelectInput'
 import { StateBlock } from '../components/StateBlock'
 import { Section, SaveNote } from '../components/settings/Section'
 import { useSave } from '../components/settings/useSave'
@@ -280,17 +280,19 @@ function DefaultGear({
       description="Prefilled on a new run. You can still change either on the run itself."
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <ComboInput
+        <SelectInput
           label="Default shoes"
           value={gear.shoes}
           onChange={(v) => setGear({ ...gear, shoes: v })}
           options={shoes}
+          placeholder="None"
         />
-        <ComboInput
+        <SelectInput
           label="Default watch"
           value={gear.watch}
           onChange={(v) => setGear({ ...gear, watch: v })}
           options={watches}
+          placeholder="None"
         />
       </div>
       <div className="flex items-center gap-3">

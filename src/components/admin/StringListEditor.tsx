@@ -26,7 +26,7 @@ export function StringListEditor({
   blockRemove,
 }: {
   title: string
-  description: string
+  description?: string | undefined
   values: string[]
   onSave: (next: string[]) => Promise<unknown>
   /** Offered in the add field. Typing something new is still allowed. */

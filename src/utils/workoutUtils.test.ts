@@ -42,6 +42,7 @@ function workout(start: Date, over: Partial<Workout> = {}): Workout {
     categoryId: null,
     category: null,
     avgHeartRate: null,
+    calories: null,
     people: [],
     exercises: [
       { exerciseId: null, exerciseTitle: 'Squat', notes: null, sets: [set()] },
@@ -502,7 +503,6 @@ describe('against the real fixture', () => {
         current.workouts.volumeKg,
         current.workouts.reps,
         current.runs.distanceKm,
-        current.runs.elevationGainM,
         current.runs.calories,
       ]) {
         expect(Number.isNaN(v)).toBe(false)

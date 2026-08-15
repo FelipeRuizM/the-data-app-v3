@@ -181,10 +181,10 @@ describe('MonthlyReport — muscle group charts', () => {
     )
   })
 
-  it('states that Core and Other are excluded from the radar', async () => {
+  it('carries no explanatory note under the radar (D-48)', async () => {
     renderAt(busiestParam)
-    await settled(() => screen.queryAllByText(/Core and Other are excluded/i).length)
-    expect(screen.getByText(/Core and Other are excluded/i)).toBeInTheDocument()
+    await settled(() => screen.queryAllByText('Training balance').length)
+    expect(screen.queryByText(/Core and Other are excluded/i)).not.toBeInTheDocument()
   })
 })
 

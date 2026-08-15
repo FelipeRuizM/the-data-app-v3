@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../ui'
-import { ComboInput } from '../ComboInput'
+import { SelectInput } from '../SelectInput'
 import { Section, SaveNote } from './Section'
 import { useSave } from './useSave'
 import { saveSettings } from '../../lib/settingsWrites'
@@ -115,7 +115,7 @@ export function FeaturedExercises({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <ComboInput
+          <SelectInput
             label="Add an exercise"
             value={typed}
             onChange={(v) => {
@@ -123,7 +123,7 @@ export function FeaturedExercises({
               setProblem(null)
             }}
             options={catalog}
-            placeholder="Start typing…"
+            placeholder="Pick an exercise"
           />
         </div>
         <Button onClick={add}>Add to featured</Button>

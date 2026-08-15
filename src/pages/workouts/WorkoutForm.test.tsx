@@ -77,6 +77,29 @@ const settled = (find: () => number) =>
 const workoutPathIn = (updates: Record<string, unknown>) =>
   Object.keys(updates).find((k) => k.includes('/workouts/'))!
 
+type User = ReturnType<typeof userEvent.setup>
+
+/** The start timestamp lives behind a disclosure now (D-47). */
+async function setStart(user: User, value: string) {
+  await user.click(screen.getByRole('button', { name: /change date & time/i }))
+  const start = screen.getByLabelText('Started') as HTMLInputElement
+  await user.clear(start)
+  await user.type(start, value)
+}
+
+const setDuration = (user: User, minutes: string) =>
+  user.selectOptions(screen.getByLabelText('Duration'), minutes)
+
+/** Pick an existing catalog entry; every one of these fields is a select now. */
+const pick = (user: User, label: string | RegExp, value: string) =>
+  user.selectOptions(screen.getByLabelText(label), value)
+
+/** The create-on-the-fly escape hatch: choose "add new", then type. */
+async function pickNew(user: User, label: string | RegExp, value: string) {
+  await user.selectOptions(screen.getByLabelText(label), '::create-new::')
+  await user.type(screen.getByLabelText(label), value)
+}
+
 beforeEach(() => {
   currentUser = { uid: OWNER, email: 'owner@example.test' }
   rolesEntry = null
@@ -111,17 +134,13 @@ describe('WorkoutForm — create', () => {
     )
 
     await user.type(screen.getByLabelText('Title'), 'Leg day')
-    await user.type(screen.getByLabelText('Exercise 1'), 'Squat (Barbell)')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
     await user.type(screen.getByLabelText(/Set 1 weight/), '100')
     await user.type(screen.getByLabelText('Set 1 reps'), '5')
 
-    // Default start/end are equal, which is correctly rejected — set a real end.
-    const end = screen.getByLabelText('End') as HTMLInputElement
-    await user.clear(end)
-    await user.type(end, '2026-04-08T18:00')
-    const start = screen.getByLabelText('Start') as HTMLInputElement
-    await user.clear(start)
-    await user.type(start, '2026-04-08T16:50')
+    // end_time is DERIVED from start + duration now (D-47) — 16:50 + 70m.
+    await setStart(user, '2026-04-08T16:50')
+    await setDuration(user, '70')
 
     await user.click(screen.getByRole('button', { name: /log workout/i }))
 
@@ -147,14 +166,8 @@ describe('WorkoutForm — create', () => {
     )
 
     await user.type(screen.getByLabelText('Title'), 'Pull day')
-    await user.type(screen.getByLabelText('Exercise 1'), 'Pull Up')
+    await pick(user, 'Exercise 1', 'Pull Up')
     await user.type(screen.getByLabelText('Set 1 reps'), '8')
-    const end = screen.getByLabelText('End') as HTMLInputElement
-    await user.clear(end)
-    await user.type(end, '2026-04-08T18:00')
-    const start = screen.getByLabelText('Start') as HTMLInputElement
-    await user.clear(start)
-    await user.type(start, '2026-04-08T16:50')
 
     await user.click(screen.getByRole('button', { name: /log workout/i }))
     await waitFor(() => expect(updateCalls).toHaveLength(1))
@@ -172,15 +185,9 @@ describe('WorkoutForm — create', () => {
     )
 
     await user.type(screen.getByLabelText('Title'), 'Leg day')
-    await user.type(screen.getByLabelText('Place'), 'Brand New Gym')
-    await user.type(screen.getByLabelText('Exercise 1'), 'Squat (Barbell)')
+    await pickNew(user, 'Place', 'Brand New Gym')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
     await user.type(screen.getByLabelText('Set 1 reps'), '5')
-    const end = screen.getByLabelText('End') as HTMLInputElement
-    await user.clear(end)
-    await user.type(end, '2026-04-08T18:00')
-    const start = screen.getByLabelText('Start') as HTMLInputElement
-    await user.clear(start)
-    await user.type(start, '2026-04-08T16:50')
 
     await user.click(screen.getByRole('button', { name: /log workout/i }))
     await waitFor(() => expect(updateCalls).toHaveLength(1))
@@ -199,15 +206,9 @@ describe('WorkoutForm — create', () => {
     )
 
     await user.type(screen.getByLabelText('Title'), 'Leg day')
-    await user.type(screen.getByLabelText('Place'), 'Place A')
-    await user.type(screen.getByLabelText('Exercise 1'), 'Squat (Barbell)')
+    await pick(user, 'Place', 'Place A')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
     await user.type(screen.getByLabelText('Set 1 reps'), '5')
-    const end = screen.getByLabelText('End') as HTMLInputElement
-    await user.clear(end)
-    await user.type(end, '2026-04-08T18:00')
-    const start = screen.getByLabelText('Start') as HTMLInputElement
-    await user.clear(start)
-    await user.type(start, '2026-04-08T16:50')
 
     await user.click(screen.getByRole('button', { name: /log workout/i }))
     await waitFor(() => expect(updateCalls).toHaveLength(1))
@@ -223,20 +224,90 @@ describe('WorkoutForm — create', () => {
     )
 
     await user.type(screen.getByLabelText('Title'), 'Leg day')
-    await user.type(screen.getByLabelText('Exercise 1'), 'Squat (Barbell)')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
     await user.type(screen.getByLabelText('Set 1 reps'), '5')
-    const end = screen.getByLabelText('End') as HTMLInputElement
-    await user.clear(end)
-    await user.type(end, '2026-04-08T18:00')
-    const start = screen.getByLabelText('Start') as HTMLInputElement
-    await user.clear(start)
-    await user.type(start, '2026-04-08T16:50')
 
     await user.click(screen.getByRole('button', { name: /log workout/i }))
 
     expect(await screen.findByText(/PERMISSION_DENIED/)).toBeInTheDocument()
     // Still on the form, not navigated away.
     expect(screen.queryByText('detail page')).not.toBeInTheDocument()
+  })
+})
+
+describe('WorkoutForm — logging ergonomics (D-47, D-50)', () => {
+  it('puts the logged exercises ABOVE the add button', async () => {
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Exercise 1').length)
+
+    const addButton = screen.getByRole('button', { name: /add exercise/i })
+    const firstExercise = screen.getByLabelText('Exercise 1')
+    // You reach for "add" after logging what you just did, so it has to sit
+    // where your eye already is — below the list, not above it.
+    expect(
+      firstExercise.compareDocumentPosition(addButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('prefills a new set from the one above it', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Exercise 1').length)
+
+    await user.type(screen.getByLabelText(/Set 1 weight/), '80')
+    await user.type(screen.getByLabelText('Set 1 reps'), '8')
+    await user.selectOptions(screen.getByLabelText('Set 1 type'), 'warmup')
+
+    await user.click(screen.getByRole('button', { name: /\+ set/i }))
+
+    expect((screen.getByLabelText(/Set 2 weight/) as HTMLInputElement).value).toBe('80')
+    expect((screen.getByLabelText('Set 2 reps') as HTMLInputElement).value).toBe('8')
+    expect((screen.getByLabelText('Set 2 type') as HTMLSelectElement).value).toBe(
+      'warmup',
+    )
+  })
+
+  it('editing a prefilled set does not change the one it came from', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Exercise 1').length)
+
+    await user.type(screen.getByLabelText('Set 1 reps'), '8')
+    await user.click(screen.getByRole('button', { name: /\+ set/i }))
+    await user.clear(screen.getByLabelText('Set 2 reps'))
+    await user.type(screen.getByLabelText('Set 2 reps'), '6')
+
+    expect((screen.getByLabelText('Set 1 reps') as HTMLInputElement).value).toBe('8')
+  })
+
+  it('writes calories when given, and omits the field otherwise (D-45)', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(
+      () => screen.queryAllByRole('button', { name: /log workout/i }).length,
+    )
+
+    await user.type(screen.getByLabelText('Title'), 'Leg day')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
+    await user.type(screen.getByLabelText('Set 1 reps'), '5')
+    await user.type(screen.getByLabelText('Calories'), '420')
+
+    await user.click(screen.getByRole('button', { name: /log workout/i }))
+    await waitFor(() => expect(updateCalls).toHaveLength(1))
+
+    const updates = updateCalls[0]!
+    expect(
+      (updates[workoutPathIn(updates)] as Record<string, unknown>)['calories'],
+    ).toBe(420)
+  })
+
+  it('never shows a start or end field by default', async () => {
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Duration').length)
+    expect(screen.queryByLabelText('End')).toBeNull()
+    expect(screen.queryByLabelText('Start')).toBeNull()
+    expect(screen.queryByLabelText('Started')).toBeNull()
   })
 })
 
