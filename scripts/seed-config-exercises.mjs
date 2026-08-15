@@ -30,6 +30,10 @@
  * requires an account whose /roles entry says admin, so sign in as the owner:
  *
  *   SEED_EMAIL=owner@example.com SEED_PASSWORD=… node scripts/… --apply
+ *
+ * Or put SEED_EMAIL / SEED_PASSWORD in .env.local and drop them afterwards.
+ * There is no unauthenticated mode: both reads are gated by the rules too, so
+ * even the dry run has to sign in.
  */
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
@@ -58,10 +62,24 @@ const env = readEnvLocal()
 const OWNER_UID = env.VITE_OWNER_UID
 if (!OWNER_UID) fail('VITE_OWNER_UID is missing from .env.local')
 
-const email = process.env.SEED_EMAIL
-const password = process.env.SEED_PASSWORD
-if (APPLY && (!email || !password)) {
-  fail('--apply needs SEED_EMAIL and SEED_PASSWORD for an admin account')
+/**
+ * Credentials come from the environment, or from `.env.local` as a fallback.
+ *
+ * The fallback exists because BOTH reads here are gated — `/config` needs a
+ * signed-in account with a `/roles` entry, and `users/{uid}` needs to be that
+ * uid — so there is no useful unauthenticated mode, not even the dry run.
+ * `.env.local` is gitignored and already holds the Firebase config, so it is
+ * the one place a credential can sit without reaching git.
+ *
+ * Delete the two lines once the seed has run. This is a one-off script.
+ */
+const email = process.env.SEED_EMAIL ?? env.SEED_EMAIL
+const password = process.env.SEED_PASSWORD ?? env.SEED_PASSWORD
+if (!email || !password) {
+  fail(
+    'needs SEED_EMAIL and SEED_PASSWORD (env vars, or lines in .env.local) ' +
+      'for an admin account — every read here requires auth',
+  )
 }
 
 function fail(message) {
@@ -118,12 +136,8 @@ const app = initializeApp({
   appId: env.VITE_FIREBASE_APP_ID,
 })
 
-if (email && password) {
-  await signInWithEmailAndPassword(getAuth(app), email, password)
-  console.log(`  signed in as ${email}`)
-} else {
-  console.log('  not signed in — dry run only')
-}
+await signInWithEmailAndPassword(getAuth(app), email, password)
+console.log(`  signed in as ${email}`)
 
 const db = getDatabase(app)
 const read = async (path) => {
