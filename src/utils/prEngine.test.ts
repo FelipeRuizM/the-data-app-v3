@@ -41,6 +41,7 @@ function workout(
     avgHeartRate: null,
     people: [],
     exercises: exercises.map((e) => ({
+      exerciseId: null,
       exerciseTitle: e.title,
       notes: null,
       sets: e.sets.map((s, i) => ({ ...s, setIndex: s.setIndex || i })),

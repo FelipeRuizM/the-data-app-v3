@@ -453,9 +453,19 @@ Rules:
 
 ### 3.7 Referential integrity
 
-Joins are **by name string**, not by ID. The brief reports that every
-`exercise_title`, `people` entry, and `gym`/`location` currently resolves against its
-lookup table (the one empty-string gym aside). **Do not assume that holds forever.**
+Joins are **by name string**, not by ID — with one exception, added additively:
+
+> **Exercises also carry `exercise_id` (D-40).** A workout entry stores the catalog
+> key *alongside* `exercise_title`, never instead of it. The parse layer resolves
+> **id → name → merged catalog**, so a renamed catalog row is picked up without any
+> record being rewritten, while D-20's "the user's entry wins on a name collision"
+> still applies. An entry with no id, or an id that resolves to nothing, falls back to
+> the name join exactly as before. **Places, people, categories and run types remain
+> name-joined** — their cascades already work.
+
+The brief reports that every `exercise_title`, `people` entry, and `gym`/`location`
+currently resolves against its lookup table (the one empty-string gym aside). **Do not
+assume that holds forever.**
 
 Every join in the app must be **total**: an unresolvable name renders as itself with
 a neutral treatment and aggregates under `Unknown`. Never throw, never drop the

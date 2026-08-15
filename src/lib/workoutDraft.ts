@@ -1,5 +1,12 @@
 import { formatDbDate } from './dates'
-import type { RawExerciseEntry, RawSet, RawWorkout, SetType, Workout } from '../types'
+import type {
+  CatalogExercise,
+  RawExerciseEntry,
+  RawSet,
+  RawWorkout,
+  SetType,
+  Workout,
+} from '../types'
 import { SET_TYPES } from '../types'
 
 /**
@@ -134,7 +141,24 @@ export type BuildResult =
  * presence figure in CLAUDE.md §3.1 — this function is what keeps a new write
  * indistinguishable, shape-wise, from one of the original 81 records.
  */
-export function buildRawWorkout(draft: WorkoutDraft): BuildResult {
+/**
+ * Name → catalog id, so a saved record can carry `exercise_id` (D-40).
+ *
+ * Built from the merged catalog at save time. A title with no catalog entry —
+ * a genuinely new exercise typed into the form — simply gets no id, and the
+ * record falls back to the name join exactly as every record did before.
+ */
+export function exerciseIdsByName(
+  catalog: readonly CatalogExercise[],
+): Map<string, string> {
+  return new Map(catalog.map((e) => [e.name, e.id]))
+}
+
+export function buildRawWorkout(
+  draft: WorkoutDraft,
+  /** Omit to write name-only records, which is what every caller did before. */
+  idByName: ReadonlyMap<string, string> = new Map(),
+): BuildResult {
   const errors: DraftValidationError[] = []
 
   const title = draft.title.trim()
@@ -177,7 +201,7 @@ export function buildRawWorkout(draft: WorkoutDraft): BuildResult {
     end_time: formatDbDate(end),
     // ALWAYS present, per §3.1 — "" represents no place, never an omitted field.
     gym: draft.place.trim(),
-    exercises: exerciseGroups.map(exerciseGroupToRaw),
+    exercises: exerciseGroups.map((g) => exerciseGroupToRaw(g, idByName)),
   }
 
   const category = draft.category.trim()
@@ -195,11 +219,20 @@ export function buildRawWorkout(draft: WorkoutDraft): BuildResult {
   return { ok: true, raw }
 }
 
-function exerciseGroupToRaw(g: ExerciseGroupDraft): RawExerciseEntry {
+function exerciseGroupToRaw(
+  g: ExerciseGroupDraft,
+  idByName: ReadonlyMap<string, string>,
+): RawExerciseEntry {
+  const title = g.exercise.exerciseTitle.trim()
   const entry: RawExerciseEntry = {
-    exercise_title: g.exercise.exerciseTitle.trim(),
+    exercise_title: title,
     sets: g.sets.map(setDraftToRaw),
   }
+  // ADDITIVE: the id goes ON TOP of the title, never instead of it (D-40). A
+  // record stays readable by a client that knows nothing about ids, and the
+  // whole change is undone by deleting this one field.
+  const id = idByName.get(title)
+  if (id !== undefined) entry.exercise_id = id
   const notes = g.exercise.notes.trim()
   if (notes !== '') entry.exercise_notes = notes
   return entry

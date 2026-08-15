@@ -42,7 +42,9 @@ function workout(start: Date, over: Partial<Workout> = {}): Workout {
     category: null,
     avgHeartRate: null,
     people: [],
-    exercises: [{ exerciseTitle: 'Squat', notes: null, sets: [set()] }],
+    exercises: [
+      { exerciseId: null, exerciseTitle: 'Squat', notes: null, sets: [set()] },
+    ],
     durationMinutes: 60,
     ...over,
   }
@@ -164,6 +166,7 @@ describe('summariseMonth', () => {
           workout(MAR, {
             exercises: [
               {
+                exerciseId: null,
                 exerciseTitle: 'Squat',
                 notes: null,
                 sets: [
@@ -186,6 +189,7 @@ describe('summariseMonth', () => {
           workout(MAR, {
             exercises: [
               {
+                exerciseId: null,
                 exerciseTitle: 'Pull Up',
                 notes: null,
                 sets: [set({ weight: { kind: 'bodyweight' }, reps: 10 })],
@@ -205,6 +209,7 @@ describe('summariseMonth', () => {
           workout(MAR, {
             exercises: [
               {
+                exerciseId: null,
                 exerciseTitle: 'Pull Up',
                 notes: null,
                 sets: [set({ weight: { kind: 'bodyweight' }, reps: 10 })],
@@ -224,6 +229,7 @@ describe('summariseMonth', () => {
           workout(MAR, {
             exercises: [
               {
+                exerciseId: null,
                 exerciseTitle: 'Assisted Dip',
                 notes: null,
                 sets: [set({ weight: { kind: 'zero' }, reps: 10 })],
@@ -245,6 +251,7 @@ describe('summariseMonth', () => {
           workout(MAR, {
             exercises: [
               {
+                exerciseId: null,
                 exerciseTitle: 'Squat',
                 notes: null,
                 sets: [set(), set({ setType: 'failure', reps: 0 })],
@@ -367,8 +374,8 @@ describe('getVolumeByMuscleGroup', () => {
   it('aggregates sets, reps and volume per group', () => {
     const w = workout(MAR, {
       exercises: [
-        { exerciseTitle: 'Squat', notes: null, sets: [set(), set()] },
-        { exerciseTitle: 'Bench', notes: null, sets: [set()] },
+        { exerciseId: null, exerciseTitle: 'Squat', notes: null, sets: [set(), set()] },
+        { exerciseId: null, exerciseTitle: 'Bench', notes: null, sets: [set()] },
       ],
     })
     const totals = getVolumeByMuscleGroup([w], catalog, null)
@@ -379,7 +386,9 @@ describe('getVolumeByMuscleGroup', () => {
 
   it('buckets an unresolved exercise under Unknown rather than dropping it', () => {
     const w = workout(MAR, {
-      exercises: [{ exerciseTitle: 'Mystery Lift', notes: null, sets: [set()] }],
+      exercises: [
+        { exerciseId: null, exerciseTitle: 'Mystery Lift', notes: null, sets: [set()] },
+      ],
     })
     expect(getVolumeByMuscleGroup([w], catalog, null)[0]!.group).toBe('Unknown')
   })
@@ -387,8 +396,13 @@ describe('getVolumeByMuscleGroup', () => {
   it('sorts by set count descending', () => {
     const w = workout(MAR, {
       exercises: [
-        { exerciseTitle: 'Bench', notes: null, sets: [set()] },
-        { exerciseTitle: 'Squat', notes: null, sets: [set(), set(), set()] },
+        { exerciseId: null, exerciseTitle: 'Bench', notes: null, sets: [set()] },
+        {
+          exerciseId: null,
+          exerciseTitle: 'Squat',
+          notes: null,
+          sets: [set(), set(), set()],
+        },
       ],
     })
     expect(getVolumeByMuscleGroup([w], catalog, null)[0]!.group).toBe('Legs')
@@ -412,11 +426,13 @@ describe('getMainExercises', () => {
     const w = workout(MAR, {
       exercises: [
         {
+          exerciseId: null,
           exerciseTitle: 'Light',
           notes: null,
           sets: [set({ weight: { kind: 'loaded', kg: 10 } })],
         },
         {
+          exerciseId: null,
           exerciseTitle: 'Heavy',
           notes: null,
           sets: [set({ weight: { kind: 'loaded', kg: 200 } })],
@@ -517,6 +533,7 @@ describe('getRecordsBrokenInMonth', () => {
     workout(new Date(2026, 2, day, 12, 0), {
       exercises: [
         {
+          exerciseId: null,
           exerciseTitle: 'Squat',
           notes: null,
           sets: [set({ weight: { kind: 'loaded', kg }, reps })],
@@ -560,6 +577,7 @@ describe('getRecordsBrokenInMonth', () => {
       workout(new Date(2026, 2, day, 12, 0), {
         exercises: [
           {
+            exerciseId: null,
             exerciseTitle: 'Bench',
             notes: null,
             sets: [set({ weight: { kind: 'loaded', kg }, reps: 5 })],
@@ -581,6 +599,7 @@ describe('getRecordsBrokenInMonth', () => {
     const feb = workout(new Date(2026, 1, 20, 12, 0), {
       exercises: [
         {
+          exerciseId: null,
           exerciseTitle: 'Squat',
           notes: null,
           sets: [set({ weight: { kind: 'loaded', kg: 200 }, reps: 5 })],
@@ -603,6 +622,7 @@ describe('countByMetric', () => {
         workout(new Date(2026, 2, 1, 12, 0), {
           exercises: [
             {
+              exerciseId: null,
               exerciseTitle: 'Squat',
               notes: null,
               sets: [set({ weight: { kind: 'loaded', kg: 100 } })],
@@ -612,6 +632,7 @@ describe('countByMetric', () => {
         workout(new Date(2026, 2, 5, 12, 0), {
           exercises: [
             {
+              exerciseId: null,
               exerciseTitle: 'Squat',
               notes: null,
               sets: [set({ weight: { kind: 'loaded', kg: 120 } })],

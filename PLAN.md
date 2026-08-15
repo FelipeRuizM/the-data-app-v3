@@ -256,3 +256,16 @@ as broken data logic.
   engines built in 8–11; global config only feeds presentation.
 - Analytics is last of the feature phases: the widest page, and the one most likely to
   expose a registry abstraction that didn't hold.
+
+## Phase 16 — Exercise ids (D-40)
+
+- [x] `exercise_id` added to the raw and app types, **alongside** `exercise_title`
+- [x] Parse layer resolves id → name → merged catalog, keeping D-20’s two-tier rule;
+      a dangling id falls back to the stored title (§3.7)
+- [x] The writer stamps `exercise_id` on every save where the title is catalogued
+- [x] `scripts/add-exercise-ids.mjs` — dry-run by default, refuses to write unless
+      every id resolves back to the name already stored, re-verifies live afterwards
+- [x] Verified offline against the real export: 385/385 entries resolve, 0 unresolved
+- [ ] **Run against the live database** — blocked on D-41, the owner-uid mismatch
+- [ ] Enable base-exercise rename in the admin panel — only once records carry ids
+- [x] `feat: exercise ids, written alongside names`

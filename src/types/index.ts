@@ -25,6 +25,13 @@ export type RawSet = {
 }
 
 export type RawExerciseEntry = {
+  /**
+   * ADDITIVE (D-40). The catalog key this entry points at, written alongside
+   * `exercise_title` rather than instead of it. An id survives a rename; the
+   * title is kept so nothing that has not migrated breaks, and so the change is
+   * reversible by deleting this field.
+   */
+  exercise_id?: string
   exercise_title?: string
   exercise_notes?: string
   sets?: RawList<RawSet>
@@ -113,7 +120,15 @@ export type WorkoutSet = {
 }
 
 export type ExerciseEntry = {
+  /**
+   * The CURRENT name of the exercise this entry points at. When the record
+   * carries an `exercise_id` that resolves, this is the catalog's name — so a
+   * rename shows up here without the record being rewritten. Otherwise it is
+   * the stored title.
+   */
   exerciseTitle: string
+  /** Null on a record written before the id migration, or an unresolvable id. */
+  exerciseId: string | null
   notes: string | null
   sets: WorkoutSet[]
 }

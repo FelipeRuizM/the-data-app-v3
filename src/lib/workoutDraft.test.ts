@@ -334,3 +334,56 @@ describe('draftFromWorkout / buildRawWorkout — round-trip through the real fix
     expect(kinds).toContain('zero')
   })
 })
+
+/* ── exercise ids on save (D-40) ────────────────────────────────────────── */
+
+describe('buildRawWorkout — exercise_id is written ALONGSIDE the title', () => {
+  const idByName = new Map([['Bench Press (Barbell)', 'ex-1']])
+
+  function draftWith(title: string) {
+    const draft = emptyWorkoutDraft(new Date(2026, 3, 8, 16, 50))
+    draft.title = 'Session'
+    draft.place = 'Gym A'
+    // emptyWorkoutDraft starts and ends at the same instant; a workout needs a
+    // positive duration to validate (D-19).
+    draft.endLocal = draft.endLocal.replace('16:50', '17:50')
+    draft.exercises = [
+      {
+        exercise: { exerciseTitle: title, notes: '' },
+        sets: [{ setType: 'normal', reps: '5', weight: '100', durationSeconds: '' }],
+      },
+    ]
+    return draft
+  }
+
+  it('writes both fields for a catalogued exercise', () => {
+    const built = buildRawWorkout(draftWith('Bench Press (Barbell)'), idByName)
+    expect(built.ok).toBe(true)
+    const entry = (built as { ok: true; raw: RawWorkout }).raw.exercises as Array<{
+      exercise_id?: string
+      exercise_title?: string
+    }>
+    expect(entry[0]!.exercise_id).toBe('ex-1')
+    // The title stays. That is what makes this reversible and what keeps the
+    // record readable to anything that knows nothing about ids.
+    expect(entry[0]!.exercise_title).toBe('Bench Press (Barbell)')
+  })
+
+  it('omits the id for an exercise that is not in the catalog yet', () => {
+    const built = buildRawWorkout(draftWith('Something New'), idByName)
+    const entry = (built as { ok: true; raw: RawWorkout }).raw.exercises as Array<{
+      exercise_id?: string
+      exercise_title?: string
+    }>
+    expect(entry[0]!.exercise_id).toBeUndefined()
+    expect(entry[0]!.exercise_title).toBe('Something New')
+  })
+
+  it('writes name-only records when no catalog is passed, as every caller did before', () => {
+    const built = buildRawWorkout(draftWith('Bench Press (Barbell)'))
+    const entry = (built as { ok: true; raw: RawWorkout }).raw.exercises as Array<{
+      exercise_id?: string
+    }>
+    expect(entry[0]!.exercise_id).toBeUndefined()
+  })
+})

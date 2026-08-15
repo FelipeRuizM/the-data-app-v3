@@ -2,6 +2,7 @@ import { get, ref } from 'firebase/database'
 import { db } from './firebase'
 import { CONFIG_DEFAULTS, type AppConfig, type ConfigCategory } from './config'
 import {
+  applyExerciseIds,
   mergeExerciseCatalog,
   normalizePeople,
   normalizePlaces,
@@ -125,12 +126,16 @@ export function buildProfile(rawProfile: RawProfile, rawConfig: unknown): LoadRe
     objectOf<unknown>(rawConfig)['exercises'],
   )
   const ownCatalog = objectOf<RawExerciseCatalogEntry>(rawProfile.exercises)
+  const exercises = mergeExerciseCatalog(baseCatalog, ownCatalog)
 
   return {
     profile: {
-      workouts,
+      // Once the catalog exists, any entry carrying an exercise_id adopts that
+      // row's current name — so a renamed exercise reads correctly everywhere
+      // without a single record having been rewritten (D-40).
+      workouts: applyExerciseIds(workouts, exercises),
       runs,
-      exercises: mergeExerciseCatalog(baseCatalog, ownCatalog),
+      exercises,
       places: normalizePlaces(objectOf<RawNamed>(rawProfile.gyms)),
       people: normalizePeople(objectOf<RawNamed>(rawProfile.people)),
       settings: normalizeSettings(rawProfile.settings),

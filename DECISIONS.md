@@ -594,3 +594,59 @@ The 2px of horizontal scroll on Analytics was not a measurement artifact — it 
 the figure pushed its own grid track wider. `clamp(2rem, 8.5vw, 2.75rem)` plus
 `min-w-0` on the stat block fixes the class of bug rather than the one number; the
 desktop treatment is unchanged.
+
+---
+
+# 2026-08-15 — Phase 16, exercise ids
+
+## D-40 · Exercise joins move to ids — ADDITIVELY, and exercises only ✅
+**The owner's proposal, and the right instinct:** if a record stored an exercise
+**id** instead of a name, renaming would need no cascade at all — the name would live
+only in the catalog, so a rename is one write. That dissolves the D-31 problem rather
+than working around it.
+
+Two calls were put to the owner, and both answers matter:
+
+**1. Additive, not replacing.** `exercise_id` is written **alongside** the existing
+`exercise_title`, and nothing is removed. Consequences, all deliberate:
+
+- **§0.3 is not violated.** No record is renamed, restructured, or made unreadable to
+  a client that knows only about names. This is a new optional field, which §0.3
+  explicitly permits.
+- **A half-finished migration leaves a working app**, because the parse layer falls
+  back to the name join for any entry without an id.
+- **It is reversible by deleting one field per entry** — "restore from backup" is not
+  the only recovery path for a write over 385 live records.
+- Cost: records carry both for now, and the parse layer keeps a fallback branch until
+  someone decides to retire the titles. That is a separate, boring decision later.
+
+**2. Exercises only.** Places, people, categories and run types keep their name joins.
+Their cascades already exist and work: places and people are per-user, so D-5's cascade
+is complete, and D-32's category cascade is as complete as the rules allow. Only
+exercises had a problem the app could not solve. 385 fields instead of 602, and four
+working mechanisms left alone.
+
+**Resolution order is id → name → merged catalog**, deliberately not id → entry.
+D-20 says a user's own entry wins over the shared one on a **name** collision; looking
+the entry up by id alone would bypass that and return the base row's muscle group. The
+id supplies the *current name*; the name is then resolved through the merged catalog,
+so the two-tier rule survives intact. A dangling id falls back to the stored title,
+because §3.7 requires every join to be total.
+
+**Verified offline against the real export before any database write:** all 385
+entries resolve, 0 unresolved titles, and every id round-trips to the exact name
+already stored.
+
+## D-41 · The export and the live account do not match — UNRESOLVED ⚠
+`RTDB.json` holds its data under `3WonULS2gRZwtJ6OAh7YpM1Sn9v1`. `.env.local` and
+`CLAUDE.md` both name the owner as `oaM2fM7K52ak6EzqDNzDzXSRWXr1`.
+
+The export's **contents** match §3 exactly — 81 workouts, 385 exercise entries, 74
+exercises, 5 gyms, 7 people, 12 runs — so it is the documented dataset, under a
+different uid. Either it predates a project move, or the live database is not what
+every figure in §3 was verified against.
+
+**Nothing has been run against the live database, and nothing should be, until this is
+resolved.** A migration writing to the wrong subtree is unrecoverable. Both scripts
+read `VITE_OWNER_UID`, so they will target `oaM2fM7K52ak6EzqDNzDzXSRWXr1` — which is
+correct only if that is where the data now lives.

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import fixture from '../test/fixture.json'
-import type { RawRun, RawWorkout } from '../types'
+import type {
+  RawRun,
+  RawWorkout,
+  CatalogExercise,
+  ExerciseEntry,
+  Workout,
+} from '../types'
 import {
   derivePaceSecPerKm,
   mergeExerciseCatalog,
@@ -14,6 +20,7 @@ import {
   weightState,
   workoutVolumeKg,
   zeroIsMissing,
+  applyExerciseIds,
 } from './normalize'
 
 const workouts = Object.entries(fixture.workouts as Record<string, RawWorkout>)
@@ -400,5 +407,108 @@ describe('workoutVolumeKg', () => {
       if (hasLoaded)
         expect(workoutVolumeKg(w, 78), `zero volume on ${id}`).toBeGreaterThan(0)
     }
+  })
+})
+
+/* ── exercise ids (D-40) ────────────────────────────────────────────────── */
+
+describe('applyExerciseIds', () => {
+  const catalog: CatalogExercise[] = [
+    { id: 'base-1', name: 'Back Squat', muscleGroup: 'Legs', tier: 'base' },
+    { id: 'user-1', name: 'Plank', muscleGroup: 'Core', tier: 'user' },
+  ]
+
+  function entry(over: Partial<ExerciseEntry> = {}): ExerciseEntry {
+    return { exerciseId: null, exerciseTitle: 'Squat', notes: null, sets: [], ...over }
+  }
+
+  function workoutWith(entries: ExerciseEntry[]): Workout {
+    return {
+      id: 'w1',
+      title: 'Session',
+      description: '',
+      startTime: new Date(2026, 3, 8, 16, 50),
+      endTime: null,
+      place: null,
+      category: null,
+      avgHeartRate: null,
+      people: [],
+      exercises: entries,
+      durationMinutes: null,
+    }
+  }
+
+  it('adopts the catalog’s CURRENT name, which is the whole point of the id', () => {
+    // The record still says "Squat"; the catalog row it points at has since been
+    // renamed to "Back Squat". No record was rewritten.
+    const [w] = applyExerciseIds(
+      [workoutWith([entry({ exerciseId: 'base-1', exerciseTitle: 'Squat' })])],
+      catalog,
+    )
+    expect(w!.exercises[0]!.exerciseTitle).toBe('Back Squat')
+  })
+
+  it('leaves a record with no id completely alone', () => {
+    const [w] = applyExerciseIds(
+      [workoutWith([entry({ exerciseId: null, exerciseTitle: 'Squat' })])],
+      catalog,
+    )
+    expect(w!.exercises[0]!.exerciseTitle).toBe('Squat')
+  })
+
+  it('leaves the stored title alone when the id resolves to nothing', () => {
+    // A dangling id is just another unresolvable join, and §3.7 says every join
+    // must be total: render the name as itself, never throw, never blank it.
+    const [w] = applyExerciseIds(
+      [workoutWith([entry({ exerciseId: 'deleted', exerciseTitle: 'Squat' })])],
+      catalog,
+    )
+    expect(w!.exercises[0]!.exerciseTitle).toBe('Squat')
+  })
+
+  it('does nothing at all when the catalog is empty', () => {
+    const workouts = [workoutWith([entry({ exerciseId: 'base-1' })])]
+    expect(applyExerciseIds(workouts, [])).toBe(workouts)
+  })
+
+  it('keeps D-20’s two-tier rule: the user’s entry still wins by name', () => {
+    // A record pointing at the BASE row must still pick up the user's override
+    // of that name — resolving id → entry directly would hand back Legs.
+    const shadowed: CatalogExercise[] = [
+      { id: 'base-2', name: 'Hip Thrust', muscleGroup: 'Legs', tier: 'base' },
+      { id: 'user-2', name: 'Hip Thrust', muscleGroup: 'Glutes', tier: 'user' },
+    ]
+    const merged = mergeExerciseCatalog(
+      { 'base-2': { name: 'Hip Thrust', muscleGroup: 'Legs' } },
+      { 'user-2': { name: 'Hip Thrust', muscleGroup: 'Glutes' } },
+    )
+    const [w] = applyExerciseIds(
+      [workoutWith([entry({ exerciseId: 'base-2', exerciseTitle: 'Hip Thrust' })])],
+      shadowed,
+    )
+    // The name is unchanged, and the muscle-group lookup goes through the
+    // merged catalog by NAME, so the user's override still applies.
+    expect(w!.exercises[0]!.exerciseTitle).toBe('Hip Thrust')
+    expect(muscleGroupFor(merged, 'Hip Thrust')).toBe('Glutes')
+  })
+})
+
+describe('normalizeWorkout — exercise_id is additive', () => {
+  it('carries the id through when present', () => {
+    const w = normalizeWorkout('w1', {
+      start_time: '8 Apr 2026, 16:50',
+      exercises: [{ exercise_id: 'ex-9', exercise_title: 'Squat', sets: [] }],
+    })
+    expect(w!.exercises[0]!.exerciseId).toBe('ex-9')
+    // The title is NOT dropped — the record stays readable without the catalog.
+    expect(w!.exercises[0]!.exerciseTitle).toBe('Squat')
+  })
+
+  it('is null on every record written before the migration', () => {
+    const w = normalizeWorkout('w1', {
+      start_time: '8 Apr 2026, 16:50',
+      exercises: [{ exercise_title: 'Squat', sets: [] }],
+    })
+    expect(w!.exercises[0]!.exerciseId).toBeNull()
   })
 })

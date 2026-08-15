@@ -133,6 +133,7 @@ function normalizeSet(raw: RawSet, index: number): WorkoutSet {
 }
 
 function normalizeExerciseEntry(raw: {
+  exercise_id?: string
   exercise_title?: string
   exercise_notes?: string
   sets?: RawList<RawSet>
@@ -143,10 +144,47 @@ function normalizeExerciseEntry(raw: {
     .sort((a, b) => a.setIndex - b.setIndex)
 
   return {
+    // The stored title stands until the catalog is available to resolve the id
+    // against — see `applyExerciseIds`, which runs once the catalog is built.
     exerciseTitle: str(raw.exercise_title) ?? 'Unknown',
+    exerciseId: str(raw.exercise_id),
     notes: str(raw.exercise_notes),
     sets,
   }
+}
+
+/**
+ * Resolve every entry's `exerciseId` to the catalog's CURRENT name (D-40).
+ *
+ * This is the whole point of the id: the record keeps pointing at the same
+ * catalog row when that row is renamed, so a rename stops being a cascade over
+ * history and becomes one write.
+ *
+ * Resolution deliberately goes **id → name → merged catalog**, not id → entry:
+ * D-20 says a user's own entry wins over the shared one on a NAME collision, and
+ * looking the entry up by id alone would bypass that and hand back the base
+ * row's muscle group. Taking the id's name and re-resolving it keeps the
+ * two-tier rule intact.
+ *
+ * An id that resolves to nothing leaves the stored title alone — §3.7 requires
+ * every join to be total, and a dangling id is just another unresolvable name.
+ */
+export function applyExerciseIds(
+  workouts: Workout[],
+  catalog: CatalogExercise[],
+): Workout[] {
+  const nameById = new Map(catalog.map((e) => [e.id, e.name]))
+  if (nameById.size === 0) return workouts
+
+  return workouts.map((workout) => ({
+    ...workout,
+    exercises: workout.exercises.map((entry) => {
+      if (entry.exerciseId === null) return entry
+      const current = nameById.get(entry.exerciseId)
+      if (current === undefined || current === entry.exerciseTitle) return entry
+      return { ...entry, exerciseTitle: current }
+    }),
+  }))
 }
 
 /**
