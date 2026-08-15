@@ -80,6 +80,12 @@ export type RawSettings = {
   bodyweightKg?: number
   defaultShoes?: string
   defaultWatch?: string
+  calculator?: {
+    warmup?: RawList<{ percent?: number; reps?: number }>
+    feeders?: RawList<{ percent?: number; reps?: number }>
+    roundingKg?: number
+    roundingLb?: number
+  }
 }
 
 /* ═══════════════════════════════ APP (normalized) ═══════════════════════ */
@@ -168,12 +174,33 @@ export type CatalogExercise = {
 /** Re-exported so components import display types from one place. */
 export type Units = 'kg' | 'lb'
 
+/** One prescribed set in the warm-up / feeder ramp (§8). */
+export type RampSet = {
+  /** Percent of the target working load. */
+  percent: number
+  reps: number
+}
+
+/**
+ * Calculator preferences (§8). The percentages are the owner's current
+ * preference, not a law — editable and persisted, never hardcoded beyond a
+ * default.
+ */
+export type CalculatorSettings = {
+  warmup: RampSet[]
+  feeders: RampSet[]
+  /** Loadable increment in each display unit (D-12). */
+  roundingKg: number
+  roundingLb: number
+}
+
 export type Settings = {
   featuredExercises: string[]
   units: Units
   bodyweightKg: number | null
   defaultShoes: string
   defaultWatch: string
+  calculator: CalculatorSettings
 }
 
 /** Everything one profile needs, already normalized. */

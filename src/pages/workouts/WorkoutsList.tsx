@@ -162,7 +162,10 @@ function Page({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col gap-6 py-10">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <Label as="h1">Workouts</Label>
-        <CategorySubNav recordsPath="/workouts/records" />
+        <CategorySubNav
+          recordsPath="/workouts/records"
+          extra={[{ to: '/workouts/calculator', label: 'Calculator' }]}
+        />
       </div>
       {children}
     </div>

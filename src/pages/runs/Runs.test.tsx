@@ -83,16 +83,16 @@ describe('RunsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/runs/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/runs/'),
           ).length,
     )
     const links = screen
       .getAllByRole('link')
       .filter(
         (a) =>
-          /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-          a.getAttribute('href') !== '/runs/records',
+          a.closest('li') !== null &&
+          (a.getAttribute('href') ?? '').startsWith('/runs/'),
       )
     expect(links.length).toBe(Object.keys(fixtureRuns).length)
   })
@@ -113,8 +113,8 @@ describe('RunsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/runs/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/runs/'),
           ).length,
     )
     const otherChip = screen.getByRole('button', { name: /^other$/i })
@@ -137,8 +137,8 @@ describe('RunsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/runs/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/runs/'),
           ).length,
     )
     const link = screen
@@ -155,8 +155,8 @@ describe('RunsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/runs/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/runs/'),
           ).length,
     )
     const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href') ?? '')

@@ -16,6 +16,8 @@ import {
   type Settings,
   type SetType,
   type WeightState,
+  type CalculatorSettings,
+  type RampSet,
   type Workout,
   type WorkoutSet,
 } from '../types'
@@ -301,12 +303,63 @@ export function muscleGroupFor(
 
 /* ── settings ───────────────────────────────────────────────────────────── */
 
+/**
+ * Calculator defaults, sitting inside the §8 ranges: warm-up 20–30% for 6–12
+ * reps; first feeder 40–50% for 4–6; second and third 50–75% with reps
+ * dropping as the weight rises, so the lifter is fresh for the working set.
+ */
+export const CALCULATOR_DEFAULTS: CalculatorSettings = {
+  warmup: [
+    { percent: 20, reps: 12 },
+    { percent: 30, reps: 8 },
+  ],
+  feeders: [
+    { percent: 45, reps: 5 },
+    { percent: 60, reps: 3 },
+    { percent: 75, reps: 2 },
+  ],
+  roundingKg: 2.5,
+  roundingLb: 5,
+}
+
 export const SETTINGS_DEFAULTS: Settings = {
   featuredExercises: [],
   units: 'kg',
   bodyweightKg: null,
   defaultShoes: 'Adidas Ultraboost 21',
   defaultWatch: 'Apple Watch Series 8',
+  calculator: CALCULATOR_DEFAULTS,
+}
+
+/** A stored ramp, falling back whole rather than per-set on nonsense input. */
+function normalizeRamp(
+  raw: RawSettings['calculator'],
+  key: 'warmup' | 'feeders',
+): RampSet[] {
+  const list = toList(raw?.[key])
+    .map((r) => ({ percent: num(r?.percent), reps: num(r?.reps) }))
+    .filter(
+      (r): r is { percent: number; reps: number } =>
+        r.percent !== null && r.reps !== null && r.percent > 0 && r.reps > 0,
+    )
+  return list.length > 0 ? list : CALCULATOR_DEFAULTS[key]
+}
+
+function normalizeCalculator(raw: RawSettings['calculator']): CalculatorSettings {
+  const roundingKg = num(raw?.roundingKg)
+  const roundingLb = num(raw?.roundingLb)
+  return {
+    warmup: normalizeRamp(raw, 'warmup'),
+    feeders: normalizeRamp(raw, 'feeders'),
+    roundingKg:
+      roundingKg !== null && roundingKg > 0
+        ? roundingKg
+        : CALCULATOR_DEFAULTS.roundingKg,
+    roundingLb:
+      roundingLb !== null && roundingLb > 0
+        ? roundingLb
+        : CALCULATOR_DEFAULTS.roundingLb,
+  }
 }
 
 /**
@@ -326,6 +379,7 @@ export function normalizeSettings(raw: RawSettings | undefined): Settings {
     bodyweightKg: bodyweight != null && bodyweight > 0 ? bodyweight : null,
     defaultShoes: str(raw?.defaultShoes) ?? SETTINGS_DEFAULTS.defaultShoes,
     defaultWatch: str(raw?.defaultWatch) ?? SETTINGS_DEFAULTS.defaultWatch,
+    calculator: normalizeCalculator(raw?.calculator),
   }
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fixture from '../test/fixture.json'
 import { buildProfile } from '../lib/db'
+import { CALCULATOR_DEFAULTS } from '../lib/normalize'
 import {
   computeDelta,
   getMainExercises,
@@ -90,6 +91,7 @@ function profileOf(
       bodyweightKg,
       defaultShoes: '',
       defaultWatch: '',
+      calculator: CALCULATOR_DEFAULTS,
     },
   }
 }

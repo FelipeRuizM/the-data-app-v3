@@ -91,16 +91,16 @@ describe('WorkoutsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/workouts/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/workouts/'),
           ).length,
     )
     const links = screen
       .getAllByRole('link')
       .filter(
         (a) =>
-          /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-          a.getAttribute('href') !== '/workouts/records',
+          a.closest('li') !== null &&
+          (a.getAttribute('href') ?? '').startsWith('/workouts/'),
       )
     expect(links.length).toBe(Object.keys(fixture.workouts).length)
   })
@@ -121,8 +121,8 @@ describe('WorkoutsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/workouts/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/workouts/'),
           ).length,
     )
     const pushChip = screen.getByRole('button', { name: /^push$/i })
@@ -155,8 +155,8 @@ describe('WorkoutsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/workouts/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/workouts/'),
           ).length,
     )
     expect(screen.getByRole('button', { name: /uncategorized/i })).toBeInTheDocument()
@@ -172,12 +172,13 @@ describe('WorkoutsList', () => {
           .queryAllByRole('link')
           .filter(
             (a) =>
-              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
-              a.getAttribute('href') !== '/workouts/records',
+              a.closest('li') !== null &&
+              (a.getAttribute('href') ?? '').startsWith('/workouts/'),
           ).length,
     )
     const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href') ?? '')
     expect(hrefs).toContain('/workouts/records')
+    expect(hrefs).toContain('/workouts/calculator')
     expect(hrefs.some((h) => /^\/reports\/\d{4}-\d{2}$/.test(h))).toBe(true)
   })
 

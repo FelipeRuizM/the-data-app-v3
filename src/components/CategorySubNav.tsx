@@ -10,7 +10,14 @@ import { format } from 'date-fns'
  * Monthly report links at the CURRENT month; the page itself has ← / →
  * navigation from there.
  */
-export function CategorySubNav({ recordsPath }: { recordsPath: string }) {
+export function CategorySubNav({
+  recordsPath,
+  extra,
+}: {
+  recordsPath: string
+  /** Category-specific extras, e.g. the workouts-only calculator (§8). */
+  extra?: Array<{ to: string; label: string }>
+}) {
   const thisMonth = format(new Date(), 'yyyy-MM')
 
   return (
@@ -27,6 +34,15 @@ export function CategorySubNav({ recordsPath }: { recordsPath: string }) {
       >
         Monthly report
       </Link>
+      {extra?.map((e) => (
+        <Link
+          key={e.to}
+          to={e.to}
+          className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-0"
+        >
+          {e.label}
+        </Link>
+      ))}
     </nav>
   )
 }

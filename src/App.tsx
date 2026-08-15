@@ -10,6 +10,7 @@ import { WorkoutDetail } from './pages/workouts/WorkoutDetail'
 import { WorkoutsList } from './pages/workouts/WorkoutsList'
 import { WorkoutForm } from './pages/workouts/WorkoutForm'
 import { Records } from './pages/workouts/Records'
+import { Calculator } from './pages/workouts/Calculator'
 import { RecordDetail } from './pages/workouts/RecordDetail'
 import { RunDetail } from './pages/runs/RunDetail'
 import { RunsList } from './pages/runs/RunsList'
@@ -82,12 +83,7 @@ export function App() {
             />
             <Route path="workouts/records" element={<Records />} />
             <Route path="workouts/records/:exercise" element={<RecordDetail />} />
-            <Route
-              path="workouts/calculator"
-              element={
-                <Placeholder title="Warm-up & feeder calculator" phase="Phase 11" />
-              }
-            />
+            <Route path="workouts/calculator" element={<Calculator />} />
             <Route path="workouts/:id" element={<WorkoutDetail />} />
             <Route
               path="workouts/:id/edit"
