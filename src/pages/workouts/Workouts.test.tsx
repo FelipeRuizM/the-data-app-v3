@@ -85,10 +85,23 @@ beforeEach(() => {
 describe('WorkoutsList', () => {
   it('lists workouts as links to their detail pages', async () => {
     renderList()
-    await settled(() => screen.queryAllByRole('link').length)
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/workouts/records',
+          ).length,
+    )
     const links = screen
       .getAllByRole('link')
-      .filter((a) => (a.getAttribute('href') ?? '').startsWith('/workouts/'))
+      .filter(
+        (a) =>
+          /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+          a.getAttribute('href') !== '/workouts/records',
+      )
     expect(links.length).toBe(Object.keys(fixture.workouts).length)
   })
 
@@ -102,7 +115,16 @@ describe('WorkoutsList', () => {
   it('filters by category and reports the narrowed count', async () => {
     const user = userEvent.setup()
     renderList()
-    await settled(() => screen.queryAllByRole('link').length)
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/workouts/records',
+          ).length,
+    )
     const pushChip = screen.getByRole('button', { name: /^push$/i })
     await user.click(pushChip)
 
@@ -127,8 +149,36 @@ describe('WorkoutsList', () => {
 
   it('offers an Uncategorized filter because the data contains one', async () => {
     renderList()
-    await settled(() => screen.queryAllByRole('link').length)
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/workouts/records',
+          ).length,
+    )
     expect(screen.getByRole('button', { name: /uncategorized/i })).toBeInTheDocument()
+  })
+
+  it('links to Records and the Monthly report — a route nothing points at is not shipped', async () => {
+    // This assertion exists because both pages were built and routed but left
+    // unreachable except by typing the URL.
+    renderList()
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/workouts\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/workouts/records',
+          ).length,
+    )
+    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href') ?? '')
+    expect(hrefs).toContain('/workouts/records')
+    expect(hrefs.some((h) => /^\/reports\/\d{4}-\d{2}$/.test(h))).toBe(true)
   })
 
   it('shows a designed empty state, not a bare message, when nothing is logged', async () => {

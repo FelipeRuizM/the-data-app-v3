@@ -77,10 +77,23 @@ beforeEach(() => {
 describe('RunsList', () => {
   it('lists every run as a link to its detail page', async () => {
     renderList()
-    await settled(() => screen.queryAllByRole('link').length)
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/runs/records',
+          ).length,
+    )
     const links = screen
       .getAllByRole('link')
-      .filter((a) => (a.getAttribute('href') ?? '').startsWith('/runs/'))
+      .filter(
+        (a) =>
+          /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+          a.getAttribute('href') !== '/runs/records',
+      )
     expect(links.length).toBe(Object.keys(fixtureRuns).length)
   })
 
@@ -94,7 +107,16 @@ describe('RunsList', () => {
   it('filters by type and narrows the count', async () => {
     const user = userEvent.setup()
     renderList()
-    await settled(() => screen.queryAllByRole('link').length)
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/runs/records',
+          ).length,
+    )
     const otherChip = screen.getByRole('button', { name: /^other$/i })
     await user.click(otherChip)
 
@@ -109,11 +131,37 @@ describe('RunsList', () => {
     // RunsList never imports "runs" as a literal path segment for its rows —
     // it comes from CategoryDefinition.basePath via the Link in RunRow.
     renderList()
-    await settled(() => screen.queryAllByRole('link').length)
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/runs/records',
+          ).length,
+    )
     const link = screen
       .getAllByRole('link')
       .find((a) => (a.getAttribute('href') ?? '').startsWith('/runs/'))
     expect(link).toBeDefined()
+  })
+
+  it('links to Run records and the Monthly report', async () => {
+    renderList()
+    await settled(
+      () =>
+        screen
+          .queryAllByRole('link')
+          .filter(
+            (a) =>
+              /^\/runs\/[^/]+$/.test(a.getAttribute('href') ?? '') &&
+              a.getAttribute('href') !== '/runs/records',
+          ).length,
+    )
+    const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href') ?? '')
+    expect(hrefs).toContain('/runs/records')
+    expect(hrefs.some((h) => /^\/reports\/\d{4}-\d{2}$/.test(h))).toBe(true)
   })
 
   it('shows a designed empty state when nothing is logged', async () => {

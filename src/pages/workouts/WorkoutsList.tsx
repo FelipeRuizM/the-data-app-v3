@@ -15,6 +15,7 @@ import { formatVolume } from '../../lib/units'
 import { useProfile } from '../../data/useProfile'
 import { FilterBar } from '../../components/FilterBar'
 import { StateBlock } from '../../components/StateBlock'
+import { CategorySubNav } from '../../components/CategorySubNav'
 import type { Units, Workout } from '../../types'
 import { UNCATEGORIZED } from '../../lib/filters'
 
@@ -159,7 +160,10 @@ export function WorkoutsList() {
 function Page({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-6 py-10">
-      <Label as="h1">Workouts</Label>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <Label as="h1">Workouts</Label>
+        <CategorySubNav recordsPath="/workouts/records" />
+      </div>
       {children}
     </div>
   )

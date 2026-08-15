@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { CategoryTag, Label } from '../../components/ui'
 import { FilterBar } from '../../components/FilterBar'
 import { StateBlock } from '../../components/StateBlock'
+import { CategorySubNav } from '../../components/CategorySubNav'
 import { formatDayShort, formatDuration, formatPace } from '../../lib/dates'
 import { colorTokenFor } from '../../lib/config'
 import {
@@ -147,7 +148,10 @@ export function RunsList() {
 function Page({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-6 py-10">
-      <Label as="h1">Runs</Label>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <Label as="h1">Runs</Label>
+        <CategorySubNav recordsPath="/runs/records" />
+      </div>
       {children}
     </div>
   )
