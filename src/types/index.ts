@@ -165,9 +165,12 @@ export type CatalogExercise = {
   tier: 'base' | 'user'
 }
 
+/** Re-exported so components import display types from one place. */
+export type Units = 'kg' | 'lb'
+
 export type Settings = {
   featuredExercises: string[]
-  units: 'kg' | 'lb'
+  units: Units
   bodyweightKg: number | null
   defaultShoes: string
   defaultWatch: string

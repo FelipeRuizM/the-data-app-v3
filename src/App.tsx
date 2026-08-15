@@ -5,6 +5,8 @@ import { RequireAdmin, RequireAuth, RequireWrite } from './auth/guards'
 import { missingEnvVars } from './lib/firebase'
 import { Label } from './components/ui'
 import { Home } from './pages/Home'
+import { WorkoutDetail } from './pages/workouts/WorkoutDetail'
+import { WorkoutsList } from './pages/workouts/WorkoutsList'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
@@ -61,10 +63,7 @@ export function App() {
           >
             <Route index element={<Home />} />
 
-            <Route
-              path="workouts"
-              element={<Placeholder title="Workouts" phase="Phase 4" />}
-            />
+            <Route path="workouts" element={<WorkoutsList />} />
             <Route
               path="workouts/new"
               element={
@@ -83,10 +82,7 @@ export function App() {
                 <Placeholder title="Warm-up & feeder calculator" phase="Phase 11" />
               }
             />
-            <Route
-              path="workouts/:id"
-              element={<Placeholder title="Workout detail" phase="Phase 4" />}
-            />
+            <Route path="workouts/:id" element={<WorkoutDetail />} />
             <Route
               path="workouts/:id/edit"
               element={

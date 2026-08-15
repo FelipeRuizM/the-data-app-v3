@@ -1,3 +1,5 @@
+import type { Units, WeightState } from '../types'
+
 /**
  * Weight units are a DISPLAY-LAYER conversion only.
  *
@@ -5,8 +7,6 @@
  * Every kilogram→display conversion in the app goes through this one helper, so
  * there is exactly one place where a rounding or factor mistake could live.
  */
-
-export type Units = 'kg' | 'lb'
 
 const LB_PER_KG = 2.2046226218
 
@@ -54,4 +54,25 @@ export function formatVolume(kg: number | null, units: Units): string {
 export function formatDistance(km: number | null): string {
   if (km === null || !Number.isFinite(km)) return '—'
   return `${km.toFixed(2)} km`
+}
+
+/**
+ * Render a set's weight, keeping the three states DISTINGUISHABLE (D-7b).
+ *
+ *   loaded      "60 kg"
+ *   zero        "0 kg"   — a genuine unloaded/assisted set, not missing data
+ *   bodyweight  "BW"     — the field was absent
+ *
+ * Showing "0 kg" for a bodyweight pull-up, or "—" for a real 0 kg assisted set,
+ * would each erase a distinction the whole records engine depends on.
+ */
+export function formatSetWeight(weight: WeightState, units: Units): string {
+  switch (weight.kind) {
+    case 'loaded':
+      return formatWeight(weight.kg, units)
+    case 'zero':
+      return formatWeight(0, units)
+    case 'bodyweight':
+      return 'BW'
+  }
 }

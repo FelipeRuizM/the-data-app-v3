@@ -17,7 +17,7 @@ export function Label({
   as: As = 'span',
 }: {
   children: ReactNode
-  as?: 'span' | 'div' | 'h2' | 'h3'
+  as?: 'span' | 'div' | 'h1' | 'h2' | 'h3'
 }) {
   return (
     <As className="font-mono text-label uppercase tracking-[0.14em] text-ink-2">
