@@ -5,6 +5,10 @@ import { Label } from '../components/ui'
 import { StateBlock } from '../components/StateBlock'
 import { StatCard } from '../components/StatCard'
 import { SessionCalendar } from '../components/SessionCalendar'
+import { RecordsBrokenCard } from '../components/RecordsBrokenCard'
+import { MonthRunList } from '../components/MonthRunList'
+import { InProgressGuard } from '../components/InProgressOverlay'
+import { MonthlyTrendChart } from '../components/charts/MonthlyTrendChart'
 import {
   MuscleGroupRadar,
   SetsPerGroupChart,
@@ -17,6 +21,8 @@ import {
   getMainExercises,
   getMonthlySummary,
   getSessionCalendar,
+  getMonthlySeries,
+  getRecordsBrokenInMonth,
   getVolumeByMuscleGroup,
   monthsWithActivity,
   radarGroups,
@@ -62,6 +68,8 @@ export function MonthlyReport() {
         profile.settings.bodyweightKg,
       ),
       calendar: getSessionCalendar(report.current),
+      recordsBroken: getRecordsBrokenInMonth(profile.workouts, month),
+      series: getMonthlySeries(profile),
       units: profile.settings.units,
       available: monthsWithActivity(profile),
       config,
@@ -110,7 +118,7 @@ export function MonthlyReport() {
 
   if (!data) return null
 
-  const { report, groups, mainExercises, calendar, units } = data
+  const { report, groups, mainExercises, calendar, units, recordsBroken, series } = data
   const { current, previous, showWorkouts, showRuns } = report
 
   if (current.activities.count === 0) {
@@ -127,154 +135,177 @@ export function MonthlyReport() {
 
   return (
     <Page month={month}>
-      <section className="flex flex-col gap-6">
-        <Label as="h2">Activity</Label>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
-          <StatCard
-            label="Activities"
-            value={String(current.activities.count)}
-            delta={computeDelta(current.activities.count, previous.activities.count)}
-          />
-          <StatCard
-            label="Total time"
-            value={formatDuration(current.activities.totalMinutes)}
-            delta={computeDelta(
-              current.activities.totalMinutes,
-              previous.activities.totalMinutes,
-            )}
-            formatDelta={(m) => formatDuration(m)}
-            // Same principle as the hidden Runs section: don't state "0.0h
-            // running" for someone who doesn't run. The split only appears
-            // when running is actually part of the picture.
-            sub={
-              showRuns
-                ? `${hours(current.activities.liftingMinutes)}h lifting · ${hours(
-                    current.activities.runningMinutes,
-                  )}h running`
-                : showWorkouts
-                  ? `${hours(current.activities.liftingMinutes)}h lifting`
-                  : undefined
-            }
-          />
-          <StatCard
-            label="Avg session"
-            value={formatDuration(current.activities.avgSessionMinutes)}
-            delta={computeDelta(
-              current.activities.avgSessionMinutes,
-              previous.activities.avgSessionMinutes,
-            )}
-            formatDelta={(m) => formatDuration(m)}
-          />
-          <StatCard
-            label="Avg heart rate"
-            value={
-              current.activities.avgHeartRate === null
-                ? '—'
-                : String(Math.round(current.activities.avgHeartRate))
-            }
-            unit={current.activities.avgHeartRate === null ? undefined : 'bpm'}
-            delta={computeDelta(
-              current.activities.avgHeartRate,
-              previous.activities.avgHeartRate,
-            )}
-          />
-        </div>
-      </section>
-
-      {showWorkouts ? (
+      {/* The current month is gated by default (§7 Access rule). The
+          aggregation above already ran — this only gates display. */}
+      <InProgressGuard month={month}>
         <section className="flex flex-col gap-6">
-          <Label as="h2">Workouts</Label>
+          <Label as="h2">Activity</Label>
           <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
             <StatCard
-              label="Volume"
-              value={formatVolume(current.workouts.volumeKg, units)}
-              unit={units}
+              label="Activities"
+              value={String(current.activities.count)}
+              delta={computeDelta(current.activities.count, previous.activities.count)}
+            />
+            <StatCard
+              label="Total time"
+              value={formatDuration(current.activities.totalMinutes)}
               delta={computeDelta(
-                current.workouts.volumeKg,
-                previous.workouts.volumeKg,
+                current.activities.totalMinutes,
+                previous.activities.totalMinutes,
               )}
+              formatDelta={(m) => formatDuration(m)}
+              // Same principle as the hidden Runs section: don't state "0.0h
+              // running" for someone who doesn't run. The split only appears
+              // when running is actually part of the picture.
+              sub={
+                showRuns
+                  ? `${hours(current.activities.liftingMinutes)}h lifting · ${hours(
+                      current.activities.runningMinutes,
+                    )}h running`
+                  : showWorkouts
+                    ? `${hours(current.activities.liftingMinutes)}h lifting`
+                    : undefined
+              }
             />
             <StatCard
-              label="Total reps"
-              value={current.workouts.reps.toLocaleString('en-US')}
-              delta={computeDelta(current.workouts.reps, previous.workouts.reps)}
-            />
-            <StatCard
-              label="Total sets"
-              value={String(current.workouts.sets)}
-              delta={computeDelta(current.workouts.sets, previous.workouts.sets)}
-            />
-            <StatCard
-              label="Avg volume / session"
-              value={formatVolume(current.workouts.avgVolumePerSession, units)}
-              unit={units}
+              label="Avg session"
+              value={formatDuration(current.activities.avgSessionMinutes)}
               delta={computeDelta(
-                current.workouts.avgVolumePerSession,
-                previous.workouts.avgVolumePerSession,
+                current.activities.avgSessionMinutes,
+                previous.activities.avgSessionMinutes,
+              )}
+              formatDelta={(m) => formatDuration(m)}
+            />
+            <StatCard
+              label="Avg heart rate"
+              value={
+                current.activities.avgHeartRate === null
+                  ? '—'
+                  : String(Math.round(current.activities.avgHeartRate))
+              }
+              unit={current.activities.avgHeartRate === null ? undefined : 'bpm'}
+              delta={computeDelta(
+                current.activities.avgHeartRate,
+                previous.activities.avgHeartRate,
               )}
             />
           </div>
         </section>
-      ) : null}
 
-      {showRuns ? (
+        {showWorkouts ? (
+          <section className="flex flex-col gap-6">
+            <Label as="h2">Workouts</Label>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
+              <StatCard
+                label="Volume"
+                value={formatVolume(current.workouts.volumeKg, units)}
+                unit={units}
+                delta={computeDelta(
+                  current.workouts.volumeKg,
+                  previous.workouts.volumeKg,
+                )}
+              />
+              <StatCard
+                label="Total reps"
+                value={current.workouts.reps.toLocaleString('en-US')}
+                delta={computeDelta(current.workouts.reps, previous.workouts.reps)}
+              />
+              <StatCard
+                label="Total sets"
+                value={String(current.workouts.sets)}
+                delta={computeDelta(current.workouts.sets, previous.workouts.sets)}
+              />
+              <StatCard
+                label="Avg volume / session"
+                value={formatVolume(current.workouts.avgVolumePerSession, units)}
+                unit={units}
+                delta={computeDelta(
+                  current.workouts.avgVolumePerSession,
+                  previous.workouts.avgVolumePerSession,
+                )}
+              />
+            </div>
+          </section>
+        ) : null}
+
+        {showRuns ? (
+          <section className="flex flex-col gap-6">
+            <Label as="h2">Runs</Label>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
+              <StatCard
+                label="Distance"
+                value={formatDistance(current.runs.distanceKm)}
+                delta={computeDelta(current.runs.distanceKm, previous.runs.distanceKm)}
+                formatDelta={(km) => `${km.toFixed(2)} km`}
+              />
+              <StatCard
+                label="Avg pace"
+                value={formatPace(current.runs.avgPaceSecPerKm)}
+                unit={current.runs.avgPaceSecPerKm === null ? undefined : '/km'}
+                // Lower is better — invertTrend flips the arrow semantics (§7).
+                delta={computeDelta(
+                  current.runs.avgPaceSecPerKm,
+                  previous.runs.avgPaceSecPerKm,
+                  true,
+                )}
+                formatDelta={(s) => `${Math.round(s)}s`}
+              />
+              <StatCard
+                label="Elevation gain"
+                value={Math.round(current.runs.elevationGainM).toLocaleString('en-US')}
+                unit="m"
+                delta={computeDelta(
+                  current.runs.elevationGainM,
+                  previous.runs.elevationGainM,
+                )}
+              />
+              <StatCard
+                label="Calories"
+                value={Math.round(current.runs.calories).toLocaleString('en-US')}
+                delta={computeDelta(current.runs.calories, previous.runs.calories)}
+              />
+            </div>
+          </section>
+        ) : null}
+
+        {showWorkouts && groups.length > 0 ? (
+          <section className="flex flex-col gap-10">
+            <Label as="h2">Muscle groups</Label>
+            <SetsPerGroupChart totals={groups} />
+            <MuscleGroupRadar totals={radarGroups(groups)} />
+            <MainExercises exercises={mainExercises} units={units} />
+          </section>
+        ) : null}
+
+        {showWorkouts ? (
+          <section className="flex flex-col gap-6">
+            <Label as="h2">Records broken</Label>
+            <RecordsBrokenCard records={recordsBroken} units={units} />
+          </section>
+        ) : null}
+
+        {showRuns && current.monthRuns.length > 0 ? (
+          <section className="flex flex-col gap-6">
+            <Label as="h2">Run log</Label>
+            <MonthRunList runs={current.monthRuns} runTypes={data.config.runTypes} />
+          </section>
+        ) : null}
+
         <section className="flex flex-col gap-6">
-          <Label as="h2">Runs</Label>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
-            <StatCard
-              label="Distance"
-              value={formatDistance(current.runs.distanceKm)}
-              delta={computeDelta(current.runs.distanceKm, previous.runs.distanceKm)}
-              formatDelta={(km) => `${km.toFixed(2)} km`}
-            />
-            <StatCard
-              label="Avg pace"
-              value={formatPace(current.runs.avgPaceSecPerKm)}
-              unit={current.runs.avgPaceSecPerKm === null ? undefined : '/km'}
-              // Lower is better — invertTrend flips the arrow semantics (§7).
-              delta={computeDelta(
-                current.runs.avgPaceSecPerKm,
-                previous.runs.avgPaceSecPerKm,
-                true,
-              )}
-              formatDelta={(s) => `${Math.round(s)}s`}
-            />
-            <StatCard
-              label="Elevation gain"
-              value={Math.round(current.runs.elevationGainM).toLocaleString('en-US')}
-              unit="m"
-              delta={computeDelta(
-                current.runs.elevationGainM,
-                previous.runs.elevationGainM,
-              )}
-            />
-            <StatCard
-              label="Calories"
-              value={Math.round(current.runs.calories).toLocaleString('en-US')}
-              delta={computeDelta(current.runs.calories, previous.runs.calories)}
-            />
-          </div>
+          <Label as="h2">Calendar</Label>
+          <SessionCalendar weeks={calendar} />
         </section>
-      ) : null}
 
-      {showWorkouts && groups.length > 0 ? (
-        <section className="flex flex-col gap-10">
-          <Label as="h2">Muscle groups</Label>
-          <SetsPerGroupChart totals={groups} />
-          <MuscleGroupRadar totals={radarGroups(groups)} />
-          <MainExercises exercises={mainExercises} units={units} />
+        <section className="flex flex-col gap-6">
+          <Label as="h2">Trends</Label>
+          <MonthlyTrendChart series={series} selectedMonth={month} />
         </section>
-      ) : null}
 
-      <section className="flex flex-col gap-6">
-        <Label as="h2">Calendar</Label>
-        <SessionCalendar weeks={calendar} />
-      </section>
-
-      <p className="m-0 border-t border-rule pt-4 text-xs text-ink-3">
-        Recomputed from full history on every visit — including the previous month it
-        compares against. Nothing on this page is stored.
-      </p>
+        <p className="m-0 border-t border-rule pt-4 text-xs text-ink-3">
+          Recomputed from full history on every visit — including the previous month it
+          compares against. Nothing on this page is stored.
+        </p>
+      </InProgressGuard>
     </Page>
   )
 }

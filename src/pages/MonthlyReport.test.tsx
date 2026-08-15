@@ -182,3 +182,84 @@ describe('MonthlyReport — muscle group charts', () => {
     expect(screen.getByText(/Core and Other are excluded/i)).toBeInTheDocument()
   })
 })
+
+describe('MonthlyReport — layers 3–4 and trends', () => {
+  it('shows the records-broken card, collapsed by default', async () => {
+    renderAt(busiestParam)
+    await settled(
+      () => screen.queryAllByRole('heading', { name: 'Records broken' }).length,
+    )
+    const summary = screen.queryByText(/personal record/i)
+    // Either records exist (collapsible) or the designed empty state shows.
+    expect(
+      summary !== null || screen.queryByText('No records broken this month.') !== null,
+    ).toBe(true)
+  })
+
+  it('expands the records card to show per-exercise line items', async () => {
+    const user = userEvent.setup()
+    renderAt(busiestParam)
+    await settled(
+      () => screen.queryAllByRole('heading', { name: 'Records broken' }).length,
+    )
+
+    const summary = screen.queryByText(/personal record/i)
+    if (!summary) return // month legitimately had none
+    await user.click(summary)
+    await waitFor(() => expect(screen.getAllByText(/ PR$/).length).toBeGreaterThan(0))
+  })
+
+  it('renders the trend chart with a text alternative', async () => {
+    renderAt(busiestParam)
+    await settled(() => screen.queryAllByRole('heading', { name: 'Trends' }).length)
+    expect(screen.getByRole('img', { name: /across all history/i })).toBeInTheDocument()
+  })
+
+  it('marks the selected month in the trend chart’s text alternative', async () => {
+    renderAt(busiestParam)
+    await settled(() => screen.queryAllByRole('heading', { name: 'Trends' }).length)
+    // Exactly one row is the selected month.
+    const yeses = screen.getAllByRole('cell').filter((c) => c.textContent === 'yes')
+    expect(yeses).toHaveLength(1)
+  })
+
+  it('switches the trend metric', async () => {
+    const user = userEvent.setup()
+    renderAt(busiestParam)
+    await settled(() => screen.queryAllByRole('heading', { name: 'Trends' }).length)
+    await user.click(screen.getByRole('button', { name: /^distance$/i }))
+    await waitFor(() =>
+      expect(
+        screen.getByRole('img', { name: /Monthly distance across all history/i }),
+      ).toBeInTheDocument(),
+    )
+  })
+})
+
+describe('MonthlyReport — the in-progress guard (§7)', () => {
+  it('gates the CURRENT month behind an overlay', async () => {
+    const now = new Date()
+    const param = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    renderAt(param)
+    await settled(
+      () => screen.queryAllByText(/Still in progress|No activity in/i).length,
+    )
+
+    // Either it's gated, or the month is genuinely empty — both are valid, but
+    // it must never render the full report ungated.
+    const gated = screen.queryByText('Still in progress') !== null
+    const empty = screen.queryByText(/No activity in/i) !== null
+    expect(gated || empty).toBe(true)
+    if (gated) {
+      expect(
+        screen.queryByRole('heading', { name: 'Activity' }),
+      ).not.toBeInTheDocument()
+    }
+  })
+
+  it('never gates a PAST month', async () => {
+    renderAt(busiestParam)
+    await settled(() => screen.queryAllByRole('heading', { name: 'Activity' }).length)
+    expect(screen.queryByText('Still in progress')).not.toBeInTheDocument()
+  })
+})

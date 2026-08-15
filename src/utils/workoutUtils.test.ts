@@ -7,6 +7,9 @@ import {
   getMonthlySummary,
   getSessionCalendar,
   getVolumeByMuscleGroup,
+  countByMetric,
+  getMonthlySeries,
+  getRecordsBrokenInMonth,
   monthsWithActivity,
   radarGroups,
   summariseMonth,
@@ -502,5 +505,173 @@ describe('against the real fixture', () => {
       }
     }
     expect(perMonth).toBe(direct)
+  })
+})
+
+/* ── layer 3: records broken this month ─────────────────────────────────── */
+
+describe('getRecordsBrokenInMonth', () => {
+  const squat = (day: number, kg: number, reps = 5) =>
+    workout(new Date(2026, 2, day, 12, 0), {
+      exercises: [
+        {
+          exerciseTitle: 'Squat',
+          notes: null,
+          sets: [set({ weight: { kind: 'loaded', kg }, reps })],
+        },
+      ],
+    })
+
+  it('excludes the first session — it establishes, it does not break', () => {
+    expect(getRecordsBrokenInMonth([squat(1, 100)], MAR)).toEqual([])
+  })
+
+  it('COLLAPSES repeat PRs of the same type to the single best instance', () => {
+    // Three weight PRs in one month must show once, at the heaviest.
+    const records = getRecordsBrokenInMonth(
+      [squat(1, 100), squat(5, 110), squat(10, 120), squat(15, 130)],
+      MAR,
+    )
+    const weight = records.filter((r) => r.metric === 'weight')
+    expect(weight).toHaveLength(1)
+    expect(weight[0]!.value).toBe(130)
+  })
+
+  it('reports the baseline the month STARTED from, not the last intermediate value', () => {
+    // Collapsing must not make a 100→130 month look like 120→130.
+    const records = getRecordsBrokenInMonth(
+      [squat(1, 100), squat(5, 120), squat(10, 130)],
+      MAR,
+    )
+    expect(records.find((r) => r.metric === 'weight')!.previous).toBe(100)
+  })
+
+  it('keeps different metrics separate', () => {
+    const records = getRecordsBrokenInMonth([squat(1, 100), squat(5, 120, 10)], MAR)
+    expect(new Set(records.map((r) => r.metric))).toEqual(
+      new Set(['weight', 'volume', 'oneRM']),
+    )
+  })
+
+  it('keeps different exercises separate', () => {
+    const bench = (day: number, kg: number) =>
+      workout(new Date(2026, 2, day, 12, 0), {
+        exercises: [
+          {
+            exerciseTitle: 'Bench',
+            notes: null,
+            sets: [set({ weight: { kind: 'loaded', kg }, reps: 5 })],
+          },
+        ],
+      })
+    const records = getRecordsBrokenInMonth(
+      [squat(1, 100), squat(5, 120), bench(1, 60), bench(6, 70)],
+      MAR,
+    )
+    expect(new Set(records.map((r) => r.exerciseTitle))).toEqual(
+      new Set(['Squat', 'Bench']),
+    )
+  })
+
+  it('uses FULL history for chronology, then filters to the month', () => {
+    // The February baseline must silence March's first session, not the
+    // other way round.
+    const feb = workout(new Date(2026, 1, 20, 12, 0), {
+      exercises: [
+        {
+          exerciseTitle: 'Squat',
+          notes: null,
+          sets: [set({ weight: { kind: 'loaded', kg: 200 }, reps: 5 })],
+        },
+      ],
+    })
+    // March never beats February, so March has no records.
+    expect(getRecordsBrokenInMonth([feb, squat(5, 100)], MAR)).toEqual([])
+  })
+
+  it('returns nothing for a month with no activity', () => {
+    expect(getRecordsBrokenInMonth([squat(1, 100), squat(5, 120)], FEB)).toEqual([])
+  })
+})
+
+describe('countByMetric', () => {
+  it('counts per type and omits types with none', () => {
+    const records = getRecordsBrokenInMonth(
+      [
+        workout(new Date(2026, 2, 1, 12, 0), {
+          exercises: [
+            {
+              exerciseTitle: 'Squat',
+              notes: null,
+              sets: [set({ weight: { kind: 'loaded', kg: 100 } })],
+            },
+          ],
+        }),
+        workout(new Date(2026, 2, 5, 12, 0), {
+          exercises: [
+            {
+              exerciseTitle: 'Squat',
+              notes: null,
+              sets: [set({ weight: { kind: 'loaded', kg: 120 } })],
+            },
+          ],
+        }),
+      ],
+      MAR,
+    )
+    const counts = countByMetric(records)
+    expect(counts.every((c) => c.count > 0)).toBe(true)
+    expect(counts.find((c) => c.metric === 'weight')!.count).toBe(1)
+  })
+})
+
+/* ── trend series ───────────────────────────────────────────────────────── */
+
+describe('getMonthlySeries', () => {
+  it('returns nothing for an empty profile', () => {
+    expect(getMonthlySeries(profileOf([], []))).toEqual([])
+  })
+
+  it('INCLUDES months with no activity so a gap reads as a gap', () => {
+    // January and March only — February must still appear, at zero.
+    const p = profileOf(
+      [workout(new Date(2026, 0, 10, 12, 0)), workout(new Date(2026, 2, 10, 12, 0))],
+      [],
+    )
+    const series = getMonthlySeries(p)
+    expect(series).toHaveLength(3)
+    expect(series[1]!.month.getMonth()).toBe(1)
+    expect(series[1]!.activities).toBe(0)
+  })
+
+  it('runs oldest to newest', () => {
+    const p = profileOf(
+      [workout(new Date(2026, 0, 10, 12, 0)), workout(new Date(2026, 2, 10, 12, 0))],
+      [],
+    )
+    const series = getMonthlySeries(p)
+    expect(series[0]!.month.getTime()).toBeLessThan(series[2]!.month.getTime())
+  })
+
+  it('carries the metrics the trend chart plots', () => {
+    const p = profileOf([workout(MAR)], [run(MAR)])
+    const point = getMonthlySeries(p)[0]!
+    expect(point.activities).toBe(2)
+    expect(point.volumeKg).toBeGreaterThan(0)
+    expect(point.distanceKm).toBe(5)
+    expect(point.totalMinutes).toBe(90)
+  })
+
+  it('spans every month of the real fixture without gaps in the sequence', () => {
+    const { profile: real } = buildProfile(fixture as never, {})
+    const series = getMonthlySeries(real)
+    for (let i = 1; i < series.length; i++) {
+      const prev = series[i - 1]!.month
+      const cur = series[i]!.month
+      const monthsApart =
+        (cur.getFullYear() - prev.getFullYear()) * 12 +
+        (cur.getMonth() - prev.getMonth())
+      expect(monthsApart).toBe(1)
+    }
   })
 })

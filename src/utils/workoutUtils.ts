@@ -1,7 +1,12 @@
-import { endOfMonth, isSameMonth, startOfMonth, subMonths } from 'date-fns'
+import { addMonths, endOfMonth, isSameMonth, startOfMonth, subMonths } from 'date-fns'
 import { muscleGroupFor, volumeKg } from '../lib/normalize'
 import { RADAR_EXCLUDED_GROUPS } from '../lib/config'
-import { isExcludedSet } from './prEngine'
+import {
+  PR_METRICS,
+  computePRAchievements,
+  isExcludedSet,
+  type PRMetric,
+} from './prEngine'
 import type { CatalogExercise, Profile, Run, Workout } from '../types'
 
 /**
@@ -353,4 +358,113 @@ export function monthsWithActivity(profile: Profile): Date[] {
   }
 
   return out.sort((a, b) => b.getTime() - a.getTime())
+}
+
+/* ── layer 3: records broken this month ─────────────────────────────────── */
+
+export type MonthlyRecord = {
+  exerciseTitle: string
+  metric: PRMetric
+  value: number
+  previous: number
+  date: Date
+  workoutId: string
+}
+
+/**
+ * Records broken in the given month (§7 Layer 3).
+ *
+ * Reuses `computePRAchievements` over FULL history — the chronology has to be
+ * complete for "broken, not established" to mean anything — then filters to
+ * the month.
+ *
+ * Within that filtered set, collapses to ONE best achievement per exercise per
+ * record type: hitting the same PR type twice in a month shows only the
+ * heaviest instance.
+ */
+export function getRecordsBrokenInMonth(
+  workouts: readonly Workout[],
+  month: Date,
+): MonthlyRecord[] {
+  const best = new Map<string, MonthlyRecord>()
+
+  for (const a of computePRAchievements(workouts)) {
+    if (!inMonth(a.date, month)) continue
+
+    const key = `${a.exerciseTitle}::${a.metric}`
+    const current = best.get(key)
+    if (!current || a.value > current.value) {
+      best.set(key, {
+        exerciseTitle: a.exerciseTitle,
+        metric: a.metric,
+        value: a.value,
+        // Keep the ORIGINAL baseline this month started from, not the
+        // intermediate value the collapsed-away achievement beat.
+        previous: current ? Math.min(current.previous, a.previous) : a.previous,
+        date: a.date,
+        workoutId: a.workoutId,
+      })
+    } else {
+      current.previous = Math.min(current.previous, a.previous)
+    }
+  }
+
+  return [...best.values()].sort(
+    (a, b) =>
+      b.date.getTime() - a.date.getTime() ||
+      a.exerciseTitle.localeCompare(b.exerciseTitle),
+  )
+}
+
+/** Counts per record type, for the collapsed card's chips. */
+export function countByMetric(records: readonly MonthlyRecord[]): Array<{
+  metric: PRMetric
+  count: number
+}> {
+  return PR_METRICS.map((metric) => ({
+    metric,
+    count: records.filter((r) => r.metric === metric).length,
+  })).filter((r) => r.count > 0)
+}
+
+/* ── trend series ───────────────────────────────────────────────────────── */
+
+export type MonthlySeriesPoint = {
+  month: Date
+  activities: number
+  volumeKg: number
+  sets: number
+  distanceKm: number
+  totalMinutes: number
+}
+
+/**
+ * One point per calendar month across ALL history (§7) — including months with
+ * nothing logged, so a gap reads as a gap rather than being closed up.
+ *
+ * Separate from the single-month comparison cards: this is the long view.
+ */
+export function getMonthlySeries(profile: Profile): MonthlySeriesPoint[] {
+  const months = monthsWithActivity(profile)
+  if (months.length === 0) return []
+
+  const oldest = months[months.length - 1]!
+  const newest = months[0]!
+
+  const points: MonthlySeriesPoint[] = []
+  let cursor = oldest
+  while (cursor.getTime() <= newest.getTime()) {
+    const s = summariseMonth(profile, cursor)
+    points.push({
+      month: cursor,
+      activities: s.activities.count,
+      volumeKg: s.workouts.volumeKg,
+      sets: s.workouts.sets,
+      distanceKm: s.runs.distanceKm,
+      totalMinutes: s.activities.totalMinutes,
+    })
+    cursor = addMonths(cursor, 1)
+  }
+
+  return points
 }
