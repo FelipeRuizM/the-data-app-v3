@@ -13,9 +13,10 @@ import {
 import { workoutSetCount, workoutVolumeKg } from '../../lib/normalize'
 import { formatVolume } from '../../lib/units'
 import { useProfile } from '../../data/useProfile'
-import { FilterBar } from './FilterBar'
+import { FilterBar } from '../../components/FilterBar'
 import { StateBlock } from '../../components/StateBlock'
-import type { Workout } from '../../types'
+import type { Units, Workout } from '../../types'
+import { UNCATEGORIZED } from '../../lib/filters'
 
 /** Stable empty reference so the useMemos below don't recompute every render. */
 const NO_WORKOUTS: Workout[] = []
@@ -94,12 +95,31 @@ export function WorkoutsList() {
   return (
     <Page>
       <FilterBar
-        filters={filters}
-        onChange={setFilters}
-        options={options}
-        colorFor={colorFor}
+        tagLabel="Category"
+        tagOptions={options.categories}
+        activeTag={filters.category}
+        onTagChange={(v) => setFilters({ ...filters, category: v })}
+        colorForTag={colorFor}
+        noneTag={
+          options.hasUncategorized
+            ? { sentinel: UNCATEGORIZED, label: 'Uncategorized' }
+            : undefined
+        }
+        places={options.places}
+        activePlace={filters.place}
+        onPlaceChange={(v) => setFilters({ ...filters, place: v })}
+        people={options.people}
+        activePerson={filters.person}
+        onPersonChange={(v) => setFilters({ ...filters, person: v })}
+        from={filters.from}
+        to={filters.to}
+        onFromChange={(d) => setFilters({ ...filters, from: d })}
+        onToChange={(d) => setFilters({ ...filters, to: d })}
         resultCount={visible.length}
         totalCount={workouts.length}
+        countNoun="workout"
+        active={hasActiveFilters(filters)}
+        onClear={() => setFilters(EMPTY_FILTERS)}
       />
 
       {visible.length === 0 ? (
@@ -154,7 +174,7 @@ function WorkoutRow({
   workout: Workout
   colorToken: string
   bodyweightKg: number | null
-  units: 'kg' | 'lb'
+  units: Units
 }) {
   const volume = workoutVolumeKg(workout, bodyweightKg)
   const sets = workoutSetCount(workout)

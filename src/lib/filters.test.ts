@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   EMPTY_FILTERS,
+  EMPTY_RUN_FILTERS,
   UNCATEGORIZED,
+  UNTYPED,
+  filterRuns,
   filterWorkouts,
   hasActiveFilters,
+  hasActiveRunFilters,
+  runFilterOptions,
   withinRange,
   workoutFilterOptions,
+  type RunFilters,
   type WorkoutFilters,
 } from './filters'
-import type { Workout } from '../types'
+import type { Run, Workout } from '../types'
 
 function workout(over: Partial<Workout>): Workout {
   return {
@@ -194,5 +200,124 @@ describe('hasActiveFilters', () => {
     expect(hasActiveFilters(filters({ person: 'Person A' }))).toBe(true)
     expect(hasActiveFilters(filters({ from: new Date() }))).toBe(true)
     expect(hasActiveFilters(filters({ to: new Date() }))).toBe(true)
+  })
+})
+
+/* ── runs — same shape, same traps, kept as its own describe block since it's
+   a parallel implementation rather than a shared one (CLAUDE.md §1) ────── */
+
+function run(over: Partial<Run>): Run {
+  return {
+    id: 'r',
+    title: 'Run',
+    description: '',
+    startTime: new Date(2026, 7, 14, 7, 0),
+    type: null,
+    place: null,
+    distanceKm: 5,
+    durationSeconds: 1800,
+    paceSecPerKm: 360,
+    storedPace: '6:00',
+    avgHeartRate: null,
+    calories: null,
+    difficulty: null,
+    elevationGainM: null,
+    maxElevationM: null,
+    steps: null,
+    people: [],
+    shoes: null,
+    watch: null,
+    durationMinutes: 30,
+    ...over,
+  }
+}
+
+const runFilters = (over: Partial<RunFilters>): RunFilters => ({
+  ...EMPTY_RUN_FILTERS,
+  ...over,
+})
+
+describe('filterRuns', () => {
+  const other = run({ id: 'a', type: 'Other', place: 'Place A', people: ['Person A'] })
+  const light = run({ id: 'b', type: 'Light', place: 'Place B', people: [] })
+  const untyped = run({ id: 'c', type: null, place: null, people: ['Person B'] })
+  const all = [other, light, untyped]
+
+  it('returns everything when no filter is set', () => {
+    expect(filterRuns(all, EMPTY_RUN_FILTERS)).toHaveLength(3)
+  })
+
+  it('filters by type', () => {
+    expect(filterRuns(all, runFilters({ type: 'Other' })).map((r) => r.id)).toEqual([
+      'a',
+    ])
+  })
+
+  it('filters to untyped without matching a real type', () => {
+    expect(filterRuns(all, runFilters({ type: UNTYPED })).map((r) => r.id)).toEqual([
+      'c',
+    ])
+  })
+
+  it('filters by place', () => {
+    expect(filterRuns(all, runFilters({ place: 'Place B' })).map((r) => r.id)).toEqual([
+      'b',
+    ])
+  })
+
+  it('filters by person against the people array', () => {
+    expect(
+      filterRuns(all, runFilters({ person: 'Person A' })).map((r) => r.id),
+    ).toEqual(['a'])
+  })
+
+  it('filters by date range inclusively, reusing the same day-boundary rule', () => {
+    const older = run({ id: 'old', startTime: new Date(2026, 6, 1, 9, 0) })
+    expect(
+      filterRuns([other, older], runFilters({ from: new Date(2026, 7, 1) })).map(
+        (r) => r.id,
+      ),
+    ).toEqual(['a'])
+  })
+
+  it('combines filters with AND', () => {
+    expect(
+      filterRuns(all, runFilters({ type: 'Other', place: 'Place B' })),
+    ).toHaveLength(0)
+  })
+})
+
+describe('runFilterOptions', () => {
+  it('derives sorted options from the records present', () => {
+    const list = [
+      run({ type: 'Light', place: 'Place B', people: ['Person B'] }),
+      run({ type: 'Other', place: 'Place A', people: ['Person A'] }),
+    ]
+    const o = runFilterOptions(list)
+    expect(o.types).toEqual(['Light', 'Other'])
+    expect(o.places).toEqual(['Place A', 'Place B'])
+    expect(o.people).toEqual(['Person A', 'Person B'])
+    expect(o.hasUntyped).toBe(false)
+  })
+
+  it('flags the untyped bucket only when one exists', () => {
+    expect(runFilterOptions([run({ type: null })]).hasUntyped).toBe(true)
+    expect(runFilterOptions([run({ type: 'Other' })]).hasUntyped).toBe(false)
+  })
+
+  it('keeps a type that /config no longer defines', () => {
+    expect(runFilterOptions([run({ type: 'Retired Type' })]).types).toEqual([
+      'Retired Type',
+    ])
+  })
+})
+
+describe('hasActiveRunFilters', () => {
+  it('is false for the empty filter set', () => {
+    expect(hasActiveRunFilters(EMPTY_RUN_FILTERS)).toBe(false)
+  })
+  it('is true when any single filter is set', () => {
+    expect(hasActiveRunFilters(runFilters({ type: 'Other' }))).toBe(true)
+    expect(hasActiveRunFilters(runFilters({ place: 'Place A' }))).toBe(true)
   })
 })

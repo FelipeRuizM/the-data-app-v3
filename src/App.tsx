@@ -7,6 +7,8 @@ import { Label } from './components/ui'
 import { Home } from './pages/Home'
 import { WorkoutDetail } from './pages/workouts/WorkoutDetail'
 import { WorkoutsList } from './pages/workouts/WorkoutsList'
+import { RunDetail } from './pages/runs/RunDetail'
+import { RunsList } from './pages/runs/RunsList'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
@@ -92,7 +94,7 @@ export function App() {
               }
             />
 
-            <Route path="runs" element={<Placeholder title="Runs" phase="Phase 5" />} />
+            <Route path="runs" element={<RunsList />} />
             <Route
               path="runs/new"
               element={
@@ -105,10 +107,7 @@ export function App() {
               path="runs/records"
               element={<Placeholder title="Run records" phase="Phase 8" />}
             />
-            <Route
-              path="runs/:id"
-              element={<Placeholder title="Run detail" phase="Phase 5" />}
-            />
+            <Route path="runs/:id" element={<RunDetail />} />
             <Route
               path="runs/:id/edit"
               element={

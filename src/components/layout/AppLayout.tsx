@@ -1,19 +1,14 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { RouteErrorBoundary } from '../RouteErrorBoundary'
 import { useAuth } from '../../auth/hooks'
+import { CATEGORIES } from '../../categories/registry'
 
 /**
- * Nav is derived from a list, not hand-written per page. In Phase 3 the
- * category entries come from the registry (CLAUDE.md §1) so a future category
- * appears here without editing this file.
+ * The category links (Workouts, Runs, …) come from the registry (CLAUDE.md
+ * §1) — adding "Flights" later means adding a module and a registry entry,
+ * not editing this file. Home and Analytics aren't categories, so they stay
+ * as fixed entries either side of the iterated list.
  */
-const NAV = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/workouts', label: 'Workouts', end: false },
-  { to: '/runs', label: 'Runs', end: false },
-  { to: '/analytics', label: 'Analytics', end: false },
-] as const
-
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   'font-mono text-label uppercase tracking-[0.12em] no-underline transition-colors duration-[120ms] ' +
   (isActive ? 'text-ink-0' : 'text-ink-2 hover:text-ink-1')
@@ -38,11 +33,17 @@ export function AppLayout() {
           </span>
 
           <nav aria-label="Primary" className="flex flex-wrap gap-x-4 gap-y-1">
-            {NAV.map(({ to, label, end }) => (
-              <NavLink key={to} to={to} end={end} className={linkClass}>
-                {label}
+            <NavLink to="/" end className={linkClass}>
+              Home
+            </NavLink>
+            {CATEGORIES.map((c) => (
+              <NavLink key={c.id} to={c.basePath} className={linkClass}>
+                {c.label}
               </NavLink>
             ))}
+            <NavLink to="/analytics" className={linkClass}>
+              Analytics
+            </NavLink>
             <NavLink to="/settings" className={linkClass}>
               Settings
             </NavLink>
