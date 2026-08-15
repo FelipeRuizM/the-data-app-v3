@@ -219,6 +219,47 @@ export function countReferences(
   return { records, workouts, runs, featured }
 }
 
+/**
+ * Categories and run types are ALSO stored denormalized, as a name on each
+ * record (`workouts/{id}/category`, `runs/{id}/type`) — so renaming one in the
+ * admin panel has the same orphaning problem as renaming an exercise.
+ *
+ * Unlike exercises, the vocabulary itself is global while the records are
+ * per-profile, and the rules let an admin write only their own subtree. So this
+ * cascade covers the ADMIN'S OWN profile and says so; other profiles keep the
+ * old name and degrade to `--cat-none`, which §4 already requires never to be
+ * an error state (D-32).
+ */
+export type CategoryField = 'category' | 'runType'
+
+export function planCategoryRename(
+  source: CascadeSource,
+  field: CategoryField,
+  oldName: string,
+  newName: string,
+): CascadePlan {
+  const base = `users/${source.uid}`
+  const updates: Record<string, unknown> = {}
+  let workouts = 0
+  let runs = 0
+
+  if (field === 'category') {
+    for (const [wid, w] of Object.entries(source.workouts ?? {})) {
+      if (w.category !== oldName) continue
+      updates[`${base}/workouts/${wid}/category`] = newName
+      workouts++
+    }
+  } else {
+    for (const [rid, r] of Object.entries(source.runs ?? {})) {
+      if (r.type !== oldName) continue
+      updates[`${base}/runs/${rid}/type`] = newName
+      runs++
+    }
+  }
+
+  return { updates, workouts, runs, records: workouts + runs, featured: false }
+}
+
 /** A human sentence for the confirm dialog — the count is the whole point (D-5). */
 export function describeImpact(plan: {
   workouts: number

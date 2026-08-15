@@ -433,3 +433,62 @@ one operation in the app that legitimately needs the wire shape.
 
 The same traversal produces both the count shown in the confirm and the update that is
 applied, so a delete can never disagree with a rename about what counts as a reference.
+
+---
+
+# 2026-08-15 — Phase 13, the admin panel
+
+## D-31 · Base exercises are add-and-re-file only — no rename, no delete ✅
+**The contradiction:** `PLAN.md` Phase 13 and D-20 both call for renaming a base
+exercise to "cascade across *every* profile, behind a confirm stating records **and
+profiles** affected". `database.rules.json` makes that impossible:
+
+```
+"users": { "$uid": { ".write": "auth != null && auth.uid === $uid && …" } }
+```
+
+An account — **admin included** — can write only its own subtree. There is no client
+that can perform that cascade, and the rules are the actual security boundary (§2).
+
+**Options put to the owner:** (a) don't offer it in the app; (b) relax the rules so
+admin can read and write every profile; (c) cascade only the admin's own profile and
+let other profiles silently orphan. A fourth idea came back from the owner — **key the
+joins by id instead of by name**, which would remove the need for any cascade at all.
+
+**Decision: (a), and the id idea becomes its own phase.** The admin panel offers
+**add** and **re-file into a different muscle group** — neither touches a name any
+record joins on, so neither needs a cascade. Rename and delete are documented console
+operations, and the panel says so in place of a control that would half-work.
+
+**On the id proposal:** it is correct that ids would dissolve this problem rather than
+work around it — the name would live only in `/config`, so a rename is one row. It is
+also precisely what §0.3 forbids: a migration of every existing record (385 exercise
+entries across 81 real workouts), plus §3.7, D-20's merge-by-name rule, and the
+`#/workouts/records/:exercise` URL scheme, which is an encoded name by design. **19
+source files** key on the name today. Agreed to revisit **after Phase 15 as a
+dedicated phase** — backup, migration script, re-derived §3 — rather than folded into
+a phase about the admin panel.
+
+**`CLAUDE.md` §3.3 was corrected in the same commit**, per the rule that this file
+loses to `DECISIONS.md`.
+
+## D-32 · Renaming a category cascades the admin's own records; deleting one does not ✅
+**Question:** workout `category` and run `type` are denormalized name strings too, so
+renaming "Push" in the admin panel orphans every workout carrying it. §4 only says a
+*deleted* category must degrade to `--cat-none`.
+
+**Decision:**
+- **Rename cascades**, within the admin's own profile, in one atomic update with the
+  `/config` row. The confirm states the count **and states plainly that other profiles
+  are not rewritten** — they keep the old name and render neutral. Partial, and
+  honest about being partial, beats silently degrading the admin's own history.
+- **Delete does not cascade and is not blocked.** This is the deliberate asymmetry
+  with D-5: a workout whose category no longer exists is still a complete workout, and
+  §4 already requires it to render neutral rather than break. Nothing is lost, so
+  nothing needs preventing — the confirm just says how many records will go neutral.
+
+## D-33 · Category colours are picked from swatches, never a colour input ✅
+**Decision:** the six categorical tokens are offered as swatches; there is no hex
+field. The palette passed the colourblind-separation validator **as a set** (§5), and
+a free colour input would let a well-meaning owner break that in one click. Storage is
+the token id, so "no raw hex in components" stays true even for owner-chosen colours.

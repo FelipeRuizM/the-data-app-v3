@@ -20,6 +20,7 @@ import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
 import { Placeholder } from './pages/Placeholder'
 import { Settings } from './pages/Settings'
+import { Admin } from './pages/Admin'
 import { Styleguide } from './pages/Styleguide'
 
 /** Build-time config is missing — the single most likely deployment failure. */
@@ -134,7 +135,7 @@ export function App() {
               path="admin"
               element={
                 <RequireAdmin>
-                  <Placeholder title="Admin" phase="Phase 13" />
+                  <Admin />
                 </RequireAdmin>
               }
             />

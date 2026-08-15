@@ -198,19 +198,21 @@ as broken data logic.
 
 ## Phase 13 — Admin panel (global config)
 
-- [ ] Route-guarded to `admin`, hidden from nav for everyone else
-- [ ] **Seed `/config/exercises` from the existing 74** — a reviewed one-off script,
-      never at startup. Safe because joins are by name, so no workout record changes
-      (D-20). Verify every historical `exercise_title` still resolves afterwards
-- [ ] CRUD the **global base** exercise catalog. Renaming a base exercise cascades
-      across *every* profile — confirm dialog states records **and profiles** affected
-- [ ] CRUD workout categories and run types, colors as **palette token ids** (D-17);
+- [x] Route-guarded to `admin`, hidden from nav for everyone else
+- [x] **Seed `/config/exercises` from the existing 74** — `scripts/seed-config-exercises.mjs`,
+      dry-run by default. Verifies every historical `exercise_title` still resolves and
+      refuses to write otherwise. **Not yet run against the live database** — needs the
+      owner's credentials
+- [x] CRUD the **global base** exercise catalog — **add and re-file only**. Rename and
+      delete would have to write other profiles, which the rules forbid, so they are
+      console operations and the panel says so (D-31)
+- [x] CRUD workout categories and run types, colors as **palette token ids** (D-17);
       deleted categories degrade to `--cat-none` on existing records
-- [ ] Rep-based exercise list (D-6)
-- [ ] Muscle-group list including `Core`
-- [ ] Shoes and watches catalogs
-- [ ] Temporary role panel removed from `/styleguide`
-- [ ] `feat: global admin panel`
+- [x] Rep-based exercise list (D-6)
+- [x] Muscle-group list including `Core`
+- [x] Shoes and watches catalogs
+- [x] Temporary role panel removed from `/styleguide`
+- [x] `feat: global admin panel`
 
 ## Phase 14 — Analytics
 

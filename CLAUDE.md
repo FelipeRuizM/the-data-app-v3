@@ -329,10 +329,13 @@ user-editable — do not hardcode this pair anywhere but a fallback default.
 >   exercise into a different muscle group without an admin and without mutating
 >   shared data.
 > - **Users write only their own tier.** Creating an exercise never touches `/config`.
-> - **The rename cascade (D-5) spans both tiers.** Renaming a *base* exercise rewrites
->   history across **every profile** that references it — admin-only, behind a confirm
->   stating how many records across how many profiles are affected.
-> - **Deleting a base exercise is blocked while any profile references it.**
+> - **Renaming or deleting a base exercise is NOT an app feature (D-31).** It would
+>   have to rewrite `exercise_title` in every profile that logged it, and
+>   `database.rules.json` lets an account write **only its own subtree** — an admin
+>   included. So the admin panel offers **add and re-file only**, and rename/delete
+>   are console or server-script operations. This supersedes the earlier plan for a
+>   cross-profile cascade behind a confirm; that cascade was never implementable
+>   without weakening the tenant boundary.
 
 **Seeding (Phase 13, a reviewed one-off script — never at startup):** the existing 74
 exercises seed `/config/exercises`; the owner's own tier starts empty. This is safe
