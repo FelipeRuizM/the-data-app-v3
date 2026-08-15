@@ -492,3 +492,42 @@ renaming "Push" in the admin panel orphans every workout carrying it. §4 only s
 field. The palette passed the colourblind-separation validator **as a set** (§5), and
 a free colour input would let a well-meaning owner break that in one click. Storage is
 the token id, so "no raw hex in components" stays true even for owner-chosen colours.
+
+---
+
+# 2026-08-15 — Phase 14, analytics
+
+## D-34 · Charts are hand-drawn. Recharts is unused and stays a dependency for now ✅
+**Observed:** §2 names Recharts as the charting library, and §5 then demands
+"Charts are made of discrete marks… prefer squares, dots, stipple and thin bars",
+"no Recharts defaults", axes receding to near-invisible, and a text alternative on
+every chart. Meeting §5 through Recharts would have meant replacing its axes, ticks,
+tooltips, legend and mark rendering — i.e. keeping the library for its layout maths
+and overriding everything that makes it recognisable.
+
+**Decision, taken by default across Phases 7–14 and recorded here:** every chart is
+**hand-drawn SVG or plain HTML/CSS** — the progression line, the monthly trend bars,
+the sets-per-group stipple, the radar, the session calendar, and now the day × hour
+heatmap. `grep -rl recharts src/` returns nothing.
+
+Each carries its text alternative as a visually-hidden `<table>` of the same numbers,
+which is §9's requirement and which Recharts would not have provided either.
+
+**Recharts stays in `package.json` for now.** It is never imported, so it costs the
+bundle nothing, and removing it is a §2 change rather than a code change. Folded into
+the Phase 15 quality pass, where the dependency list gets looked at as a whole.
+
+## D-35 · A visually-hidden `<table>` must be wrapped in a hidden `<div>` ✅
+**Found by measuring, not by a test:** the analytics page scrolled sideways at 375px —
+`document.documentElement.scrollWidth` was **1042** against a 375px viewport.
+
+The cause is a CSS subtlety worth writing down: on a `<table>`, `width: 1px` is a
+**minimum, not a maximum**. Tailwind's `sr-only` sets `width: 1px; overflow: hidden`,
+which visually hides a block element but does **not** stop a table from laying out at
+its natural width — the heatmap's alternative table wanted 1023px and dragged the
+page with it.
+
+**Fix:** the hidden table is wrapped in `<div className="sr-only">`, giving the
+clipping a block box that actually contains it. Applied to all six sr-only tables in
+the codebase, not just the heatmap's — the other five were latent instances of the
+same bug that happened to hold fewer columns.

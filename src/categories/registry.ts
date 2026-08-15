@@ -27,6 +27,14 @@ export type CategoryDefinition = {
   count: (profile: Profile) => number
   /** Flatten this category's records into the shared activity shape. */
   toActivity: (profile: Profile, config: AppConfig) => ActivityItem[]
+  /**
+   * The one number that means most for this category, already formatted.
+   *
+   * Analytics renders a headline per registry entry rather than naming volume
+   * and distance itself — those are category facts, and a Flights entry would
+   * bring its own without the page changing (§1).
+   */
+  headline: (profile: Profile) => { label: string; value: string; unit: string }
 }
 
 const workouts: CategoryDefinition = {
@@ -49,7 +57,21 @@ const workouts: CategoryDefinition = {
         profile.settings.units,
       ),
       durationMinutes: w.durationMinutes,
+      place: w.place,
+      people: w.people,
+      avgHeartRate: w.avgHeartRate,
     })),
+  headline: (profile) => ({
+    label: 'Total volume',
+    value: formatVolume(
+      profile.workouts.reduce(
+        (kg, w) => kg + workoutVolumeKg(w, profile.settings.bodyweightKg),
+        0,
+      ),
+      profile.settings.units,
+    ),
+    unit: profile.settings.units,
+  }),
 }
 
 const runs: CategoryDefinition = {
@@ -69,7 +91,15 @@ const runs: CategoryDefinition = {
       colorToken: colorTokenFor(config.runTypes, r.type),
       metric: formatDistance(r.distanceKm),
       durationMinutes: r.durationMinutes,
+      place: r.place,
+      people: r.people,
+      avgHeartRate: r.avgHeartRate,
     })),
+  headline: (profile) => ({
+    label: 'Total distance',
+    value: profile.runs.reduce((km, r) => km + (r.distanceKm ?? 0), 0).toFixed(1),
+    unit: 'km',
+  }),
 }
 
 export const CATEGORIES: CategoryDefinition[] = [workouts, runs]

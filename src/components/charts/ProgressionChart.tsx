@@ -111,25 +111,27 @@ export function ProgressionChart({
         {caption}
       </figcaption>
 
-      <table className="sr-only">
-        <caption>{caption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Value</th>
-            <th scope="col">Record broken</th>
-          </tr>
-        </thead>
-        <tbody>
-          {points.map((p, i) => (
-            <tr key={i}>
-              <td>{p.label}</td>
-              <td>{formatValue(p.value)}</td>
-              <td>{p.isPR ? 'yes' : 'no'}</td>
+      <div className="sr-only">
+        <table>
+          <caption>{caption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Value</th>
+              <th scope="col">Record broken</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {points.map((p, i) => (
+              <tr key={i}>
+                <td>{p.label}</td>
+                <td>{formatValue(p.value)}</td>
+                <td>{p.isPR ? 'yes' : 'no'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   )
 }

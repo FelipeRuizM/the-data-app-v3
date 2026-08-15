@@ -225,4 +225,12 @@ export type ActivityItem = {
   /** The one scannable number: volume for workouts, distance for runs. */
   metric: string
   durationMinutes: number | null
+  /**
+   * Cross-category facets. Analytics aggregates these by iterating the registry,
+   * so a future category contributes to the place and partner breakdowns — and
+   * to the heart-rate average — without the page learning it exists (§1, §4).
+   */
+  place: string | null
+  people: string[]
+  avgHeartRate: number | null
 }

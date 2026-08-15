@@ -52,23 +52,25 @@ export function SetsPerGroupChart({ totals }: { totals: MuscleGroupTotals[] }) {
         ))}
       </div>
 
-      <table className="sr-only">
-        <caption>Sets per muscle group</caption>
-        <thead>
-          <tr>
-            <th scope="col">Muscle group</th>
-            <th scope="col">Sets</th>
-          </tr>
-        </thead>
-        <tbody>
-          {totals.map((t) => (
-            <tr key={t.group}>
-              <td>{t.group}</td>
-              <td>{t.sets}</td>
+      <div className="sr-only">
+        <table>
+          <caption>Sets per muscle group</caption>
+          <thead>
+            <tr>
+              <th scope="col">Muscle group</th>
+              <th scope="col">Sets</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {totals.map((t) => (
+              <tr key={t.group}>
+                <td>{t.group}</td>
+                <td>{t.sets}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <span className="sr-only">Highest is {max} sets.</span>
     </figure>
   )
@@ -193,23 +195,25 @@ export function MuscleGroupRadar({ totals }: { totals: MuscleGroupTotals[] }) {
         })}
       </svg>
 
-      <table className="sr-only">
-        <caption>{caption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Muscle group</th>
-            <th scope="col">{METRIC_LABEL[metric]}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {totals.map((t) => (
-            <tr key={t.group}>
-              <td>{t.group}</td>
-              <td>{Math.round(metricValue(t, metric))}</td>
+      <div className="sr-only">
+        <table>
+          <caption>{caption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Muscle group</th>
+              <th scope="col">{METRIC_LABEL[metric]}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {totals.map((t) => (
+              <tr key={t.group}>
+                <td>{t.group}</td>
+                <td>{Math.round(metricValue(t, metric))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <p className="m-0 text-xs text-ink-3">
         Core and Other are excluded — they distort the balance shape.

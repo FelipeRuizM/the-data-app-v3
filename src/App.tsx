@@ -18,8 +18,8 @@ import { RunForm } from './pages/runs/RunForm'
 import { RunRecords } from './pages/runs/RunRecords'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
-import { Placeholder } from './pages/Placeholder'
 import { Settings } from './pages/Settings'
+import { Analytics } from './pages/Analytics'
 import { Admin } from './pages/Admin'
 import { Styleguide } from './pages/Styleguide'
 
@@ -117,10 +117,7 @@ export function App() {
             />
 
             <Route path="reports/:month" element={<MonthlyReport />} />
-            <Route
-              path="analytics"
-              element={<Placeholder title="Analytics" phase="Phase 14" />}
-            />
+            <Route path="analytics" element={<Analytics />} />
             {/* Per-account, and every control on it is a mutating one — so a
                 guest is bounced rather than shown a page it cannot use (§4). */}
             <Route

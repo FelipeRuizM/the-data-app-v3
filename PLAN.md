@@ -216,14 +216,15 @@ as broken data logic.
 
 ## Phase 14 — Analytics
 
-- [ ] Aggregation driven **entirely** by the category registry
-- [ ] Totals, time, average HR, volume over time, muscle-group balance
-- [ ] **Weekly streaks starting Sunday** (D-15) — current and longest, longest with its
+- [x] Aggregation driven **entirely** by the category registry
+- [x] Totals, time, average HR, volume over time, muscle-group balance
+- [x] **Weekly streaks starting Sunday** (D-15) — current and longest, longest with its
       date range; `weekStartsOn: 0` passed explicitly; unit-tested
-- [ ] Day × hour heatmap on the sequential ramp, **zero drawn as an outline, not
+- [x] Day × hour heatmap on the sequential ramp, **zero drawn as an outline, not
       `--seq-1`**; place and partner breakdowns
-- [ ] Every chart restyled off Recharts defaults, each with a text alternative
-- [ ] `feat: cross-category analytics`
+- [x] Every chart hand-drawn rather than restyled off Recharts, which is never
+      imported (D-34); each carries a visually-hidden table of the same numbers
+- [x] `feat: cross-category analytics`
 
 ## Phase 15 — Quality pass
 

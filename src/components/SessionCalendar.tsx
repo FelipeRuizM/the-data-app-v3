@@ -40,28 +40,30 @@ export function SessionCalendar({ weeks }: { weeks: CalendarDay[][] }) {
         ))}
       </div>
 
-      <table className="sr-only">
-        <caption>Days with activity this month</caption>
-        <thead>
-          <tr>
-            <th scope="col">Day</th>
-            <th scope="col">Workouts</th>
-            <th scope="col">Runs</th>
-          </tr>
-        </thead>
-        <tbody>
-          {weeks
-            .flat()
-            .filter((d) => d.dayOfMonth !== null && (d.workouts > 0 || d.runs > 0))
-            .map((d) => (
-              <tr key={d.dayOfMonth}>
-                <td>{d.dayOfMonth}</td>
-                <td>{d.workouts}</td>
-                <td>{d.runs}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+      <div className="sr-only">
+        <table>
+          <caption>Days with activity this month</caption>
+          <thead>
+            <tr>
+              <th scope="col">Day</th>
+              <th scope="col">Workouts</th>
+              <th scope="col">Runs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {weeks
+              .flat()
+              .filter((d) => d.dayOfMonth !== null && (d.workouts > 0 || d.runs > 0))
+              .map((d) => (
+                <tr key={d.dayOfMonth}>
+                  <td>{d.dayOfMonth}</td>
+                  <td>{d.workouts}</td>
+                  <td>{d.runs}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   )
 }

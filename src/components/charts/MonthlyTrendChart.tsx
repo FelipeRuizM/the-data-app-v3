@@ -34,7 +34,8 @@ export function MonthlyTrendChart({
   selectedMonth,
 }: {
   series: MonthlySeriesPoint[]
-  selectedMonth: Date
+  /** Omitted on Analytics, where there is no month in focus to highlight. */
+  selectedMonth?: Date
 }) {
   const [metric, setMetric] = useState<TrendMetric>('activities')
   const titleId = useId()
@@ -52,6 +53,7 @@ export function MonthlyTrendChart({
   const barW = Math.max(2, (W - gap * (series.length - 1)) / series.length)
 
   const isSelected = (p: MonthlySeriesPoint) =>
+    selectedMonth !== undefined &&
     p.month.getFullYear() === selectedMonth.getFullYear() &&
     p.month.getMonth() === selectedMonth.getMonth()
 
@@ -110,25 +112,27 @@ export function MonthlyTrendChart({
         <span>{formatMonthLong(series[series.length - 1]!.month)}</span>
       </div>
 
-      <table className="sr-only">
-        <caption>{caption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Month</th>
-            <th scope="col">{spec.label}</th>
-            <th scope="col">Selected</th>
-          </tr>
-        </thead>
-        <tbody>
-          {series.map((p, i) => (
-            <tr key={i}>
-              <td>{formatMonthLong(p.month)}</td>
-              <td>{spec.format(p[metric])}</td>
-              <td>{isSelected(p) ? 'yes' : 'no'}</td>
+      <div className="sr-only">
+        <table>
+          <caption>{caption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Month</th>
+              <th scope="col">{spec.label}</th>
+              <th scope="col">Selected</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {series.map((p, i) => (
+              <tr key={i}>
+                <td>{formatMonthLong(p.month)}</td>
+                <td>{spec.format(p[metric])}</td>
+                <td>{isSelected(p) ? 'yes' : 'no'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   )
 }
