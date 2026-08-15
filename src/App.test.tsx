@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
    no emulator and no credentials. What's under test is the login wall and the
    role gating — the parts where a mistake leaks data. */
 
-const OWNER = 'oaM2fM7K52ak6EzqDNzDzXSRWXr1'
+/** Must match VITE_OWNER_UID in .env.test — never the real owner UID. */
+const OWNER = 'test-owner-uid'
 
 let currentUser: { uid: string; email: string } | null = null
 let rolesEntry: Record<string, string> | null = null
