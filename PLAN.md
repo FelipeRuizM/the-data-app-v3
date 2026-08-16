@@ -318,3 +318,26 @@ actually used through, and most of this is about making them answerable one-hand
 Workouts section is a four-card grid and a fifth would sit alone. The elevation and
 steps values are still in the database and still round-trip; only the app stopped
 using them.
+
+## Phase 19 — Corrections from actually using it (D-52 … D-55)
+
+Owner feedback after Phase 18 shipped. Three of these reverse decisions made a day
+earlier, which is what the feedback was for.
+
+- [x] **No form control below 16px** — the iOS zoom-on-focus bug, fixed with one
+      unlayered rule so no utility can override it. Verified against the built CSS.
+- [x] `ComboBox` replaces `SelectInput` everywhere: type, filter on a substring, and
+      a name that matches nothing gets created (D-52). Per-user catalogs create
+      always; `/config` vocabulary creates for an admin, and degrades gracefully
+      otherwise
+- [x] Naming an exercise prefills its sets from the last session that logged it,
+      guarded so it can never overwrite typed input (D-53)
+- [x] Difficulty is a slider; duration is a plain number field again (D-54)
+- [x] Every explanatory description and hint removed from **Settings** too — D-48 had
+      only done Analytics, the report and the admin panel (D-55)
+
+- [x] `fix: no zoom on focus, real comboboxes, prefill from last session`
+
+**Superseded:** D-49 (a `<select>` wherever the value comes from a known set) and the
+duration picker half of D-47. The rest of D-47 — start defaults to now, `end_time`
+derived — stands.

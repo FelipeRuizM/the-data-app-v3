@@ -588,20 +588,39 @@ is the activity strip alone.
 These are durable rules, not one-off tweaks. The forms are used on a phone, standing
 in a gym, between sets.
 
-- **A `<select>` wherever the value comes from a known set** (D-49) — place, category,
-  run type, exercise, shoes, watch, difficulty, set type, duration. Use `SelectInput`,
-  never a raw `<datalist>`. It keeps a stored value the catalog no longer holds, so a
-  retired category survives an edit instead of being silently rewritten.
-  - `allowCreate` **only** for the per-user catalogs §4 requires it on: **places and
-    exercises**. Categories, run types, shoes and watches are `/config` vocabulary —
-    inventing one from a log form writes a name with no row, no colour and no id
-    (D-43).
-  - Reps, weight, heart rate, calories and a run's moving time stay typed numbers.
-    They are continuous, not a known set.
+- **NO FORM CONTROL BELOW 16px** (D-55). iOS Safari zooms on focus below that and
+  never zooms back out. The rule lives **unlayered** in `index.css` so no Tailwind
+  utility can override it — do not put a `text-sm` on an input and do not move that
+  rule into `@layer base`. Density comes from padding, never from smaller text.
+- **`ComboBox` for every value that comes from a catalog** (D-52) — place, category,
+  run type, exercise, shoes, watch. You type, it filters on a substring, and **a name
+  that matches nothing is a valid value that the form then creates**:
+  - places, people and **exercises** are created in `/users/{uid}` — the user's own
+    tier, never `/config` (D-20). Exercises land in muscle group `Other`.
+  - categories, run types, shoes and watches are `/config` vocabulary, so they are
+    created **only when the viewer is an admin**. For anyone else the name is still
+    stored on the record and still joins by string, degrading to `--cat-none` exactly
+    as a deleted category does.
+  - **Featured exercises is the one place free entry must NOT create** — the shortlist
+    points at lifts you already have history for (§6.3).
+  - Reps, weight, heart rate, calories, duration and a run's moving time stay typed
+    numbers. **Duration is not a picker** (D-47).
 - **Ask for a duration, not an end time** (D-47). Start defaults to now and lives
   behind a "Change date & time" disclosure; `end_time` is derived. See §3.1.
+- **Difficulty is a slider** (D-54) — a 1–10 rating is a judgement, not a measurement.
+  Blank stays reachable; "not rated" must not collapse to 1.
+- **Naming an exercise prefills it from the last session that logged it** (D-53), and
+  **only when nothing has been typed into that group's sets** — the guard is what makes
+  it safe, since the handler fires on every keystroke.
 - **A new set inherits the previous one** (D-50) — `setLike`, a copy and not an alias.
 - **"+ Add exercise" sits below the exercise list**, not above it (D-50).
+
+### No explanatory prose in the chrome — D-48, D-55
+
+Analytics, the monthly report, the admin panel and **Settings** carry no descriptive
+paragraphs under their headings. The rules they used to narrate are all still enforced
+in code. What stays: error messages, save state, designed empty states (§9), and the
+bodyweight warning on a workout detail — those are *state*, not explanation.
 
 ### Analytics
 

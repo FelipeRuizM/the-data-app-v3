@@ -59,7 +59,7 @@ export function EntityManager({
   uid: string
   kind: EntityKind
   title: string
-  description: string
+  description?: string | undefined
   entries: ManagedEntity[]
   muscleGroups?: string[]
 }) {

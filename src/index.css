@@ -90,6 +90,23 @@ body {
   width: 1px;
 }
 
+/* NO FORM CONTROL MAY BE SMALLER THAN 16px.
+   iOS Safari zooms the viewport whenever a focused input, select or textarea
+   computes below 16px — and it does not zoom back out afterwards, so logging a
+   25-set session leaves the page permanently magnified. This is the entire fix;
+   `maximum-scale=1` on the viewport meta would also stop it, by disabling pinch
+   zoom for everyone, which is an accessibility failure and not a trade we make.
+
+   Deliberately UNLAYERED. Tailwind's utilities live in the `utilities` cascade
+   layer, and unlayered rules beat every layered one, so `text-sm` on an input
+   cannot quietly reintroduce the bug. Density on this app's dense forms comes
+   from padding and the mono face, never from shrinking the text people type. */
+input,
+select,
+textarea {
+  font-size: 1rem;
+}
+
 /* Real focus states — never `outline: none` (CLAUDE.md §9). */
 :focus-visible {
   outline: 2px solid var(--color-accent);

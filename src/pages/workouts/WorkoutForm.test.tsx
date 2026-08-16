@@ -87,18 +87,21 @@ async function setStart(user: User, value: string) {
   await user.type(start, value)
 }
 
-const setDuration = (user: User, minutes: string) =>
-  user.selectOptions(screen.getByLabelText('Duration'), minutes)
-
-/** Pick an existing catalog entry; every one of these fields is a select now. */
-const pick = (user: User, label: string | RegExp, value: string) =>
-  user.selectOptions(screen.getByLabelText(label), value)
-
-/** The create-on-the-fly escape hatch: choose "add new", then type. */
-async function pickNew(user: User, label: string | RegExp, value: string) {
-  await user.selectOptions(screen.getByLabelText(label), '::create-new::')
-  await user.type(screen.getByLabelText(label), value)
+async function setDuration(user: User, minutes: string) {
+  const field = screen.getByLabelText(/Duration/)
+  await user.clear(field)
+  await user.type(field, minutes)
 }
+
+/**
+ * Every catalog field is a ComboBox: you type, and what you typed is the value
+ * whether or not it matched (D-52). So both the "pick an existing one" and the
+ * "invent a new one" cases are the same gesture.
+ */
+const pick = (user: User, label: string | RegExp, value: string) =>
+  user.type(screen.getByLabelText(label), value)
+
+const pickNew = pick
 
 beforeEach(() => {
   currentUser = { uid: OWNER, email: 'owner@example.test' }
@@ -167,6 +170,10 @@ describe('WorkoutForm — create', () => {
 
     await user.type(screen.getByLabelText('Title'), 'Pull day')
     await pick(user, 'Exercise 1', 'Pull Up')
+    // Naming the exercise prefills it from the last Pull Up session (D-53), so
+    // clear the fields first — this test is about what a BLANK weight writes.
+    await user.clear(screen.getByLabelText(/Set 1 weight/))
+    await user.clear(screen.getByLabelText('Set 1 reps'))
     await user.type(screen.getByLabelText('Set 1 reps'), '8')
 
     await user.click(screen.getByRole('button', { name: /log workout/i }))
@@ -304,10 +311,106 @@ describe('WorkoutForm — logging ergonomics (D-47, D-50)', () => {
 
   it('never shows a start or end field by default', async () => {
     renderForm('create')
-    await settled(() => screen.queryAllByLabelText('Duration').length)
+    await settled(() => screen.queryAllByLabelText(/Duration/).length)
     expect(screen.queryByLabelText('End')).toBeNull()
     expect(screen.queryByLabelText('Start')).toBeNull()
     expect(screen.queryByLabelText('Started')).toBeNull()
+  })
+})
+
+describe('WorkoutForm — free entry creates (D-52, D-53)', () => {
+  it('creates a typed-in exercise in the users OWN tier, in the same write', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(
+      () => screen.queryAllByRole('button', { name: /log workout/i }).length,
+    )
+
+    await user.type(screen.getByLabelText('Title'), 'Leg day')
+    await pick(user, 'Exercise 1', 'Zercher Squat')
+    await user.type(screen.getByLabelText('Set 1 reps'), '5')
+    await user.click(screen.getByRole('button', { name: /log workout/i }))
+    await waitFor(() => expect(updateCalls).toHaveLength(1))
+
+    const updates = updateCalls[0]!
+    const path = Object.keys(updates).find((p) => p.includes('/exercises/'))
+    expect(path, 'no exercise was created').toBeDefined()
+    // The user's own tier, never /config — creating an exercise must not touch
+    // shared vocabulary (D-20).
+    expect(path!.startsWith(`users/${OWNER}/exercises/`)).toBe(true)
+    expect(updates[path!]).toEqual({ name: 'Zercher Squat', muscleGroup: 'Other' })
+  })
+
+  it('stamps exercise_id on the very first record, not the next edit', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(
+      () => screen.queryAllByRole('button', { name: /log workout/i }).length,
+    )
+
+    await user.type(screen.getByLabelText('Title'), 'Leg day')
+    await pick(user, 'Exercise 1', 'Zercher Squat')
+    await user.type(screen.getByLabelText('Set 1 reps'), '5')
+    await user.click(screen.getByRole('button', { name: /log workout/i }))
+    await waitFor(() => expect(updateCalls).toHaveLength(1))
+
+    const updates = updateCalls[0]!
+    const createdId = Object.keys(updates)
+      .find((p) => p.includes('/exercises/'))!
+      .split('/')
+      .at(-1)
+    const raw = updates[workoutPathIn(updates)] as {
+      exercises: { exercise_id?: string }[]
+    }
+    expect(raw.exercises[0]!.exercise_id).toBe(createdId)
+  })
+
+  it('does not re-create an exercise already in the catalog', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(
+      () => screen.queryAllByRole('button', { name: /log workout/i }).length,
+    )
+
+    await user.type(screen.getByLabelText('Title'), 'Leg day')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
+    await user.type(screen.getByLabelText('Set 1 reps'), '5')
+    await user.click(screen.getByRole('button', { name: /log workout/i }))
+    await waitFor(() => expect(updateCalls).toHaveLength(1))
+
+    expect(Object.keys(updateCalls[0]!).some((p) => p.includes('/exercises/'))).toBe(
+      false,
+    )
+  })
+
+  it('prefills the sets from the last session with that exercise', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Exercise 1').length)
+
+    // Triceps Pushdown is the most-logged exercise in the fixture (5 sessions),
+    // so naming it must bring that session's sets in rather than leaving one
+    // blank row. Squat (Barbell) is in the catalog but in no workout — it would
+    // have made this test pass for the wrong reason.
+    await pick(user, 'Exercise 1', 'Triceps Pushdown')
+    await waitFor(() =>
+      expect((screen.getByLabelText('Set 1 reps') as HTMLInputElement).value).not.toBe(
+        '',
+      ),
+    )
+  })
+
+  it('never prefills over sets you have already typed into', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Exercise 1').length)
+
+    await user.type(screen.getByLabelText('Set 1 reps'), '3')
+    // The same exercise that DOES prefill above — so this proves the guard,
+    // not the absence of history.
+    await pick(user, 'Exercise 1', 'Triceps Pushdown')
+
+    expect((screen.getByLabelText('Set 1 reps') as HTMLInputElement).value).toBe('3')
   })
 })
 

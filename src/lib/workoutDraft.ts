@@ -6,6 +6,7 @@ import type {
   RawWorkout,
   SetType,
   Workout,
+  WorkoutSet,
 } from '../types'
 import { SET_TYPES } from '../types'
 
@@ -140,6 +141,63 @@ export function emptyWorkoutDraft(defaultStart?: Date): WorkoutDraft {
   }
 }
 
+/** One stored set → its draft form. The three `WeightState` kinds collapse back
+ *  into the single string that carries all of them (D-7b). */
+export function setDraftFromSet(s: WorkoutSet): SetDraft {
+  return {
+    setType: s.setType ?? 'normal',
+    reps: s.reps === null ? '' : String(s.reps),
+    weight:
+      s.weight.kind === 'loaded'
+        ? String(s.weight.kg)
+        : s.weight.kind === 'zero'
+          ? '0'
+          : '',
+    durationSeconds: s.durationSeconds === null ? '' : String(s.durationSeconds),
+  }
+}
+
+/** True when nothing has been typed into any of these sets yet. */
+export function isBlankSets(sets: readonly SetDraft[]): boolean {
+  const blank = JSON.stringify(emptySet())
+  return sets.every((s) => JSON.stringify(s) === blank)
+}
+
+/**
+ * The sets from the last session that logged this exercise (D-53).
+ *
+ * Picking an exercise fills in what you did last time, so the common case —
+ * same weight, same reps, maybe one more rep — is an edit rather than a
+ * transcription.
+ *
+ * Ordered by `start_time` and **never by key**: 37 of the real workouts have
+ * numeric-string keys from an import and 44 have push ids, so key order says
+ * nothing about when anything happened (§3.1).
+ *
+ * `excludeId` keeps the workout being edited out of its own history — otherwise
+ * changing an exercise on an existing record would offer that record's own sets
+ * back to it.
+ */
+export function setsFromLastSession(
+  exerciseTitle: string,
+  workouts: readonly Workout[],
+  excludeId?: string | null,
+): SetDraft[] | null {
+  const title = exerciseTitle.trim()
+  if (title === '') return null
+
+  let best: { at: number; sets: SetDraft[] } | null = null
+  for (const w of workouts) {
+    if (excludeId != null && w.id === excludeId) continue
+    for (const entry of w.exercises) {
+      if (entry.exerciseTitle !== title || entry.sets.length === 0) continue
+      const at = w.startTime.getTime()
+      if (!best || at > best.at) best = { at, sets: entry.sets.map(setDraftFromSet) }
+    }
+  }
+  return best?.sets ?? null
+}
+
 /** Reverse mapping, for the edit form. */
 export function draftFromWorkout(w: Workout): WorkoutDraft {
   return {
@@ -165,17 +223,7 @@ export function draftFromWorkout(w: Workout): WorkoutDraft {
     people: w.people,
     exercises: w.exercises.map((e) => ({
       exercise: { exerciseTitle: e.exerciseTitle, notes: e.notes ?? '' },
-      sets: e.sets.map((s) => ({
-        setType: s.setType ?? 'normal',
-        reps: s.reps === null ? '' : String(s.reps),
-        weight:
-          s.weight.kind === 'loaded'
-            ? String(s.weight.kg)
-            : s.weight.kind === 'zero'
-              ? '0'
-              : '',
-        durationSeconds: s.durationSeconds === null ? '' : String(s.durationSeconds),
-      })),
+      sets: e.sets.map(setDraftFromSet),
     })),
   }
 }

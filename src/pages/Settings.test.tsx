@@ -113,7 +113,7 @@ describe('weight units', () => {
 /* ── bodyweight (D-7) ───────────────────────────────────────────────────── */
 
 describe('bodyweight', () => {
-  it('stores kilograms and says plainly that it never counts toward a record', async () => {
+  it('stores kilograms whatever the display unit says', async () => {
     const user = userEvent.setup()
     renderSettings()
     await ready()
@@ -126,7 +126,6 @@ describe('bodyweight', () => {
     expect(updateCalls[0]).toEqual({
       [`users/${OWNER}/settings/bodyweightKg`]: 78.5,
     })
-    expect(screen.getByText(/never counts toward a record/i)).toBeInTheDocument()
   })
 })
 
@@ -151,17 +150,21 @@ describe('featured exercises', () => {
     expect(written).toHaveLength(stored.length)
   })
 
-  it('offers only real exercises, so a dangling name cannot be entered', async () => {
+  it('refuses a name that is not a real exercise, since joins are by name', async () => {
+    const user = userEvent.setup()
     renderSettings()
     await ready()
 
-    // A select, not a text field (D-49): joins are by name (§3.7), and the
-    // "no exercise by that name" guard is now unreachable by construction.
-    const picker = screen.getByLabelText('Add an exercise') as HTMLSelectElement
-    expect(picker.tagName).toBe('SELECT')
-    const offered = [...picker.options].map((o) => o.value).filter((v) => v !== '')
-    expect(offered.length).toBeGreaterThan(0)
-    expect(offered).not.toContain('Not A Lift')
+    // Featuring is the one place free entry must NOT create: the shortlist
+    // points at lifts you already have history for (§6.3), so a name outside
+    // the catalog would feature an exercise with nothing behind it.
+    await user.type(screen.getByLabelText('Add an exercise'), 'Not A Lift')
+    await user.click(screen.getByRole('button', { name: 'Add to featured' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /No exercise by that name/,
+    )
+    expect(updateCalls).toHaveLength(0)
   })
 })
 

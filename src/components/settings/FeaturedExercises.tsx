@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../ui'
-import { SelectInput } from '../SelectInput'
+import { ComboBox } from '../ComboBox'
 import { Section, SaveNote } from './Section'
 import { useSave } from './useSave'
 import { saveSettings } from '../../lib/settingsWrites'
@@ -67,10 +67,7 @@ export function FeaturedExercises({
   }
 
   return (
-    <Section
-      title="Featured exercises"
-      description="Shown first on Records, in this order. Leave it empty to fall back to your three heaviest lifts."
-    >
+    <Section title="Featured exercises">
       {list.length === 0 ? (
         <p className="m-0 text-sm text-ink-2">
           Nothing featured — Records will show your top three by weight.
@@ -115,7 +112,7 @@ export function FeaturedExercises({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <SelectInput
+          <ComboBox
             label="Add an exercise"
             value={typed}
             onChange={(v) => {
@@ -123,7 +120,7 @@ export function FeaturedExercises({
               setProblem(null)
             }}
             options={catalog}
-            placeholder="Pick an exercise"
+            placeholder="Start typing…"
           />
         </div>
         <Button onClick={add}>Add to featured</Button>

@@ -2,6 +2,7 @@ import { push, ref, update } from 'firebase/database'
 import { db } from './firebase'
 import { loadCascadeSource } from './settingsWrites'
 import { planCategoryRename, type CategoryField } from './cascade'
+import { CATEGORY_TOKENS } from '../components/ui/tokens'
 import type { ConfigCategory } from './config'
 
 /**
@@ -64,6 +65,24 @@ export async function saveNamedCatalog(
   await update(ref(db()), { [`config/${key}`]: node })
 }
 
+/**
+ * Append one name to a catalog, if it isn't already there (D-52).
+ *
+ * The log forms let you type a shoe or watch that doesn't exist yet, and this
+ * is what puts it in the vocabulary rather than leaving a name nothing else
+ * knows about. It rewrites the whole node, exactly like `saveNamedCatalog` —
+ * see the note there for why regenerating the ids is free.
+ */
+export async function ensureCatalogEntry(
+  key: CatalogKey,
+  name: string,
+  existing: readonly string[],
+): Promise<void> {
+  const trimmed = name.trim()
+  if (trimmed === '' || existing.includes(trimmed)) return
+  await saveNamedCatalog(key, [...existing, trimmed])
+}
+
 /* ── categories and run types ───────────────────────────────────────────── */
 
 export type CategoryKey = 'workoutCategories' | 'runTypes'
@@ -91,6 +110,44 @@ export async function saveCategory(
       order: category.order,
     },
   })
+}
+
+/**
+ * Create a category typed into a log form, if that name is new (D-52).
+ *
+ * Returns the row's id so the record can carry `category_id` / `type_id` on the
+ * very first save (D-42), rather than waiting for the next edit to pick it up.
+ * An existing name returns its existing id and writes nothing.
+ *
+ * The colour is the first token not already in use, falling back to cycling
+ * once all six are taken — §5 fixes the categorical palette at six, and a
+ * seventh split reusing a hue is better than inventing an off-system one.
+ */
+export async function ensureCategory(
+  key: CategoryKey,
+  name: string,
+  existing: readonly ConfigCategory[],
+): Promise<string | null> {
+  const trimmed = name.trim()
+  if (trimmed === '') return null
+
+  const match = existing.find((c) => c.name === trimmed)
+  if (match) return match.id
+
+  const used = new Set(existing.map((c) => c.colorToken))
+  const colorToken =
+    CATEGORY_TOKENS.find((t) => !used.has(t)) ??
+    CATEGORY_TOKENS[existing.length % CATEGORY_TOKENS.length]!
+
+  const id = newKey(`config/${key}`)
+  await update(ref(db()), {
+    [`config/${key}/${id}`]: {
+      name: trimmed,
+      colorToken,
+      order: existing.length,
+    },
+  })
+  return id
 }
 
 /** Reorder in one write, so a drag from bottom to top isn't six round trips. */

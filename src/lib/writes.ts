@@ -12,12 +12,22 @@ import type { RawRun, RawWorkout } from '../types'
  * a workout referencing a place that doesn't exist in the profile's own list.
  */
 
-/** A client-generated push key, without writing anything yet. */
-function newKey(path: string): string {
+/**
+ * A client-generated push key, without writing anything yet.
+ *
+ * Exported because the caller sometimes needs the id BEFORE the write: an
+ * exercise typed into the log form has to exist in the id map by the time
+ * `buildRawWorkout` stamps `exercise_id` (D-40), which happens before this
+ * module is reached.
+ */
+export function newKey(path: string): string {
   const key = push(ref(db(), path)).key
   if (!key) throw new Error('Firebase did not return a push key')
   return key
 }
+
+/** An exercise typed into a log form, already keyed by the caller (D-52). */
+export type NewExercise = { id: string; name: string; muscleGroup: string }
 
 export type SaveParams<T> = {
   uid: string
@@ -27,6 +37,11 @@ export type SaveParams<T> = {
   /** Place/person names not already in the profile's own lists (§4 "create-on-the-fly"). */
   newPlaces: string[]
   newPeople: string[]
+  /**
+   * Written into the user's OWN tier, never `/config` (D-20) — creating an
+   * exercise must not touch shared vocabulary.
+   */
+  newExercises?: NewExercise[]
 }
 
 /**
@@ -38,7 +53,7 @@ async function saveRecord<T>(
   collection: 'workouts' | 'runs',
   params: SaveParams<T>,
 ): Promise<{ id: string }> {
-  const { uid, id, raw, newPlaces, newPeople } = params
+  const { uid, id, raw, newPlaces, newPeople, newExercises = [] } = params
   const updates: Record<string, unknown> = {}
 
   for (const name of newPlaces) {
@@ -46,6 +61,12 @@ async function saveRecord<T>(
   }
   for (const name of newPeople) {
     updates[`users/${uid}/people/${newKey(`users/${uid}/people`)}`] = { name }
+  }
+  for (const exercise of newExercises) {
+    updates[`users/${uid}/exercises/${exercise.id}`] = {
+      name: exercise.name,
+      muscleGroup: exercise.muscleGroup,
+    }
   }
 
   const recordId = id ?? newKey(`users/${uid}/${collection}`)

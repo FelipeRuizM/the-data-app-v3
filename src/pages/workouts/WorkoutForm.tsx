@@ -2,22 +2,23 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Label } from '../../components/ui'
 import { PeoplePicker } from '../../components/ComboInput'
-import { SelectInput } from '../../components/SelectInput'
+import { ComboBox } from '../../components/ComboBox'
 import { StartTimeDisclosure } from '../../components/StartTimeDisclosure'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { StateBlock } from '../../components/StateBlock'
-import { useAuth } from '../../auth/hooks'
+import { useAuth, useIsAdmin } from '../../auth/hooks'
 import { useProfile } from '../../data/useProfile'
-import { formatDuration } from '../../lib/dates'
-import { deleteWorkout, namesNotIn, saveWorkout } from '../../lib/writes'
+import { ensureCategory } from '../../lib/configWrites'
+import { deleteWorkout, namesNotIn, newKey, saveWorkout } from '../../lib/writes'
 import {
-  DURATION_CHOICES,
   buildRawWorkout,
   configIdsByName,
   exerciseIdsByName,
   draftFromWorkout,
   emptyExerciseGroup,
+  isBlankSets,
   setLike,
+  setsFromLastSession,
   emptyWorkoutDraft,
   type DraftValidationError,
   type ExerciseGroupDraft,
@@ -38,6 +39,7 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { profileUid, canWrite } = useAuth()
+  const isAdmin = useIsAdmin()
   const state = useProfile()
 
   const [draft, setDraft] = useState<WorkoutDraft | null>(null)
@@ -152,32 +154,84 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
       ),
     })
 
+  /**
+   * Naming an exercise fills in what you did last time (D-53).
+   *
+   * **Only when nothing has been typed into this group's sets.** Prefilling
+   * over real input would destroy it, and correcting a typo in an exercise name
+   * fires this on every keystroke — so the guard is what makes the feature safe
+   * rather than an optional nicety.
+   */
+  const pickExercise = (index: number, title: string) => {
+    const group = draft.exercises[index]!
+    const previous = isBlankSets(group.sets)
+      ? setsFromLastSession(title, ready.profile.workouts, id ?? null)
+      : null
+
+    patchGroup(index, {
+      exercise: { ...group.exercise, exerciseTitle: title },
+      ...(previous ? { sets: previous } : {}),
+    })
+  }
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!profileUid || !canWrite) return
 
-    // Pass the catalog so new and edited records carry exercise_id (D-40). An
-    // exercise typed in that isn't in the catalog yet gets no id and falls back
-    // to the name join, exactly as before.
-    const built = buildRawWorkout(draft, {
-      exercises: exerciseIds,
-      categories: categoryIds,
-    })
-    if (!built.ok) {
-      setErrors(built.errors)
-      return
-    }
+    // An exercise typed into the form is created in the user's OWN tier (D-20,
+    // D-52) — never in /config. Its key is generated here rather than inside
+    // `saveWorkout` so the id map below already holds it and the very first
+    // record carries `exercise_id` (D-40) instead of waiting for the next edit.
+    const newExercises = namesNotIn(
+      draft.exercises.map((g) => g.exercise.exerciseTitle),
+      catalog,
+    ).map((name) => ({
+      id: newKey(`users/${profileUid}/exercises`),
+      name,
+      // Filed under Other until you re-file it in Settings — inventing a muscle
+      // group from a name would be a guess, and a wrong one skews the radar.
+      muscleGroup: 'Other',
+    }))
+
+    const exerciseIdMap = new Map(exerciseIds)
+    for (const created of newExercises) exerciseIdMap.set(created.name, created.id)
+
     setErrors([])
     setSaving(true)
     setSaveError(null)
 
     try {
+      // A category typed in is global vocabulary, so it goes to /config — which
+      // only an admin may write. For anyone else the name is still stored on the
+      // record and still joins by string, degrading to `--cat-none` exactly as a
+      // deleted category does (§4). Done before the record so the id exists.
+      const categoryIdMap = new Map(categoryIds)
+      if (isAdmin && draft.category.trim() !== '') {
+        const categoryId = await ensureCategory(
+          'workoutCategories',
+          draft.category,
+          ready.config.workoutCategories,
+        )
+        if (categoryId) categoryIdMap.set(draft.category.trim(), categoryId)
+      }
+
+      const built = buildRawWorkout(draft, {
+        exercises: exerciseIdMap,
+        categories: categoryIdMap,
+      })
+      if (!built.ok) {
+        setErrors(built.errors)
+        setSaving(false)
+        return
+      }
+
       const { id: savedId } = await saveWorkout({
         uid: profileUid,
         id: mode === 'edit' ? (id ?? null) : null,
         raw: built.raw,
         newPlaces: namesNotIn([draft.place], placeNames),
         newPeople: namesNotIn(draft.people, peopleNames),
+        newExercises,
       })
       navigate(`/workouts/${savedId}`, { replace: true })
     } catch (err) {
@@ -243,11 +297,15 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <DurationField
-            value={draft.durationMinutes}
-            onChange={(v) => set({ durationMinutes: v })}
-          />
-          <SelectInput
+          <Field label="Duration (minutes)">
+            <input
+              inputMode="numeric"
+              value={draft.durationMinutes}
+              onChange={(e) => set({ durationMinutes: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
+          <ComboBox
             label="Category"
             value={draft.category}
             onChange={(v) => set({ category: v })}
@@ -265,14 +323,12 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <SelectInput
+          <ComboBox
             label="Place"
             value={draft.place}
             onChange={(v) => set({ place: v })}
             options={placeNames}
-            placeholder="No place"
-            allowCreate
-            createLabel="Add a new place…"
+            placeholder="Where?"
           />
         </div>
 
@@ -313,18 +369,12 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
 
             <div className="flex items-end gap-2">
               <div className="flex-1">
-                <SelectInput
+                <ComboBox
                   label={`Exercise ${gi + 1}`}
                   value={group.exercise.exerciseTitle}
-                  onChange={(v) =>
-                    patchGroup(gi, {
-                      exercise: { ...group.exercise, exerciseTitle: v },
-                    })
-                  }
+                  onChange={(v) => pickExercise(gi, v)}
                   options={catalog}
-                  placeholder="Pick an exercise"
-                  allowCreate
-                  createLabel="Add a new exercise…"
+                  placeholder="Start typing…"
                 />
               </div>
               {draft.exercises.length > 1 ? (
@@ -432,7 +482,7 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
 }
 
 const inputClass =
-  'w-full rounded-sm border border-rule bg-transparent px-3 py-2 text-sm text-ink-0 placeholder:text-ink-3'
+  'w-full min-w-0 rounded-sm border border-rule bg-transparent px-3 py-2 text-ink-0 placeholder:text-ink-3'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -440,46 +490,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label>{label}</Label>
       {children}
     </label>
-  )
-}
-
-/**
- * Session length, as a pick rather than a keyboard (D-47).
- *
- * A duration that isn't one of the offered steps — an edited record whose
- * timestamps say 67 minutes — is prepended rather than snapped, for the same
- * reason `SelectInput` keeps an unknown stored value: rounding someone's data
- * as a side effect of opening the edit form is not a rounding, it's a rewrite.
- */
-function DurationField({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (next: string) => void
-}) {
-  const minutes = Number(value)
-  const known = DURATION_CHOICES.includes(minutes)
-  const choices =
-    value !== '' && Number.isFinite(minutes) && minutes > 0 && !known
-      ? [minutes, ...DURATION_CHOICES]
-      : DURATION_CHOICES
-
-  return (
-    <Field label="Duration">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={inputClass}
-      >
-        <option value="">—</option>
-        {choices.map((m) => (
-          <option key={m} value={m}>
-            {formatDuration(m)}
-          </option>
-        ))}
-      </select>
-    </Field>
   )
 }
 
@@ -563,5 +573,6 @@ function SetRow({
   )
 }
 
+// min-w-0: an input carries an intrinsic minimum width from its \n// attribute, which at 16px would push this four-column row past 375px.
 const smallInput =
-  'w-full rounded-sm border border-rule bg-transparent px-2 py-1.5 font-mono text-sm text-ink-0 placeholder:text-ink-3'
+  'w-full min-w-0 rounded-sm border border-rule bg-transparent px-2 py-1.5 font-mono text-ink-0 placeholder:text-ink-3'

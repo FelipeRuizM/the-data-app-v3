@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Label } from '../../components/ui'
-import { SelectInput } from '../../components/SelectInput'
+import { ComboBox } from '../../components/ComboBox'
 import { StateBlock } from '../../components/StateBlock'
 import { useProfile } from '../../data/useProfile'
 import { formatWeight } from '../../lib/units'
@@ -89,11 +89,11 @@ export function Calculator() {
               value={target}
               onChange={(e) => setTarget(e.target.value)}
               placeholder={units === 'lb' ? '225' : '100'}
-              className="w-full rounded-sm border border-rule bg-transparent px-3 py-2 font-mono text-lg text-ink-0 placeholder:text-ink-3"
+              className="w-full rounded-sm border border-rule bg-transparent px-3 py-2 font-mono text-ink-0 placeholder:text-ink-3"
             />
           </label>
 
-          <SelectInput
+          <ComboBox
             label="Exercise (optional)"
             value={exercise}
             onChange={setExercise}
@@ -122,12 +122,6 @@ export function Calculator() {
       ) : (
         <RampTable ramp={ramp} units={units} />
       )}
-
-      <p className="m-0 border-t border-rule pt-4 text-xs text-ink-2">
-        Warm-ups are for blood flow and joint lubrication, not fatigue. Feeders lock in
-        the working weight and technique — reps drop as the weight rises so you reach
-        the working set fresh. Percentages are editable in Settings.
-      </p>
     </Page>
   )
 }

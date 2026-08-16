@@ -829,3 +829,99 @@ consistent. Storage is unchanged and always `weight_kg`.
 
 `formatVolume` stays for the places where a kilogram figure is still the right
 granularity — session volume, per-exercise volume, PR values.
+
+## D-52 · Type first, filter, and create what doesn't match — `ComboBox` ✅
+**D-49 was wrong, and this reverses it.** A `<select>` made you scroll 74 exercises to
+find one you could have typed four letters of, and made a name that isn't in the
+catalog yet impossible to enter at all — on the app's primary data-entry surface.
+
+`ComboBox` is a real combobox: a text input that filters the catalog on a **substring**
+(so "row" finds "Bent Over Row (Barbell)", which is how these are actually
+remembered), an explicit `Add "…"` row, and arrow-key/Enter/Escape navigation.
+
+**A name that matches nothing is a value, not an error.** Where it gets created
+depends on who owns the vocabulary, and that distinction is the whole decision:
+
+| Typed into | Written to | When |
+|---|---|---|
+| place, person, **exercise** | `/users/{uid}` | always — the user's own tier (D-20) |
+| category, run type, shoes, watch | `/config` | **admin only** |
+
+A non-admin typing a new category is not an error either: the name is still stored on
+the record and still joins by string, degrading to `--cat-none` exactly as a deleted
+category does (§4). Nothing breaks; the vocabulary just doesn't grow.
+
+Two details worth keeping:
+
+- **The exercise's push key is generated in the form, not in `saveWorkout`**, so the id
+  map already holds it and the very first record carries `exercise_id` (D-40) rather
+  than waiting for the next edit to pick it up. `newKey` is exported for this.
+- **A new exercise is filed under `Other`.** Guessing a muscle group from a name would
+  be a guess, and a wrong one skews the §7 radar. Re-file it in Settings.
+
+The `Add` row appears whenever there is no **exact** match, even alongside partial
+ones. That is deliberate: without it, "Squat" is unreachable once "Squat (Barbell)"
+exists, because the query is a substring of it.
+
+**Featured exercises is the exception** — free entry there must not create. The
+shortlist points at lifts you already have history for (§6.3), so it keeps its "no
+exercise by that name" guard.
+
+## D-53 · Naming an exercise prefills it from the last session ✅
+`setsFromLastSession` finds the most recent workout that logged that exercise and
+copies its sets into the group. The common case — same weight, same reps, maybe one
+more — becomes an edit rather than a transcription.
+
+**Ordered by `start_time`, never by key** (§3.1). And `excludeId` keeps the workout
+being edited out of its own history, or changing an exercise on an existing record
+would offer that record's own sets back to it.
+
+**Only when nothing has been typed into that group's sets.** The handler fires on every
+keystroke of the exercise name, so without the guard, correcting a typo would wipe
+whatever you had already entered. `isBlankSets` is what makes the feature safe rather
+than a hazard.
+
+A bodyweight set round-trips as a **blank** weight, never `"0"` — collapsing the two
+would silently turn bodyweight work into a genuine zero-kilogram set (D-7b).
+
+## D-54 · Difficulty is a slider ✅
+A 1–10 rating is a judgement, not a measurement: you feel for it rather than knowing
+it, and a slider is the control that lets you. Blank stays reachable through a Clear
+button, because difficulty is optional and "not rated" must never collapse to 1.
+
+**Duration went the other way** and is a plain numeric field again, not the picker
+D-47 shipped. A session length is a number you know.
+
+## D-55 · No form control below 16px, and no explanatory prose ✅
+Two separate corrections, both from using the thing on a phone.
+
+**The zoom.** iOS Safari zooms the viewport whenever a focused input, select or
+textarea computes below 16px — and does not zoom back out, so logging a 25-set session
+left the page permanently magnified. The fix is one rule in `index.css`:
+
+```css
+input, select, textarea { font-size: 1rem; }
+```
+
+**Deliberately unlayered.** Tailwind's utilities sit in the `utilities` cascade layer
+and unlayered rules beat every layered one, so a `text-sm` on an input cannot quietly
+reintroduce the bug. Verified against the built stylesheet, not assumed.
+
+The alternative — `maximum-scale=1` on the viewport meta — also stops it, by disabling
+pinch zoom for every user including those who need it. That is an accessibility
+failure, not a trade.
+
+Consequences: the dense set grid gained `min-w-0`, because an input carries an
+intrinsic minimum width from its `size` attribute that would otherwise push a
+four-column row past 375px; and the calculator's working-weight field lost its
+`text-lg`, which no longer bought anything.
+
+**The prose.** D-48 removed it from Analytics, the monthly report and the admin panel
+but left **Settings** untouched — the original instruction said "the admin screen" and
+that was read too narrowly. Every `description` and `hint` on Settings is now gone, as
+is the calculator page's closing paragraph and the run form's pace note.
+
+What stays, and the line is worth stating: **state, not explanation.** Error messages,
+save status, designed empty states (§9), and the "bodyweight sets are excluded from
+volume" warning all survive, because each reports something true about right now
+rather than justifying a rule.

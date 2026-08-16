@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button, Chip, Label } from '../components/ui'
-import { SelectInput } from '../components/SelectInput'
+import { ComboBox } from '../components/ComboBox'
 import { StateBlock } from '../components/StateBlock'
 import { Section, SaveNote } from '../components/settings/Section'
 import { useSave } from '../components/settings/useSave'
@@ -87,7 +87,6 @@ export function Settings() {
         uid={profileUid}
         kind="exercise"
         title="Exercises"
-        description="Your own exercise list. Shared entries come from the global catalog — you can re-file one into a different muscle group, which only affects you."
         entries={profile.exercises.map((e) => ({
           id: e.id,
           name: e.name,
@@ -101,7 +100,6 @@ export function Settings() {
         uid={profileUid}
         kind="place"
         title="Places"
-        description="Gyms and anywhere else you train or run. Runs and workouts share this list."
         entries={profile.places}
       />
 
@@ -109,7 +107,6 @@ export function Settings() {
         uid={profileUid}
         kind="person"
         title="People"
-        description="Training partners you can tag on a session."
         entries={profile.people}
       />
 
@@ -141,11 +138,7 @@ function UnitsToggle({ uid, units }: { uid: string; units: Units }) {
   const { status, save } = useSave()
 
   return (
-    <Section
-      first
-      title="Weight units"
-      description="Display only — everything is stored in kilograms, and always will be."
-    >
+    <Section first title="Weight units">
       <div className="flex items-center gap-2">
         {(['kg', 'lb'] as const).map((u) => (
           <Chip
@@ -197,10 +190,7 @@ function Bodyweight({
   const valid = parsed === null || (Number.isFinite(parsed) && parsed > 0)
 
   return (
-    <Section
-      title="Bodyweight"
-      description="Used for volume on bodyweight sets — a pull-up session shouldn’t count as zero work. It never counts toward a record."
-    >
+    <Section title="Bodyweight">
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1">
           <Label>Bodyweight ({units})</Label>
@@ -275,24 +265,19 @@ function DefaultGear({
   const dirty = gear.shoes !== defaultShoes || gear.watch !== defaultWatch
 
   return (
-    <Section
-      title="Default gear"
-      description="Prefilled on a new run. You can still change either on the run itself."
-    >
+    <Section title="Default gear">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <SelectInput
+        <ComboBox
           label="Default shoes"
           value={gear.shoes}
           onChange={(v) => setGear({ ...gear, shoes: v })}
           options={shoes}
-          placeholder="None"
         />
-        <SelectInput
+        <ComboBox
           label="Default watch"
           value={gear.watch}
           onChange={(v) => setGear({ ...gear, watch: v })}
           options={watches}
-          placeholder="None"
         />
       </div>
       <div className="flex items-center gap-3">

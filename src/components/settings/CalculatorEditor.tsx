@@ -40,19 +40,14 @@ export function CalculatorEditor({
     setDraft({ ...draft, [key]: ramp })
 
   return (
-    <Section
-      title="Warm-up & feeder calculator"
-      description="Percentages of your working weight, and the smallest weight you can actually load."
-    >
+    <Section title="Warm-up & feeder calculator">
       <RampEditor
         legend="Warm-up sets"
-        hint="20–30% for 6–12 reps. Blood flow and joint lubrication, not fatigue."
         ramp={draft.warmup}
         onChange={(r) => setRamp('warmup', r)}
       />
       <RampEditor
         legend="Feeder sets"
-        hint="First 40–50% for 4–6 reps, then 50–75% with reps dropping as the weight rises."
         ramp={draft.feeders}
         onChange={(r) => setRamp('feeders', r)}
       />
@@ -106,12 +101,10 @@ export function CalculatorEditor({
 /** One ramp — a list of percent/reps rows that can grow and shrink. */
 function RampEditor({
   legend,
-  hint,
   ramp,
   onChange,
 }: {
   legend: string
-  hint: string
   ramp: RampSet[]
   onChange: (next: RampSet[]) => void
 }) {
@@ -123,7 +116,6 @@ function RampEditor({
       <legend className="p-0">
         <Label>{legend}</Label>
       </legend>
-      <p className="m-0 text-xs text-ink-2">{hint}</p>
 
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {ramp.map((r, i) => (

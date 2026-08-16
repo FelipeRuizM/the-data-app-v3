@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Label } from '../../components/ui'
 import { PeoplePicker } from '../../components/ComboInput'
-import { SelectInput } from '../../components/SelectInput'
+import { ComboBox } from '../../components/ComboBox'
 import { StartTimeDisclosure } from '../../components/StartTimeDisclosure'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { StateBlock } from '../../components/StateBlock'
-import { useAuth } from '../../auth/hooks'
+import { useAuth, useIsAdmin } from '../../auth/hooks'
 import { useProfile } from '../../data/useProfile'
 import { configIdsByName } from '../../lib/workoutDraft'
+import { ensureCatalogEntry, ensureCategory } from '../../lib/configWrites'
 import { deleteRun, namesNotIn, saveRun } from '../../lib/writes'
 import {
   buildRawRun,
@@ -32,6 +33,7 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { profileUid, canWrite } = useAuth()
+  const isAdmin = useIsAdmin()
   const state = useProfile()
 
   const [draft, setDraft] = useState<RunDraft | null>(null)
@@ -131,17 +133,35 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
     e.preventDefault()
     if (!profileUid || !canWrite) return
 
-    // Pass the run-type vocabulary so the record carries type_id (D-42).
-    const built = buildRawRun(draft, typeIds)
-    if (!built.ok) {
-      setErrors(built.errors)
-      return
-    }
     setErrors([])
     setSaving(true)
     setSaveError(null)
 
     try {
+      // Run types, shoes and watches are global vocabulary, so a name typed in
+      // here goes to /config — writable only by an admin (D-52). For anyone
+      // else the name is still stored on the record and still joins by string,
+      // exactly as it did before any of this existed.
+      const typeIdMap = new Map(typeIds)
+      if (isAdmin) {
+        const typeId = await ensureCategory(
+          'runTypes',
+          draft.type,
+          ready.config.runTypes,
+        )
+        if (typeId) typeIdMap.set(draft.type.trim(), typeId)
+        await ensureCatalogEntry('shoes', draft.shoes, ready.config.shoes)
+        await ensureCatalogEntry('watches', draft.watch, ready.config.watches)
+      }
+
+      // Pass the run-type vocabulary so the record carries type_id (D-42).
+      const built = buildRawRun(draft, typeIdMap)
+      if (!built.ok) {
+        setErrors(built.errors)
+        setSaving(false)
+        return
+      }
+
       const { id: savedId } = await saveRun({
         uid: profileUid,
         id: mode === 'edit' ? (id ?? null) : null,
@@ -213,21 +233,19 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <SelectInput
+          <ComboBox
             label="Type"
             value={draft.type}
             onChange={(v) => set({ type: v })}
             options={typeNames}
-            placeholder="Untyped"
+            placeholder="Other, Light…"
           />
-          <SelectInput
+          <ComboBox
             label="Place"
             value={draft.place}
             onChange={(v) => set({ place: v })}
             options={placeNames}
-            placeholder="No place"
-            allowCreate
-            createLabel="Add a new place…"
+            placeholder="Where?"
           />
         </div>
 
@@ -268,11 +286,6 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
           </div>
         </div>
 
-        <p className="m-0 text-xs text-ink-2">
-          Pace is calculated from distance and moving time — it isn&rsquo;t typed in, so
-          a saved run can never disagree with its own numbers.
-        </p>
-
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Field label="Avg heart rate">
             <input
@@ -292,40 +305,27 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
               className={inputClass}
             />
           </Field>
-          {/* 1–10 is a known set, so it picks rather than types. */}
-          <Field label="Difficulty (1–10)">
-            <select
-              value={draft.difficulty}
-              onChange={(e) => set({ difficulty: e.target.value })}
-              className={inputClass}
-            >
-              <option value="">—</option>
-              {DIFFICULTY_CHOICES.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <DifficultySlider
+            value={draft.difficulty}
+            onChange={(v) => set({ difficulty: v })}
+          />
         </div>
       </section>
 
       <section className="flex flex-col gap-4">
         <Label as="h2">Gear</Label>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <SelectInput
+          <ComboBox
             label="Shoes"
             value={draft.shoes}
             onChange={(v) => set({ shoes: v })}
             options={ready.config.shoes}
-            placeholder="None"
           />
-          <SelectInput
+          <ComboBox
             label="Watch"
             value={draft.watch}
             onChange={(v) => set({ watch: v })}
             options={ready.config.watches}
-            placeholder="None"
           />
         </div>
 
@@ -368,9 +368,56 @@ export function RunForm({ mode }: { mode: 'create' | 'edit' }) {
 }
 
 const inputClass =
-  'w-full rounded-sm border border-rule bg-transparent px-3 py-2 text-sm text-ink-0 placeholder:text-ink-3'
+  'w-full min-w-0 rounded-sm border border-rule bg-transparent px-3 py-2 text-ink-0 placeholder:text-ink-3'
 
-const DIFFICULTY_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const
+/**
+ * Difficulty, as a slider (D-54).
+ *
+ * A 1–10 rating is a judgement, not a measurement — you feel for it rather than
+ * knowing it, and a slider is the control that lets you. Blank stays reachable
+ * because difficulty is optional and "not rated" must not collapse to 1.
+ */
+function DifficultySlider({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (next: string) => void
+}) {
+  const rated = value.trim() !== ''
+  const current = rated ? Number(value) : 5
+
+  return (
+    <div className="col-span-2 flex flex-col gap-1 sm:col-span-3">
+      <label className="flex flex-col gap-1">
+        <span className="flex items-baseline justify-between gap-2">
+          <Label>Difficulty</Label>
+          <span className="font-mono text-sm text-ink-0 tabular-nums">
+            {rated ? `${current} / 10` : '—'}
+          </span>
+        </span>
+        <input
+          type="range"
+          min={1}
+          max={10}
+          step={1}
+          value={current}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full accent-[var(--color-accent)]"
+        />
+      </label>
+      {rated ? (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="cursor-pointer self-start border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-ink-2 uppercase hover:text-ink-0"
+        >
+          Clear
+        </button>
+      ) : null}
+    </div>
+  )
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

@@ -8,6 +8,9 @@ import {
   emptySet,
   emptyWorkoutDraft,
   setLike,
+  setsFromLastSession,
+  setDraftFromSet,
+  isBlankSets,
   type SetDraft,
   type WorkoutDraft,
   type BuildResult,
@@ -506,5 +509,70 @@ describe('workout calories (D-45)', () => {
     expect(
       'calories' in raw(buildRawWorkout(minimalValidDraft({ calories: '0' }))),
     ).toBe(false)
+  })
+})
+
+describe('setsFromLastSession — prefill from the last time you did this (D-53)', () => {
+  const workouts = Object.entries(fixtureWorkouts)
+    .map(([id, raw]) => normalizeWorkout(id, raw))
+    .filter((w): w is NonNullable<typeof w> => w !== null)
+
+  /** The exercise logged in the most sessions, so the test has real history. */
+  const busiest = (() => {
+    const counts = new Map<string, number>()
+    for (const w of workouts) {
+      for (const e of w.exercises) {
+        counts.set(e.exerciseTitle, (counts.get(e.exerciseTitle) ?? 0) + 1)
+      }
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]![0]
+  })()
+
+  it('returns the sets from the MOST RECENT session with that exercise', () => {
+    const sets = setsFromLastSession(busiest, workouts)
+    expect(sets).not.toBeNull()
+
+    // Ordered by start_time and never by key — 37 records carry numeric-string
+    // keys from an import and 44 carry push ids (§3.1).
+    const sessions = workouts
+      .filter((w) => w.exercises.some((e) => e.exerciseTitle === busiest))
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+    const expected = sessions[0]!.exercises.find((e) => e.exerciseTitle === busiest)!
+    expect(sets).toEqual(expected.sets.map(setDraftFromSet))
+  })
+
+  it('excludes the workout being edited from its own history', () => {
+    const sessions = workouts
+      .filter((w) => w.exercises.some((e) => e.exerciseTitle === busiest))
+      .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+    const sets = setsFromLastSession(busiest, workouts, sessions[0]!.id)
+    const expected = sessions[1]!.exercises.find((e) => e.exerciseTitle === busiest)!
+    expect(sets).toEqual(expected.sets.map(setDraftFromSet))
+  })
+
+  it('returns null for an exercise with no history, and for an empty name', () => {
+    expect(setsFromLastSession('Zercher Squat', workouts)).toBeNull()
+    expect(setsFromLastSession('   ', workouts)).toBeNull()
+  })
+
+  it('carries a bodyweight set through as blank, never as 0 (D-7b)', () => {
+    const bodyweight = workouts.flatMap((w) =>
+      w.exercises.filter((e) => e.sets.some((s) => s.weight.kind === 'bodyweight')),
+    )[0]
+    if (!bodyweight) throw new Error('fixture has no bodyweight set')
+    const sets = setsFromLastSession(bodyweight.exerciseTitle, workouts)!
+    // Collapsing absent into "0" would silently turn bodyweight work into a
+    // genuine zero-kilogram set on the next save.
+    expect(sets.some((s) => s.weight === '0' || s.weight === '')).toBe(true)
+  })
+})
+
+describe('isBlankSets', () => {
+  it('is true for a freshly added exercise', () => {
+    expect(isBlankSets([emptySet()])).toBe(true)
+  })
+  it('is false once anything at all has been typed', () => {
+    expect(isBlankSets([{ ...emptySet(), reps: '5' }])).toBe(false)
+    expect(isBlankSets([emptySet(), { ...emptySet(), weight: '60' }])).toBe(false)
   })
 })
