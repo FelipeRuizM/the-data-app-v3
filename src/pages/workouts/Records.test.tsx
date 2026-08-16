@@ -126,7 +126,7 @@ describe('RecordDetail page', () => {
     expect(screen.getAllByRole('img')).toHaveLength(1)
     expect(screen.queryByText(/per session/i)).not.toBeInTheDocument()
     // And it carries its text alternative (§9).
-    expect(screen.getByText('Every logged set, oldest first')).toBeInTheDocument()
+    expect(screen.getByText('Every working set, oldest first')).toBeInTheDocument()
   })
 
   it('offers all three series, and refuses to turn the last one off', async () => {

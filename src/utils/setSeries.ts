@@ -3,20 +3,33 @@ import type { PRAchievement, PRMetric } from './prEngine'
 import type { SetType, Workout } from '../types'
 
 /**
- * One exercise's complete set history, in the order it was performed (D-63).
+ * One exercise's **working** set history, in the order it was performed (D-63).
  *
  * The per-session charts this replaced showed only each session's *best* set,
  * which is the interesting number but throws away everything around it — you
  * could not see that a session was 5×5 rather than one heavy single, and the
  * back-off sets were invisible. Set by set is the log as it actually happened.
+ *
+ * **Warm-ups and feeders are excluded (D-64).** They are scaffolding, not the
+ * work: a warm-up is 20–30% of the working load and a feeder 40–75% (§8), so
+ * plotting them turns every session into a sawtooth that says nothing about
+ * progression. The workout detail page already dims them for the same reason.
+ * `dropset` and `failure` stay — those are the work, done hard.
  */
+
+/** Scaffolding set types, never plotted. */
+const SCAFFOLDING: ReadonlySet<SetType> = new Set<SetType>(['warmup', 'feeder'])
 
 export type SetPoint = {
   /** Position across the whole history, 0-based — the chart's x. */
   index: number
   date: Date
   workoutId: string
-  /** 1-based position within its own session, for the readout. */
+  /**
+   * 1-based position among the WORKING sets of its session — "my second work
+   * set", which is how a lifter counts them. Not the raw `set_index`, which
+   * would leave gaps wherever a warm-up was skipped over.
+   */
   setInSession: number
   /** Session ordinal, so the chart can rule off where one workout ends. */
   session: number
@@ -71,6 +84,8 @@ export function setSeriesFor(
         // The lift wasn't completed, so it is neither a data point nor a record
         // (§6.1) — the same exclusion the engine applies.
         if (isExcludedSet(set)) continue
+        // Scaffolding, not the work (D-64).
+        if (set.setType !== null && SCAFFOLDING.has(set.setType)) continue
 
         setInSession += 1
         const weightKg =

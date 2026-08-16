@@ -205,7 +205,7 @@ export function SetBySetChart({ points, units }: { points: SetPoint[]; units: Un
           onPointerLeave={() => setHovered(null)}
         >
           <title id={titleId}>
-            {`Every logged set, oldest first — ${on.join(', ')}`}
+            {`Every working set, oldest first — ${on.join(', ')}`}
           </title>
 
           {/* Axis and gridlines recede to near-invisible; data advances (§5). */}
@@ -348,7 +348,7 @@ export function SetBySetChart({ points, units }: { points: SetPoint[]; units: Un
       {/* Every chart carries a text alternative (§9). */}
       <div className="sr-only">
         <table>
-          <caption>Every logged set, oldest first</caption>
+          <caption>Every working set, oldest first</caption>
           <thead>
             <tr>
               <th scope="col">Date</th>

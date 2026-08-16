@@ -206,7 +206,7 @@ describe('setSeriesFor — over the real fixture', () => {
   const achievements = computePRAchievements(real)
   const points = setSeriesFor(real, title, achievements, 78)
 
-  it('produces a point for every logged set of that exercise', () => {
+  it('produces a point for every WORKING set of that exercise', () => {
     const counted = real.reduce(
       (n, w) =>
         n +
@@ -215,13 +215,39 @@ describe('setSeriesFor — over the real fixture', () => {
           .reduce(
             (m, e) =>
               m +
-              e.sets.filter((s) => !(s.setType === 'failure' && s.reps === 0)).length,
+              e.sets.filter(
+                (s) =>
+                  !(s.setType === 'failure' && s.reps === 0) &&
+                  s.setType !== 'warmup' &&
+                  s.setType !== 'feeder',
+              ).length,
             0,
           ),
       0,
     )
     expect(points).toHaveLength(counted)
     expect(points.length).toBeGreaterThan(1)
+  })
+
+  it('leaves the fixture warm-up out — it has one for this exercise', () => {
+    const scaffolding = real.reduce(
+      (n, w) =>
+        n +
+        w.exercises
+          .filter((e) => e.exerciseTitle === title)
+          .reduce(
+            (m, e) =>
+              m +
+              e.sets.filter((s) => s.setType === 'warmup' || s.setType === 'feeder')
+                .length,
+            0,
+          ),
+      0,
+    )
+    expect(scaffolding).toBeGreaterThan(0)
+    expect(points.every((p) => p.setType !== 'warmup' && p.setType !== 'feeder')).toBe(
+      true,
+    )
   })
 
   it('is strictly non-decreasing in time', () => {
@@ -242,5 +268,70 @@ describe('setSeriesFor — over the real fixture', () => {
 
   it('returns nothing for an exercise that was never logged', () => {
     expect(setSeriesFor(real, 'Not A Real Exercise', achievements, 78)).toEqual([])
+  })
+})
+
+describe('setSeriesFor — scaffolding is not the work (D-64)', () => {
+  it('drops warm-up and feeder sets', () => {
+    // A warm-up is 20–30% of the working load and a feeder 40–75% (§8), so
+    // plotting them turns every session into a sawtooth that says nothing
+    // about progression.
+    const points = setSeriesFor(
+      [
+        workout('w1', 1, [
+          set({ setType: 'warmup', weight: { kind: 'loaded', kg: 15 } }),
+          set({ setType: 'feeder', weight: { kind: 'loaded', kg: 30 } }),
+          set({ setType: 'normal', weight: { kind: 'loaded', kg: 60 } }),
+        ]),
+      ],
+      'Bench',
+      [],
+      null,
+    )
+    expect(points.map((p) => p.weightKg)).toEqual([60])
+  })
+
+  it('KEEPS dropset and failure — those are the work, done hard', () => {
+    const points = setSeriesFor(
+      [
+        workout('w1', 1, [
+          set({ setType: 'dropset' }),
+          set({ setType: 'failure', reps: 4 }),
+        ]),
+      ],
+      'Bench',
+      [],
+      null,
+    )
+    expect(points.map((p) => p.setType)).toEqual(['dropset', 'failure'])
+  })
+
+  it('numbers working sets from 1, without gaps where a warm-up was skipped', () => {
+    // "My second work set" is how a lifter counts them; a raw set_index would
+    // read 3 for the first thing actually plotted.
+    const points = setSeriesFor(
+      [
+        workout('w1', 1, [
+          set({ setIndex: 0, setType: 'warmup' }),
+          set({ setIndex: 1, setType: 'warmup' }),
+          set({ setIndex: 2 }),
+          set({ setIndex: 3 }),
+        ]),
+      ],
+      'Bench',
+      [],
+      null,
+    )
+    expect(points.map((p) => p.setInSession)).toEqual([1, 2])
+  })
+
+  it('returns nothing for a session that was warm-up only', () => {
+    const points = setSeriesFor(
+      [workout('w1', 1, [set({ setType: 'warmup' })])],
+      'Bench',
+      [],
+      null,
+    )
+    expect(points).toEqual([])
   })
 })

@@ -1108,3 +1108,26 @@ Other decisions inside it:
 **Known gap, named rather than hidden:** the new chart is in `/styleguide`; the heatmap,
 tally bars, muscle-group charts and monthly trend predate that section and are still
 only reviewable inside their pages.
+
+## D-64 · Warm-ups and feeders are not in the chart ✅
+The set-by-set plot included every set, so a session read as a sawtooth: 20 kg, 35 kg,
+60 kg, 60 kg, 60 kg, then back to 20 kg for the next session. The shape said something
+about the ramp protocol and nothing about progression, which is what the chart is for.
+
+`setSeriesFor` now drops `warmup` and `feeder`. Those are scaffolding by definition —
+§8 puts a warm-up at 20–30% of the working load and a feeder at 40–75% — and the
+workout detail page already dims them for exactly this reason.
+
+**`dropset` and `failure` stay.** A drop set is a working set at reduced load taken past
+failure, and a failure set with reps is a completed working set. Both are the work.
+Only `failure` with zero reps is excluded, which is §6.1's rule and was already there.
+
+**No toggle to show them.** The request was to hide them automatically, and a fourth
+chip on a chart that already has three would be a control for a view nobody wants.
+
+Consequence: `setInSession` counts **working** sets, so the readout says "set 2" for the
+second work set rather than the fourth row of the session. That is how a lifter counts
+them, and a raw `set_index` would leave visible gaps wherever a warm-up was skipped.
+
+An exercise logged only as warm-ups now yields no points and no chart. The stat cards
+above still carry its numbers.

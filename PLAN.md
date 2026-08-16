@@ -404,3 +404,12 @@ derived — stands.
 **Deployed as 3.4.**
 
 **Still open:** the other four charts are not in the styleguide.
+
+## Phase 25 — Warm-ups and feeders out of the chart (D-64)
+
+- [x] `setSeriesFor` drops `warmup` and `feeder`; `dropset` and `failure` stay
+- [x] `setInSession` counts working sets, so the readout matches how they are counted
+- [x] Chart title and text alternative say "working set"
+- [x] `fix: keep warm-ups and feeders out of the set-by-set chart`
+
+**Deployed as 3.5.**

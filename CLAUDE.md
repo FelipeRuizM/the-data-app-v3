@@ -35,7 +35,7 @@ fix this file in the same commit.
    `src/version.ts` holds `APP_VERSION`, rendered beside the app name in the header
    and on the login screen. **Bump it in the same commit as the deploy** — never
    after, never in a follow-up — and **state the deployed version number in the
-   report.** Currently **3.4**.
+   report.** Currently **3.5**.
    - `major.minor`, not semver: it marks deploys, not API compatibility. A normal
      phase bumps the minor (3.0 → 3.1). Bump the major only when the owner says so.
    - It is the **only** version string in the repo. `package.json` stays at `0.0.0`
@@ -970,6 +970,9 @@ The non-trivial rules — these are what the unit tests exist for:
     own maximum and the axis reads in percent; with one series on it reads in real
     units. A dual axis lets any correlation be manufactured by choosing where the
     axes cross, and is banned here as everywhere else.
+  - **Warm-up and feeder sets are excluded** (D-64) — they are scaffolding at
+    20–75% of the working load (§8), and plotting them makes every session a
+    sawtooth. `dropset` and `failure` stay: those are the work, done hard.
 
 ---
 
