@@ -19,8 +19,9 @@ fix this file in the same commit.
 ## 0. How to work in this repo
 
 1. **One phase at a time**, in `PLAN.md` order. At the end of a phase: run typecheck
-   + build, commit with a conventional-commit message, report what changed, then
-   **stop and wait for "continue"**. Never run ahead into the next phase.
+   + build, **bump `APP_VERSION`** (rule 6), commit with a conventional-commit
+   message, report what changed **including the version number**, then **stop and wait
+   for "continue"**. Never run ahead into the next phase.
 2. **When something is underspecified or contradicted by the real data, stop and
    ask.** Do not pick silently. Every such decision goes into `DECISIONS.md` (created
    at the start of Phase 1) with the question, the options, and the chosen answer.
@@ -30,6 +31,16 @@ fix this file in the same commit.
 4. **Never read `RTDB.json` into context.** See §3.0.
 5. Do not add dependencies casually. The stack in §2 is the stack; anything else
    needs a justification logged in `DECISIONS.md`.
+6. **THE VERSION COUNTER. Every deploy gets a new number.**
+   `src/version.ts` holds `APP_VERSION`, rendered beside the app name in the header
+   and on the login screen. **Bump it in the same commit as the deploy** — never
+   after, never in a follow-up — and **state the deployed version number in the
+   report.** Currently **3.0**.
+   - `major.minor`, not semver: it marks deploys, not API compatibility. A normal
+     phase bumps the minor (3.0 → 3.1). Bump the major only when the owner says so.
+   - It is the **only** version string in the repo. `package.json` stays at `0.0.0`
+     — this app is never published to a registry, and a second number is a second
+     thing to forget. Do not add one.
 
 ---
 

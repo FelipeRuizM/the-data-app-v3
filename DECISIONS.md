@@ -925,3 +925,19 @@ What stays, and the line is worth stating: **state, not explanation.** Error mes
 save status, designed empty states (§9), and the "bodyweight sets are excluded from
 volume" warning all survive, because each reports something true about right now
 rather than justifying a rule.
+
+## D-56 · A version counter beside the app name, bumped every deploy ✅
+`src/version.ts` exports `APP_VERSION`, rendered beside "the data app" in the header
+and on the login screen. **Starting at 3.0**, and bumped in the same commit as every
+deploy — the rule is §0 rule 6, and the deployed number goes in the report.
+
+`major.minor`, not semver: it marks deploys, not API compatibility.
+
+**One version string, and `package.json` is not it.** It stays at `0.0.0` because this
+app is never published to a registry, and keeping a second number in sync is a job
+nobody will do. `version.test.ts` guards the *format* — no `v` prefix (or the header
+reads "vv3.0"), no patch component — never the value, which is meant to change.
+
+Rendered at `--ink-2` with the app name rather than dimmed to `--ink-3`: that token is
+axes and disabled states only, 2.23:1 on the ground, and never text. The "v" is what
+sets it apart.

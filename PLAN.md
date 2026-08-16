@@ -341,3 +341,13 @@ earlier, which is what the feedback was for.
 **Superseded:** D-49 (a `<select>` wherever the value comes from a known set) and the
 duration picker half of D-47. The rest of D-47 — start defaults to now, `end_time`
 derived — stands.
+
+## Phase 20 — Version counter (D-56)
+
+- [x] `src/version.ts` — `APP_VERSION`, the single version string in the repo
+- [x] Rendered beside the app name in the header and on the login screen
+- [x] `CLAUDE.md` §0 rule 6: bump it in the same commit as every deploy, and report
+      the number
+- [x] `chore: version counter, starting at 3.0`
+
+**Deployed as 3.0.**

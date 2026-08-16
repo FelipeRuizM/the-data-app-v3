@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { RouteErrorBoundary } from '../RouteErrorBoundary'
 import { useAuth } from '../../auth/hooks'
 import { CATEGORIES } from '../../categories/registry'
+import { APP_VERSION } from '../../version'
 
 /**
  * The category links (Workouts, Runs, …) come from the registry (CLAUDE.md
@@ -40,8 +41,12 @@ export function AppLayout() {
 
       <header className="border-b border-rule">
         <div className="mx-auto flex max-w-4xl flex-wrap items-baseline gap-x-5 gap-y-2 px-5 py-4">
-          <span className="font-mono text-label uppercase tracking-[0.14em] text-ink-2">
-            the data app
+          <span className="font-mono text-label tracking-[0.14em] text-ink-2 uppercase">
+            the data app{' '}
+            {/* Stays at ink-2 with the name rather than dropping to ink-3 —
+                that token is axes and disabled states only, 2.23:1 on the
+                ground and never text. The "v" is what sets it apart. */}
+            <span className="tabular-nums">v{APP_VERSION}</span>
           </span>
 
           <nav aria-label="Primary" className="flex flex-wrap gap-x-4 gap-y-1">

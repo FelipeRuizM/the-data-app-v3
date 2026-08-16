@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Button, Label } from '../components/ui'
 import { useAuth } from '../auth/hooks'
+import { APP_VERSION } from '../version'
 
 /**
  * The only route reachable without a session. Serves three distinct states,
@@ -65,7 +66,7 @@ export function Login() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-5">
       <header className="flex flex-col gap-2">
-        <Label>the data app</Label>
+        <Label>the data app v{APP_VERSION}</Label>
         <h1 className="m-0 text-2xl font-semibold tracking-tight text-ink-0">
           Sign in to continue.
         </h1>
