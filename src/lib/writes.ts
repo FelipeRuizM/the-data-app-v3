@@ -1,5 +1,6 @@
 import { push, ref, remove, update } from 'firebase/database'
 import { db } from './firebase'
+import { invalidateProfile } from '../data/profileContext'
 import type { RawRun, RawWorkout } from '../types'
 
 /**
@@ -73,6 +74,10 @@ async function saveRecord<T>(
   updates[`users/${uid}/${collection}/${recordId}`] = raw
 
   await update(ref(db()), updates)
+  // The profile is one shared read now (D-61), so a write has to say so —
+  // and it is AWAITED, because the forms navigate to the record they just
+  // saved. Returning first would land the detail page on the old profile.
+  await invalidateProfile()
   return { id: recordId }
 }
 
@@ -83,10 +88,12 @@ export const saveRun = (params: SaveParams<RawRun>) => saveRecord('runs', params
 
 export async function deleteWorkout(uid: string, id: string): Promise<void> {
   await remove(ref(db(), `users/${uid}/workouts/${id}`))
+  await invalidateProfile()
 }
 
 export async function deleteRun(uid: string, id: string): Promise<void> {
   await remove(ref(db(), `users/${uid}/runs/${id}`))
+  await invalidateProfile()
 }
 
 /** Names present in `values` but not already in `existing` — case-sensitive, matching how joins work everywhere else (§3.7). */

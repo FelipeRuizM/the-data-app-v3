@@ -37,6 +37,7 @@ vi.mock('firebase/database', () => ({
 
 const { Calculator } = await import('./Calculator')
 const { AuthProvider } = await import('../../auth/AuthProvider')
+const { ProfileProvider } = await import('../../data/ProfileProvider')
 
 const settled = (find: () => number) =>
   waitFor(() => expect(find()).toBeGreaterThan(0), { timeout: 5000 })
@@ -45,7 +46,9 @@ function renderCalc() {
   return render(
     <MemoryRouter>
       <AuthProvider>
-        <Calculator />
+        <ProfileProvider>
+          <Calculator />
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

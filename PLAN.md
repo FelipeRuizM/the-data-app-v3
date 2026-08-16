@@ -364,3 +364,15 @@ derived — stands.
 - [x] `feat: category pills, typed people, working sets`
 
 **Deployed as 3.1.**
+
+## Phase 22 — One shared profile read (D-61)
+
+- [x] `<ProfileProvider>` — one `loadProfile` for the session, outside `<Routes>`
+- [x] `useProfile` reads context and throws without a provider
+- [x] `invalidateProfile()` returns a promise; `writes.ts` and `useSave` await it
+- [x] Refetch on returning to the tab, when the data is older than 30s
+- [x] Tests prove the two claims directly: navigation issues **no** read, and the
+      write-then-navigate destination never renders against the old profile
+- [x] `perf: one profile read for the session, refresh on return`
+
+**Deployed as 3.2.**

@@ -41,7 +41,9 @@ export function useSave(): {
     setStatus({ state: 'saving' })
     try {
       await run()
-      invalidateProfile()
+      // Awaited: the profile is one shared object now, so "Saved" must not
+      // appear over a list that still shows the old name (D-61).
+      await invalidateProfile()
       if (!alive.current) return true
       setStatus({ state: 'saved' })
       // The confirmation fades; the error does not. An error the user hasn't

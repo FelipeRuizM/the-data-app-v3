@@ -47,12 +47,15 @@ vi.mock('firebase/database', () => ({
 
 const { Analytics } = await import('./Analytics')
 const { AuthProvider } = await import('../auth/AuthProvider')
+const { ProfileProvider } = await import('../data/ProfileProvider')
 
 function renderPage() {
   return render(
     <MemoryRouter>
       <AuthProvider>
-        <Analytics />
+        <ProfileProvider>
+          <Analytics />
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

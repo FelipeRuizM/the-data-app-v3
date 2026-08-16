@@ -37,6 +37,7 @@ vi.mock('firebase/database', () => ({
 
 const { MonthlyReport } = await import('./MonthlyReport')
 const { AuthProvider } = await import('../auth/AuthProvider')
+const { ProfileProvider } = await import('../data/ProfileProvider')
 const { buildProfile } = await import('../lib/db')
 const { monthsWithActivity } = await import('../utils/workoutUtils')
 
@@ -61,9 +62,11 @@ function renderAt(param: string) {
   return render(
     <MemoryRouter initialEntries={[`/reports/${param}`]}>
       <AuthProvider>
-        <Routes>
-          <Route path="/reports/:month" element={<MonthlyReport />} />
-        </Routes>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/reports/:month" element={<MonthlyReport />} />
+          </Routes>
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

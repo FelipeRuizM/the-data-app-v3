@@ -1003,3 +1003,44 @@ history on more than half the sets; a column that reads `—` only for records l
 from now on is not the same as a column that is always empty.
 
 The set row is three fields instead of four, which is the actual win on a phone.
+
+## D-61 · One profile read for the session, not one per page ✅
+**Found while answering "how do I refresh?".** `useProfile` was a per-component
+hook: every page held its own state and issued its own `loadProfile`, so **every
+navigation re-downloaded the entire profile** — all 81 workouts, every set, plus
+`/config`. Correct, invisible, and roughly 350 KB per tap on mobile data, growing
+with the log.
+
+`<ProfileProvider>` now holds one read, mounted inside `AuthProvider` (it needs
+`profileUid`) and **outside `<Routes>`**, so navigating never remounts it.
+
+Which forces the app to say explicitly when the read happens again. There are
+exactly three answers:
+
+1. **auth changes** — a different account is a different profile;
+2. **a write** — `invalidateProfile()`;
+3. **returning to the tab**, if what we hold is older than 30s.
+
+**`invalidateProfile()` is now a promise, and awaiting it is load-bearing.** The
+forms invalidate and then navigate to the record they just wrote; if it resolved
+before the read landed, the detail page would mount against the old profile and
+render "no workout with that id". Awaiting makes that impossible by construction,
+rather than by adding a `revalidating` flag to every not-found branch. `writes.ts`
+calls it on every record save and delete; `useSave` covers settings and admin.
+
+A test records **every** value the destination renders after a save, not just the
+final one — asserting it ends up correct would pass even if it flashed the old
+count first.
+
+**Still one-shot `get()`, not `onValue`.** A live subscription would hold a socket
+open for a single-user app looked at a few times a day, and (3) covers the case it
+would buy. The 30-second staleness window is deliberate on both ends: not zero, so
+switching to the camera and back doesn't re-download anything; not long, because a
+minute-old profile is the thing you came back to look at.
+
+`useProfile` **throws** without a provider rather than returning a plausible
+loading state — a missing wrapper would otherwise present as a page that never
+loads.
+
+Consequence worth noting: `lib/writes.ts` now imports from `data/profileContext`.
+No cycle — `profileContext` imports `LoadResult` as a *type only*, which is erased.

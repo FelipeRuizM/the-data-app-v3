@@ -45,12 +45,15 @@ vi.mock('firebase/database', () => ({
 const { RunsList } = await import('./RunsList')
 const { RunDetail } = await import('./RunDetail')
 const { AuthProvider } = await import('../../auth/AuthProvider')
+const { ProfileProvider } = await import('../../data/ProfileProvider')
 
 function renderList() {
   return render(
     <MemoryRouter>
       <AuthProvider>
-        <RunsList />
+        <ProfileProvider>
+          <RunsList />
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )
@@ -60,9 +63,11 @@ function renderDetail(id: string) {
   return render(
     <MemoryRouter initialEntries={[`/runs/${id}`]}>
       <AuthProvider>
-        <Routes>
-          <Route path="/runs/:id" element={<RunDetail />} />
-        </Routes>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/runs/:id" element={<RunDetail />} />
+          </Routes>
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

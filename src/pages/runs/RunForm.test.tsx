@@ -52,18 +52,21 @@ vi.mock('firebase/database', () => ({
 
 const { RunForm } = await import('./RunForm')
 const { AuthProvider } = await import('../../auth/AuthProvider')
+const { ProfileProvider } = await import('../../data/ProfileProvider')
 
 function renderForm(mode: 'create' | 'edit', id?: string) {
   const path = mode === 'edit' ? `/runs/${id}/edit` : '/runs/new'
   return render(
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
-        <Routes>
-          <Route path="/runs/new" element={<RunForm mode="create" />} />
-          <Route path="/runs/:id/edit" element={<RunForm mode="edit" />} />
-          <Route path="/runs/:id" element={<div>detail page</div>} />
-          <Route path="/runs" element={<div>list page</div>} />
-        </Routes>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/runs/new" element={<RunForm mode="create" />} />
+            <Route path="/runs/:id/edit" element={<RunForm mode="edit" />} />
+            <Route path="/runs/:id" element={<div>detail page</div>} />
+            <Route path="/runs" element={<div>list page</div>} />
+          </Routes>
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

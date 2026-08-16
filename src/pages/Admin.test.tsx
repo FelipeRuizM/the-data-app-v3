@@ -56,12 +56,15 @@ vi.mock('firebase/database', () => ({
 
 const { Admin } = await import('./Admin')
 const { AuthProvider } = await import('../auth/AuthProvider')
+const { ProfileProvider } = await import('../data/ProfileProvider')
 
 function renderAdmin() {
   return render(
     <MemoryRouter>
       <AuthProvider>
-        <Admin />
+        <ProfileProvider>
+          <Admin />
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

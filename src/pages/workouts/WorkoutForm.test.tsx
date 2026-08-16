@@ -54,18 +54,21 @@ vi.mock('firebase/database', () => ({
 
 const { WorkoutForm } = await import('./WorkoutForm')
 const { AuthProvider } = await import('../../auth/AuthProvider')
+const { ProfileProvider } = await import('../../data/ProfileProvider')
 
 function renderForm(mode: 'create' | 'edit', id?: string) {
   const path = mode === 'edit' ? `/workouts/${id}/edit` : '/workouts/new'
   return render(
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
-        <Routes>
-          <Route path="/workouts/new" element={<WorkoutForm mode="create" />} />
-          <Route path="/workouts/:id/edit" element={<WorkoutForm mode="edit" />} />
-          <Route path="/workouts/:id" element={<div>detail page</div>} />
-          <Route path="/workouts" element={<div>list page</div>} />
-        </Routes>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/workouts/new" element={<WorkoutForm mode="create" />} />
+            <Route path="/workouts/:id/edit" element={<WorkoutForm mode="edit" />} />
+            <Route path="/workouts/:id" element={<div>detail page</div>} />
+            <Route path="/workouts" element={<div>list page</div>} />
+          </Routes>
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

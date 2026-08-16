@@ -39,6 +39,7 @@ const { Records } = await import('./Records')
 const { RecordDetail } = await import('./RecordDetail')
 const { RunRecords } = await import('../runs/RunRecords')
 const { AuthProvider } = await import('../../auth/AuthProvider')
+const { ProfileProvider } = await import('../../data/ProfileProvider')
 
 const settled = (find: () => number) =>
   waitFor(() => expect(find()).toBeGreaterThan(0), { timeout: 5000 })
@@ -47,11 +48,13 @@ function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
-        <Routes>
-          <Route path="/workouts/records" element={<Records />} />
-          <Route path="/workouts/records/:exercise" element={<RecordDetail />} />
-          <Route path="/runs/records" element={<RunRecords />} />
-        </Routes>
+        <ProfileProvider>
+          <Routes>
+            <Route path="/workouts/records" element={<Records />} />
+            <Route path="/workouts/records/:exercise" element={<RecordDetail />} />
+            <Route path="/runs/records" element={<RunRecords />} />
+          </Routes>
+        </ProfileProvider>
       </AuthProvider>
     </MemoryRouter>,
   )

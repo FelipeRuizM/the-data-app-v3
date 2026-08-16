@@ -9,4 +9,4 @@
  *
  * Format is `major.minor`, not semver: it marks deploys, not API compatibility.
  */
-export const APP_VERSION = '3.1'
+export const APP_VERSION = '3.2'
