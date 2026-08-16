@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /* Firebase is mocked at the module boundary so these tests need no network,
@@ -111,12 +111,22 @@ describe('the login wall', () => {
 
 describe('role gating', () => {
   it('lets the owner in as admin even with no /roles entry (bootstrap)', async () => {
+    window.location.hash = '#/admin'
     signedInAs(OWNER, null)
     render(<App />)
+    // The page itself is the proof now that Admin has left the nav (D-62).
     await waitFor(() =>
-      expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument(),
+      expect(screen.getByRole('heading', { name: 'Admin' })).toBeInTheDocument(),
     )
-    expect(screen.getByRole('link', { name: 'Admin' })).toBeInTheDocument()
+  })
+
+  it('keeps Admin out of the PRIMARY nav entirely — it is a Settings sub-page', async () => {
+    signedInAs(OWNER, null)
+    render(<App />)
+    const nav = await screen.findByRole('navigation', { name: 'Primary' })
+    expect(within(nav).queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument()
+    // Settings is what the owner navigates to; Admin hangs off it.
+    expect(within(nav).getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
 
   it('hides the admin link from a plain user', async () => {
@@ -147,6 +157,28 @@ describe('role gating', () => {
     )
     expect(screen.getByText(/guest · read only/i)).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument()
+  })
+
+  it('KEEPS sign out in the nav for a guest, who cannot reach Settings', async () => {
+    // Sign out moved to the bottom of Settings (D-62), and Settings is behind
+    // <RequireWrite>. Removing it outright would leave the guest account signed
+    // in with no way out.
+    signedInAs('guest', { role: 'guest', readsProfile: OWNER })
+    render(<App />)
+    await waitFor(() =>
+      expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument(),
+    )
+    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument()
+  })
+
+  it('takes sign out OUT of the nav for anyone who can reach Settings', async () => {
+    signedInAs(OWNER, null)
+    render(<App />)
+    await waitFor(() =>
+      expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument(),
+    )
+    expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument()
   })
 
   it('bounces a guest away from a typed write URL', async () => {

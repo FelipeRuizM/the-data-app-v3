@@ -28,7 +28,7 @@ function RouteFallback() {
 
 export function AppLayout() {
   const location = useLocation()
-  const { role, isAdmin, canWrite, user, signOut } = useAuth()
+  const { role, canWrite, user, signOut } = useAuth()
 
   return (
     <div className="min-h-dvh bg-ground">
@@ -68,19 +68,16 @@ export function AppLayout() {
                 Settings
               </NavLink>
             ) : null}
-            {/* Admin is hidden from nav for everyone else AND route-guarded —
-                hiding alone would leave a typed URL working. */}
-            {isAdmin ? (
-              <NavLink to="/admin" className={linkClass}>
-                Admin
-              </NavLink>
-            ) : null}
+            {/* Admin is NOT here any more (D-62) — it is a sub-page of Settings,
+                the same shape as Records and the monthly report. Still
+                route-guarded by <RequireAdmin>; the guard was always the real
+                boundary and the nav entry only ever advertised it. */}
           </nav>
 
           <div className="ml-auto flex items-baseline gap-3">
             {role === 'guest' ? (
               <span
-                className="font-mono text-label uppercase tracking-[0.12em] text-accent"
+                className="font-mono text-label tracking-[0.12em] text-accent uppercase"
                 title="Read-only. Every write control is hidden and the rules reject writes."
               >
                 guest · read only
@@ -90,13 +87,19 @@ export function AppLayout() {
                 {user?.email ?? ''}
               </span>
             )}
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="cursor-pointer border-0 bg-transparent p-0 font-mono text-label uppercase tracking-[0.12em] text-ink-2 transition-colors duration-[120ms] hover:text-ink-0"
-            >
-              Sign out
-            </button>
+            {/* Sign out lives at the bottom of Settings now (D-62) — EXCEPT for
+                a viewer who cannot reach Settings. Settings is behind
+                <RequireWrite>, so removing this outright would leave the guest
+                account signed in with no way out. */}
+            {canWrite ? null : (
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                className="cursor-pointer border-0 bg-transparent p-0 font-mono text-label tracking-[0.12em] text-ink-2 uppercase transition-colors duration-[120ms] hover:text-ink-0"
+              >
+                Sign out
+              </button>
+            )}
           </div>
         </div>
       </header>

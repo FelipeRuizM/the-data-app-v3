@@ -376,3 +376,15 @@ derived — stands.
 - [x] `perf: one profile read for the session, refresh on return`
 
 **Deployed as 3.2.**
+
+## Phase 23 — Admin under Settings, sign out out of the nav (D-62)
+
+- [x] `SubNav` extracted; `CategorySubNav` delegates to it
+- [x] Admin linked from beside the Settings heading, with a `← Settings` back link
+- [x] Admin removed from the primary nav (still `<RequireAdmin>`-guarded)
+- [x] Sign out removed from the nav — **except** for a viewer who cannot reach
+      Settings, or the guest account would have no way out
+- [x] The last stray Settings description removed
+- [x] `feat: admin under settings, sign out at the bottom of settings`
+
+**Deployed as 3.3.**

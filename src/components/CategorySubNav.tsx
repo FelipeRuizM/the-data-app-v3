@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
+import { SubNav } from './SubNav'
 
 /**
  * The Records and Monthly report sub-pages (§4), linked from the top of each
@@ -12,7 +12,7 @@ import { format } from 'date-fns'
  */
 export function CategorySubNav({
   recordsPath,
-  extra,
+  extra = [],
 }: {
   recordsPath: string
   /** Category-specific extras, e.g. the workouts-only calculator (§8). */
@@ -21,28 +21,12 @@ export function CategorySubNav({
   const thisMonth = format(new Date(), 'yyyy-MM')
 
   return (
-    <nav aria-label="Section" className="flex gap-4">
-      <Link
-        to={recordsPath}
-        className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-0"
-      >
-        Records
-      </Link>
-      <Link
-        to={`/reports/${thisMonth}`}
-        className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-0"
-      >
-        Monthly report
-      </Link>
-      {extra?.map((e) => (
-        <Link
-          key={e.to}
-          to={e.to}
-          className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-0"
-        >
-          {e.label}
-        </Link>
-      ))}
-    </nav>
+    <SubNav
+      links={[
+        { to: recordsPath, label: 'Records' },
+        { to: `/reports/${thisMonth}`, label: 'Monthly report' },
+        ...extra,
+      ]}
+    />
   )
 }

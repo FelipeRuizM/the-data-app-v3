@@ -1044,3 +1044,24 @@ loads.
 
 Consequence worth noting: `lib/writes.ts` now imports from `data/profileContext`.
 No cycle — `profileContext` imports `LoadResult` as a *type only*, which is erased.
+
+## D-62 · Admin becomes a Settings sub-page; sign out moves out of the nav ✅
+Admin was a top-level nav entry only one account could see. It is really a sub-page of
+Settings — the same relationship Records and the monthly report have to a category
+list — so it is linked from beside the Settings heading, with a `← Settings` way back.
+`<RequireAdmin>` still guards the route; the nav entry only ever advertised it, and the
+guard was always the real boundary.
+
+`CategorySubNav` and the new Settings link share one `SubNav`, so every sub-page link in
+the app looks and reads the same.
+
+**Sign out moved to the bottom of Settings — with one exception that is load-bearing.**
+The nav keeps it for a viewer who *cannot* reach Settings. Settings sits behind
+`<RequireWrite>`, so removing the nav control outright would leave the guest account
+signed in with **no way out at all**. The condition is `canWrite`, not
+`role === 'guest'`, so it stays correct if another read-only role ever exists.
+
+Two tests pin the pair down: sign out is present for a guest and absent for the owner.
+
+Also removed here: "Yours alone. Nothing here changes another account." under the
+Settings heading — D-55 stripped the section descriptions and missed the page's own.

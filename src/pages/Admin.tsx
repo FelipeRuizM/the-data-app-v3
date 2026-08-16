@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Label } from '../components/ui'
 import { StateBlock } from '../components/StateBlock'
 import { CategoryEditor } from '../components/admin/CategoryEditor'
@@ -119,6 +120,14 @@ export function Admin() {
 function Page({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-10 py-10">
+      {/* A sub-page of Settings now (D-62), so it needs the way back that every
+          other sub-page has. */}
+      <Link
+        to="/settings"
+        className="font-mono text-label tracking-[0.12em] text-ink-2 uppercase no-underline hover:text-ink-1"
+      >
+        ← Settings
+      </Link>
       <div className="flex flex-col gap-2">
         <Label as="h1">Admin</Label>
       </div>

@@ -7,7 +7,8 @@ import { useSave } from '../components/settings/useSave'
 import { FeaturedExercises } from '../components/settings/FeaturedExercises'
 import { CalculatorEditor } from '../components/settings/CalculatorEditor'
 import { EntityManager } from '../components/settings/EntityManager'
-import { useAuth } from '../auth/hooks'
+import { useAuth, useIsAdmin } from '../auth/hooks'
+import { SubNav } from '../components/SubNav'
 import { useProfile } from '../data/useProfile'
 import { saveSettings } from '../lib/settingsWrites'
 import { lbToKg, toDisplayWeight } from '../lib/units'
@@ -301,14 +302,20 @@ function DefaultGear({
   )
 }
 
+/**
+ * Admin sits here as a sub-page rather than a top-level nav entry (D-62) — the
+ * same shape as Records and the monthly report on a category list. It is still
+ * route-guarded by <RequireAdmin>: this link only stops advertising a page most
+ * accounts cannot open.
+ */
 function Page({ children }: { children: React.ReactNode }) {
+  const isAdmin = useIsAdmin()
+
   return (
     <div className="flex flex-col gap-10 py-10">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
         <Label as="h1">Settings</Label>
-        <p className="m-0 max-w-prose text-sm text-ink-2">
-          Yours alone. Nothing here changes another account.
-        </p>
+        <SubNav links={isAdmin ? [{ to: '/admin', label: 'Admin' }] : []} />
       </div>
       {children}
     </div>

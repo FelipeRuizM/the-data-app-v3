@@ -35,7 +35,7 @@ fix this file in the same commit.
    `src/version.ts` holds `APP_VERSION`, rendered beside the app name in the header
    and on the login screen. **Bump it in the same commit as the deploy** — never
    after, never in a follow-up — and **state the deployed version number in the
-   report.** Currently **3.2**.
+   report.** Currently **3.3**.
    - `major.minor`, not semver: it marks deploys, not API compatibility. A normal
      phase bumps the minor (3.0 → 3.1). Bump the major only when the owner says so.
    - It is the **only** version string in the repo. `package.json` stays at `0.0.0`
@@ -675,6 +675,15 @@ contributes without editing the page's core.
 
 > A `user` sees `#/settings` but not `#/admin`. The `guest` account sees **neither** —
 > it has no write access to anything.
+>
+> **`#/admin` is reached from Settings, not from the nav** (D-62) — the same
+> sub-page shape as Records and the monthly report. `<RequireAdmin>` still guards
+> the route; the nav entry only ever advertised it.
+>
+> **Sign out is at the bottom of Settings**, with one exception that is
+> load-bearing: the nav keeps it for a viewer who cannot reach Settings. Settings
+> is behind `<RequireWrite>`, so removing it outright strands the guest account
+> signed in with no way out.
 
 ---
 
