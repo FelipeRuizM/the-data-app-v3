@@ -388,3 +388,19 @@ derived — stands.
 - [x] `feat: admin under settings, sign out at the bottom of settings`
 
 **Deployed as 3.3.**
+
+## Phase 24 — One set-by-set chart on the per-exercise page (D-63)
+
+- [x] `setSeriesFor` — every logged set of one exercise, ordered by `start_time`,
+      carrying reps, weight, volume and the records each set broke
+- [x] `SetBySetChart` — three toggleable series on one axis, normalised per series
+      when more than one is on and in real units when one is
+- [x] Session hairlines, a readout line instead of a floating tooltip, horizontal
+      scroll rather than crushed marks
+- [x] The four per-session charts and `ProgressionChart` deleted
+- [x] Added to `/styleguide`
+- [x] `feat: one set-by-set chart per exercise`
+
+**Deployed as 3.4.**
+
+**Still open:** the other four charts are not in the styleguide.

@@ -1065,3 +1065,46 @@ Two tests pin the pair down: sign out is present for a guest and absent for the 
 
 Also removed here: "Yours alone. Nothing here changes another account." under the
 Settings heading — D-55 stripped the section descriptions and missed the page's own.
+
+## D-63 · The per-exercise page becomes one set-by-set plot ✅
+Four per-session charts — weight progression, estimated 1RM, volume per session, top
+reps — replaced by **one interactive plot of every logged set**, with reps, weight and
+volume toggleable in any combination.
+
+The old charts each showed a session's *best* set and nothing else, so a 5×5 and one
+heavy single were indistinguishable and every back-off set was invisible. Set by set is
+the log as it happened, which is also where the PR marks belong (§6.2): a record is
+broken by a set, not by a session.
+
+**The scale problem, and the one real judgement here.** Reps run 1–30, weight 0–200,
+volume 0–3,000. The obvious way to put three such series on one plot is a second
+y-axis, and that is the single worst thing you can do to a chart — the author picks
+where the axes cross and can manufacture any correlation they like. So:
+
+- **two or more series on** → each is drawn against its **own maximum**; 100% is that
+  metric's best ever, and the axis says so. The shapes become comparable, which is the
+  actual question ("did reps go up as the weight came down?");
+- **one series on** → nothing to reconcile, so the axis switches to real units.
+
+Real numbers are never more than a hover away either way.
+
+Other decisions inside it:
+
+- **A readout line, not a floating tooltip.** At 375px a positioned box either clips or
+  covers the plot, and on touch there is no hover to dismiss it. The line shows the most
+  recent set at rest, so it is never blank.
+- **Session hairlines.** Where one workout ends and the next begins — visible in a
+  per-session chart, invisible in a flat set list, and this plot would lose it too
+  without them.
+- **It scrolls rather than fits.** At 200 sets a fitted plot puts marks a pixel apart,
+  which is a texture, not a chart.
+- **The line breaks at a bodyweight set** rather than drawing through it. A polyline
+  over the raw list would invent a load that was never recorded (D-7b).
+- **Turning the last series off is refused.** "Show me nothing" is not a question
+  anyone asks of this chart.
+
+`ProgressionChart` is deleted — nothing else used it.
+
+**Known gap, named rather than hidden:** the new chart is in `/styleguide`; the heatmap,
+tally bars, muscle-group charts and monthly trend predate that section and are still
+only reviewable inside their pages.

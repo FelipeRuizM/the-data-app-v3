@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import fixture from '../../test/fixture.json'
@@ -116,16 +117,43 @@ describe('RecordDetail page', () => {
     expect(screen.queryAllByRole('table').length).toBeGreaterThan(0)
   })
 
-  it('renders a chart with PR events marked for an exercise with history', async () => {
+  it('renders ONE set-by-set chart for an exercise with history (D-63)', async () => {
     renderAt(`/workouts/records/${encodeURIComponent('Triceps Pushdown')}`)
     await settled(() => screen.queryAllByText('Max weight').length)
-    // Three matches by design, each doing a different job: the SVG <title>
-    // (the chart's accessible name), the visible <figcaption>, and the
-    // sr-only table's <caption>. The last is the actual text alternative.
-    expect(screen.getAllByText('Heaviest set per session')).toHaveLength(3)
-    expect(
-      screen.getByRole('img', { name: 'Heaviest set per session' }),
-    ).toBeInTheDocument()
+
+    expect(screen.getByRole('heading', { name: 'Set by set' })).toBeInTheDocument()
+    // One plot, not four. The per-session charts are gone entirely.
+    expect(screen.getAllByRole('img')).toHaveLength(1)
+    expect(screen.queryByText(/per session/i)).not.toBeInTheDocument()
+    // And it carries its text alternative (§9).
+    expect(screen.getByText('Every logged set, oldest first')).toBeInTheDocument()
+  })
+
+  it('offers all three series, and refuses to turn the last one off', async () => {
+    const user = userEvent.setup()
+    renderAt(`/workouts/records/${encodeURIComponent('Triceps Pushdown')}`)
+    await settled(() => screen.queryAllByRole('button', { name: 'reps' }).length)
+
+    for (const key of ['reps', 'weight', 'volume']) {
+      expect(screen.getByRole('button', { name: key })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+    }
+
+    await user.click(screen.getByRole('button', { name: 'reps' }))
+    expect(screen.getByRole('button', { name: 'reps' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'weight' }))
+    await user.click(screen.getByRole('button', { name: 'volume' }))
+    // "Show me nothing" is not a question anyone asks of this chart.
+    expect(screen.getByRole('button', { name: 'volume' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 
   it('says so plainly for an exercise that was never logged', async () => {

@@ -2,30 +2,22 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Badge, Label } from '../../components/ui'
 import { StateBlock } from '../../components/StateBlock'
-import {
-  ProgressionChart,
-  type ProgressionPoint,
-} from '../../components/charts/ProgressionChart'
+import { SetBySetChart } from '../../components/charts/SetBySetChart'
 import { useProfile } from '../../data/useProfile'
-import { formatDay, formatDayShort } from '../../lib/dates'
+import { formatDay } from '../../lib/dates'
 import { formatVolume, formatWeight } from '../../lib/units'
-import {
-  calculatePRs,
-  computePRAchievements,
-  epley1RM,
-  isExcludedSet,
-  metricLabel,
-} from '../../utils/prEngine'
-import type { Workout } from '../../types'
+import { calculatePRs, computePRAchievements, metricLabel } from '../../utils/prEngine'
+import { setSeriesFor } from '../../utils/setSeries'
 
 /**
- * One exercise over time (§6.3): weight progression, estimated 1RM curve,
- * volume per session, and every PR event marked.
+ * One exercise over time (§6.3), as **one interactive plot of every set** —
+ * reps, weight and volume together, each toggleable (D-63).
  *
- * Note the two different volumes on this page, deliberately named apart:
- * "Max set volume" is the best SINGLE set (§6.1's maxVolume), while the chart
- * plots the session TOTAL. A session can top the chart without any one set
- * beating the record — calling both "volume" would make that look like a bug.
+ * This replaces four separate per-session charts. Those showed each session's
+ * best set and nothing else, so a 5×5 and one heavy single looked identical and
+ * every back-off set was invisible. The set log is what actually happened, and
+ * it is also where the PR marks belong (§6.2) — a record is broken by a set,
+ * not by a session.
  */
 export function RecordDetail() {
   const { exercise } = useParams<{ exercise: string }>()
@@ -43,25 +35,17 @@ export function RecordDetail() {
     const achievements = computePRAchievements(profile.workouts).filter(
       (a) => a.exerciseTitle === title,
     )
-    const prWorkoutIds = new Set(achievements.map((a) => a.workoutId))
-
-    // One point per session, using that session's best set per metric.
-    const sessions = [...profile.workouts]
-      .filter((w) => w.exercises.some((e) => e.exerciseTitle === title))
-      .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
-
-    const bestPerSession = sessions.map((w) => ({
-      workout: w,
-      ...sessionBest(w, title),
-      isPR: prWorkoutIds.has(w.id),
-    }))
 
     return {
       pr,
       achievements,
-      sessions: bestPerSession,
+      points: setSeriesFor(
+        profile.workouts,
+        title,
+        achievements,
+        profile.settings.bodyweightKg,
+      ),
       units: profile.settings.units,
-      repBased: config.repBasedExercises.includes(title),
     } as const
   }, [state, title])
 
@@ -103,43 +87,7 @@ export function RecordDetail() {
     )
   }
 
-  const { pr, sessions, units, repBased, achievements } = data
-
-  const weightPoints: ProgressionPoint[] = sessions
-    .filter((s) => s.topWeight !== null)
-    .map((s) => ({
-      date: s.workout.startTime,
-      value: s.topWeight!,
-      isPR: s.isPR,
-      label: formatDayShort(s.workout.startTime),
-    }))
-
-  const oneRMPoints: ProgressionPoint[] = sessions
-    .filter((s) => s.best1RM !== null)
-    .map((s) => ({
-      date: s.workout.startTime,
-      value: s.best1RM!,
-      isPR: s.isPR,
-      label: formatDayShort(s.workout.startTime),
-    }))
-
-  const volumePoints: ProgressionPoint[] = sessions
-    .filter((s) => s.volume > 0)
-    .map((s) => ({
-      date: s.workout.startTime,
-      value: s.volume,
-      isPR: s.isPR,
-      label: formatDayShort(s.workout.startTime),
-    }))
-
-  const repsPoints: ProgressionPoint[] = sessions
-    .filter((s) => s.topReps !== null)
-    .map((s) => ({
-      date: s.workout.startTime,
-      value: s.topReps!,
-      isPR: s.isPR,
-      label: formatDayShort(s.workout.startTime),
-    }))
+  const { pr, points, units, achievements } = data
 
   return (
     <Wrap title={title}>
@@ -179,39 +127,7 @@ export function RecordDetail() {
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-10">
-        {repBased && repsPoints.length > 1 ? (
-          <ProgressionChart
-            points={repsPoints}
-            caption="Top reps per session"
-            formatValue={(v) => `${v} reps`}
-          />
-        ) : null}
-
-        {weightPoints.length > 1 ? (
-          <ProgressionChart
-            points={weightPoints}
-            caption="Heaviest set per session"
-            formatValue={(v) => formatWeight(v, units)}
-          />
-        ) : null}
-
-        {oneRMPoints.length > 1 ? (
-          <ProgressionChart
-            points={oneRMPoints}
-            caption="Estimated 1RM per session (Epley)"
-            formatValue={(v) => formatWeight(v, units)}
-          />
-        ) : null}
-
-        {volumePoints.length > 1 ? (
-          <ProgressionChart
-            points={volumePoints}
-            caption="Total volume per session"
-            formatValue={(v) => `${formatVolume(v, units)} ${units}`}
-          />
-        ) : null}
-      </div>
+      <SetBySetChart points={points} units={units} />
 
       <section className="flex flex-col gap-3">
         <Label as="h2">Records broken</Label>
@@ -252,39 +168,6 @@ export function RecordDetail() {
       </section>
     </Wrap>
   )
-}
-
-/** Best values for one exercise within one session. */
-function sessionBest(workout: Workout, title: string) {
-  let topWeight: number | null = null
-  let topReps: number | null = null
-  let best1RM: number | null = null
-  let volume = 0
-
-  for (const entry of workout.exercises) {
-    if (entry.exerciseTitle !== title) continue
-    for (const set of entry.sets) {
-      if (isExcludedSet(set)) continue
-
-      const kg =
-        set.weight.kind === 'loaded'
-          ? set.weight.kg
-          : set.weight.kind === 'zero'
-            ? 0
-            : null
-
-      if (kg !== null && (topWeight === null || kg > topWeight)) topWeight = kg
-      if (set.reps !== null && (topReps === null || set.reps > topReps))
-        topReps = set.reps
-      if (kg !== null && set.reps !== null) {
-        volume += kg * set.reps
-        const est = epley1RM(kg, set.reps)
-        if (best1RM === null || est > best1RM) best1RM = est
-      }
-    }
-  }
-
-  return { topWeight, topReps, best1RM, volume }
 }
 
 function Wrap({ title, children }: { title: string; children: React.ReactNode }) {

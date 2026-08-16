@@ -12,6 +12,8 @@ import { CATEGORY_TOKENS, SEQ_TOKENS } from '../components/ui/tokens'
 import { ComboBox } from '../components/ComboBox'
 import { CategoryPills } from '../components/CategoryPills'
 import { PeoplePicker } from '../components/PeoplePicker'
+import { SetBySetChart } from '../components/charts/SetBySetChart'
+import type { SetPoint } from '../utils/setSeries'
 import { SET_TYPES, SET_TYPE_LABEL } from '../types'
 import type { ConfigCategory } from '../lib/config'
 
@@ -364,6 +366,13 @@ export function Styleguide() {
       </Section>
 
       <Section
+        title="Charts"
+        note="Only the set-by-set plot is here so far — the heatmap, tally bars, muscle-group charts and monthly trend predate this section and are still only reviewable inside their pages."
+      >
+        <SetBySetChart points={DEMO_SETS} units="kg" />
+      </Section>
+
+      <Section
         title="Error boundary"
         note="Route-level, so one bad aggregation can't blank the app. Rendered here as a specimen; the live boundary wraps every route."
       >
@@ -393,3 +402,24 @@ const DEMO_CATEGORIES: ConfigCategory[] = [
   { id: 'pull', name: 'Pull', colorToken: 'cat-2', order: 1 },
   { id: 'legs', name: 'Legs', colorToken: 'cat-3', order: 2 },
 ]
+
+/** Two sessions, with a bodyweight set and a PR, so every branch is visible. */
+const DEMO_SETS: SetPoint[] = [
+  [8, 40, 0],
+  [8, 42.5, 0],
+  [6, 45, 0],
+  [10, 45, 1],
+  [8, 50, 1],
+  [6, 55, 1],
+].map(([reps, weight, session], index) => ({
+  index,
+  date: new Date(2026, 3, 8 + (session ?? 0) * 7, 17, 0),
+  workoutId: `w${session}`,
+  setInSession: (index % 3) + 1,
+  session: session!,
+  setType: 'normal' as const,
+  reps: reps!,
+  weightKg: weight!,
+  volumeKg: reps! * weight!,
+  prMetrics: index === 5 ? (['weight'] as const).slice() : [],
+}))
