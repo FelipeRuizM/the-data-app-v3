@@ -637,7 +637,7 @@ because §3.7 requires every join to be total.
 entries resolve, 0 unresolved titles, and every id round-trips to the exact name
 already stored.
 
-## D-41 · The export and the live account do not match — UNRESOLVED ⚠
+## D-41 · The export and the live account do not match — CLOSED, see D-65 ✅
 `RTDB.json` holds its data under `3WonULS2gRZwtJ6OAh7YpM1Sn9v1`. `.env.local` and
 `CLAUDE.md` both name the owner as `oaM2fM7K52ak6EzqDNzDzXSRWXr1`.
 
@@ -646,10 +646,13 @@ exercises, 5 gyms, 7 people, 12 runs — so it is the documented dataset, under 
 different uid. Either it predates a project move, or the live database is not what
 every figure in §3 was verified against.
 
-**Nothing has been run against the live database, and nothing should be, until this is
-resolved.** A migration writing to the wrong subtree is unrecoverable. Both scripts
-read `VITE_OWNER_UID`, so they will target `oaM2fM7K52ak6EzqDNzDzXSRWXr1` — which is
-correct only if that is where the data now lives.
+**Superseded.** The owner confirmed on 2026-08-15 that all three scripts were run,
+successfully, some time ago. Each verifies its own writes live before exiting, so a
+wrong-subtree migration would have failed loudly rather than silently. `RTDB.json`
+is a stale export under an older uid; the live database is the one the app reads.
+
+Original concern, kept for the record: a migration writing to the wrong subtree is
+unrecoverable, and both scripts read `VITE_OWNER_UID`.
 
 ## D-42 · Categories and run types move to ids too — additively, same shape as D-40 ✅
 **Why these two and not places or people.** The question is never "is this name
@@ -1131,3 +1134,23 @@ them, and a raw `set_index` would leave visible gaps wherever a warm-up was skip
 
 An exercise logged only as warm-ups now yields no points and no chart. The stat cards
 above still carry its numbers.
+
+## D-65 · The migration has run; the retained fields stay retained ✅
+Two standing questions closed by the owner on 2026-08-15.
+
+**The scripts have been run.** `seed-config-exercises`, `add-exercise-ids` and
+`add-category-ids` were all applied against the live database some time ago. D-41's
+uid concern is closed with them: each script verifies its own writes live before
+exiting, so a wrong-subtree run would have failed loudly. `RTDB.json` is simply a stale
+export under an older uid.
+
+What this unblocks, both still unticked because each is its own piece of work:
+base-exercise rename in the admin panel, and retiring the D-32 category cascade. The
+cascade is the only irreversible step left in the plan.
+
+**The retired fields are never deleted.** `elevation_gain_m`, `max_elevation_m` and
+`steps` on runs (D-46), and per-set `duration_seconds` on workouts (D-60), stay in the
+database permanently. The app does not ask for them, aggregate them or — except for
+per-set duration on the workout detail page — display them; it carries them through
+every edit untouched. **This is now settled, not pending:** do not propose deleting
+them, and do not write a migration that would.

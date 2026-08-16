@@ -266,8 +266,10 @@ as broken data logic.
 - [x] `scripts/add-exercise-ids.mjs` — dry-run by default, refuses to write unless
       every id resolves back to the name already stored, re-verifies live afterwards
 - [x] Verified offline against the real export: 385/385 entries resolve, 0 unresolved
-- [ ] **Run against the live database** — blocked on D-41, the owner-uid mismatch
-- [ ] Enable base-exercise rename in the admin panel — only once records carry ids
+- [x] **Run against the live database** — done; the owner confirmed on 2026-08-15
+      that all three scripts were run some time ago (D-65)
+- [ ] Enable base-exercise rename in the admin panel — **now unblocked**: records
+      carry ids
 - [x] `feat: exercise ids, written alongside names`
 
 ## Phase 17 — Category and run-type ids (D-42)
@@ -279,9 +281,9 @@ as broken data logic.
       database, never from the code-level defaults (D-43)
 - [x] `scripts/add-category-ids.mjs` — dry-run by default, self-healing (D-44)
 - [x] `add-exercise-ids.mjs` re-stamps stale ids instead of skipping them (D-44)
-- [ ] **Run both against the live database** — still blocked on D-41, and the
-      category script additionally needs real /config rows to point at
-- [ ] Retire the D-32 cascade — only once every profile’s records carry ids
+- [x] **Run both against the live database** — done (D-65)
+- [ ] Retire the D-32 cascade — **now unblocked**, but still its own decision:
+      it is the one irreversible step left, so it wants doing deliberately
 - [x] `feat: category and run-type ids`
 
 ## Phase 18 — Logging ergonomics and a data-model trim (D-45 … D-51)
