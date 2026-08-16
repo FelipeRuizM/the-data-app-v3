@@ -351,3 +351,16 @@ derived — stands.
 - [x] `chore: version counter, starting at 3.0`
 
 **Deployed as 3.0.**
+
+## Phase 21 — Log-form ergonomics, round two (D-57 … D-60)
+
+- [x] Category is a row of colour-carrying pills; tapping the selected one clears it
+- [x] People are typed in, not toggled off a wall of chips — and `ComboBox`'s
+      duplicate accessible name (listbox vs input) fixed along the way
+- [x] Per-set seconds off the form, retained in the record
+- [x] `normal` is displayed as **working** — `SET_TYPE_LABEL`, display only
+- [x] **Form controls added to `/styleguide`**, which had none — closing a standing
+      §5 gap ("a component that isn't in the styleguide isn't done")
+- [x] `feat: category pills, typed people, working sets`
+
+**Deployed as 3.1.**

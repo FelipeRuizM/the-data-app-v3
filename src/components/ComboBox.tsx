@@ -125,7 +125,10 @@ export function ComboBox({
         <ul
           id={listId}
           role="listbox"
-          aria-label={label}
+          // NOT `label` — that is the input's name, and two elements answering
+          // to it makes the field ambiguous to a screen reader (and to any
+          // query that looks a control up by its label).
+          aria-label={`${label} suggestions`}
           // The list sits over the next field rather than pushing it down — a
           // form that reflows under your thumb mid-tap is how you log the
           // wrong exercise.

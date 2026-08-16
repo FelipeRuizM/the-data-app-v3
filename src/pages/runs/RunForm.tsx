@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Label } from '../../components/ui'
-import { PeoplePicker } from '../../components/ComboInput'
+import { PeoplePicker } from '../../components/PeoplePicker'
 import { ComboBox } from '../../components/ComboBox'
 import { StartTimeDisclosure } from '../../components/StartTimeDisclosure'
 import { ConfirmDialog } from '../../components/ConfirmDialog'

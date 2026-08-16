@@ -13,6 +13,7 @@ import {
   metricLabel,
   type PRMetric,
 } from '../../utils/prEngine'
+import { SET_TYPE_LABEL } from '../../types'
 import type { ExerciseEntry, Units, Workout, WorkoutSet } from '../../types'
 
 /**
@@ -314,7 +315,7 @@ function SetRow({
         </td>
         <td className="py-2 text-right">
           {set.setType && set.setType !== 'normal' ? (
-            <Badge>{set.setType}</Badge>
+            <Badge>{SET_TYPE_LABEL[set.setType]}</Badge>
           ) : (
             <span className="font-mono text-label text-ink-2">—</span>
           )}

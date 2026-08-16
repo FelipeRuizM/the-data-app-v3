@@ -9,6 +9,11 @@ import {
   StatFigure,
 } from '../components/ui'
 import { CATEGORY_TOKENS, SEQ_TOKENS } from '../components/ui/tokens'
+import { ComboBox } from '../components/ComboBox'
+import { CategoryPills } from '../components/CategoryPills'
+import { PeoplePicker } from '../components/PeoplePicker'
+import { SET_TYPES, SET_TYPE_LABEL } from '../types'
+import type { ConfigCategory } from '../lib/config'
 
 /* Every token and every component in isolation. A component that isn't here
    isn't done (CLAUDE.md §5). */
@@ -47,6 +52,12 @@ function Swatch({ token, use }: { token: string; use: string }) {
 
 export function Styleguide() {
   const [metric, setMetric] = useState<'sets' | 'reps' | 'volume'>('sets')
+  const [title, setTitle] = useState('')
+  const [reps, setReps] = useState('8')
+  const [exercise, setExercise] = useState('')
+  const [difficulty, setDifficulty] = useState(6)
+  const [category, setCategory] = useState('Push')
+  const [people, setPeople] = useState<string[]>(['Person A'])
 
   return (
     <div className="pb-16">
@@ -270,15 +281,86 @@ export function Styleguide() {
           <CategoryTag token="cat-deleted-by-owner">Deleted category</CategoryTag>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Badge>normal</Badge>
-          <Badge>warmup</Badge>
-          <Badge>feeder</Badge>
-          <Badge>failure</Badge>
-          <Badge>dropset</Badge>
+          {/* The LABEL, not the stored value — `normal` reads as "working"
+              everywhere a human sees it (D-57). */}
+          {SET_TYPES.map((s) => (
+            <Badge key={s}>{SET_TYPE_LABEL[s]}</Badge>
+          ))}
           <Badge pr>weight PR</Badge>
           <Badge pr>volume PR</Badge>
           <Badge pr>1RM PR</Badge>
         </div>
+      </Section>
+
+      <Section
+        title="Form controls"
+        note="The log forms are the app's primary surface. Nothing here may compute below 16px — iOS Safari zooms on focus below that and does not zoom back out (D-55)."
+      >
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <Label>Text</Label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Placeholder"
+              className={demoInput}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <Label>Number</Label>
+            <input
+              inputMode="numeric"
+              value={reps}
+              onChange={(e) => setReps(e.target.value)}
+              placeholder="reps"
+              className={demoInput}
+            />
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <ComboBox
+              label="ComboBox — type, filter, or add"
+              value={exercise}
+              onChange={setExercise}
+              options={DEMO_EXERCISES}
+              placeholder="Start typing…"
+            />
+            <span className="font-mono text-xs text-ink-2">
+              value: {exercise === '' ? '(empty)' : exercise}
+            </span>
+          </div>
+          <label className="flex flex-col gap-1">
+            <Label>Slider</Label>
+            <span className="flex items-baseline justify-between gap-2">
+              <span className="font-mono text-sm text-ink-0 tabular-nums">
+                {difficulty} / 10
+              </span>
+            </span>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              step={1}
+              value={difficulty}
+              onChange={(e) => setDifficulty(Number(e.target.value))}
+              className="w-full accent-[var(--color-accent)]"
+            />
+          </label>
+        </div>
+
+        <CategoryPills
+          value={category}
+          onChange={setCategory}
+          categories={DEMO_CATEGORIES}
+        />
+
+        <PeoplePicker
+          selected={people}
+          onChange={setPeople}
+          options={['Person A', 'Person B', 'Person C']}
+        />
       </Section>
 
       <Section
@@ -295,3 +377,19 @@ export function Styleguide() {
     </div>
   )
 }
+
+const demoInput =
+  'w-full min-w-0 rounded-sm border border-rule bg-transparent px-3 py-2 text-ink-0 placeholder:text-ink-3'
+
+const DEMO_EXERCISES = [
+  'Bench Press (Barbell)',
+  'Bent Over Row (Barbell)',
+  'Pull Up',
+  'Squat (Barbell)',
+]
+
+const DEMO_CATEGORIES: ConfigCategory[] = [
+  { id: 'push', name: 'Push', colorToken: 'cat-1', order: 0 },
+  { id: 'pull', name: 'Pull', colorToken: 'cat-2', order: 1 },
+  { id: 'legs', name: 'Legs', colorToken: 'cat-3', order: 2 },
+]

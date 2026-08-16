@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Label } from '../../components/ui'
-import { PeoplePicker } from '../../components/ComboInput'
+import { PeoplePicker } from '../../components/PeoplePicker'
 import { ComboBox } from '../../components/ComboBox'
+import { CategoryPills } from '../../components/CategoryPills'
 import { StartTimeDisclosure } from '../../components/StartTimeDisclosure'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { StateBlock } from '../../components/StateBlock'
@@ -25,7 +26,7 @@ import {
   type SetDraft,
   type WorkoutDraft,
 } from '../../lib/workoutDraft'
-import { SET_TYPES, type SetType } from '../../types'
+import { SET_TYPES, SET_TYPE_LABEL, type SetType } from '../../types'
 
 /**
  * Create and edit a workout. Same component for both — the only difference is
@@ -89,10 +90,6 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
   )
   const peopleNames = useMemo(
     () => (ready ? ready.profile.people.map((p) => p.name) : []),
-    [ready],
-  )
-  const categoryNames = useMemo(
-    () => (ready ? ready.config.workoutCategories.map((c) => c.name) : []),
     [ready],
   )
 
@@ -305,14 +302,13 @@ export function WorkoutForm({ mode }: { mode: 'create' | 'edit' }) {
               className={inputClass}
             />
           </Field>
-          <ComboBox
-            label="Category"
-            value={draft.category}
-            onChange={(v) => set({ category: v })}
-            options={categoryNames}
-            placeholder="Uncategorized"
-          />
         </div>
+
+        <CategoryPills
+          value={draft.category}
+          onChange={(v) => set({ category: v })}
+          categories={ready.config.workoutCategories}
+        />
 
         {/* The date is pre-answered, not removed: it defaults to now, which is
             right for a session you have just finished, and stays reachable for
@@ -516,7 +512,8 @@ function SetRow({
     // Two rows on a phone, one on desktop. This is the app's primary
     // data-entry surface — at three rows per set a 25-set session became 75
     // rows of inputs, which is unusable on the device it's logged from.
-    <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-2 sm:grid-cols-[1.5rem_1fr_1fr_1fr_auto_auto]">
+    // Three fields now, not four: per-set seconds was retired with D-60.
+    <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-2 sm:grid-cols-[1.5rem_1fr_1fr_1fr_auto]">
       <span className="font-mono text-xs text-ink-2">{index + 1}</span>
 
       <input
@@ -535,24 +532,15 @@ function SetRow({
         onChange={(e) => onChange({ reps: e.target.value })}
         className={smallInput}
       />
-      <input
-        inputMode="numeric"
-        value={set.durationSeconds}
-        placeholder="secs"
-        aria-label={`Set ${index + 1} duration in seconds`}
-        onChange={(e) => onChange({ durationSeconds: e.target.value })}
-        className={`${smallInput} col-start-2 col-end-3 sm:col-auto`}
-      />
-
       <select
         value={set.setType}
         aria-label={`Set ${index + 1} type`}
         onChange={(e) => onChange({ setType: e.target.value as SetType })}
-        className={`${smallInput} col-start-3 col-end-5 sm:col-auto`}
+        className={`${smallInput} col-start-2 col-end-4 sm:col-auto`}
       >
         {SET_TYPES.map((t) => (
           <option key={t} value={t}>
-            {t}
+            {SET_TYPE_LABEL[t]}
           </option>
         ))}
       </select>
@@ -573,6 +561,7 @@ function SetRow({
   )
 }
 
-// min-w-0: an input carries an intrinsic minimum width from its \n// attribute, which at 16px would push this four-column row past 375px.
+// min-w-0: an input carries an intrinsic minimum width from its `size`
+// attribute, which at 16px would push this row past 375px.
 const smallInput =
   'w-full min-w-0 rounded-sm border border-rule bg-transparent px-2 py-1.5 font-mono text-ink-0 placeholder:text-ink-3'

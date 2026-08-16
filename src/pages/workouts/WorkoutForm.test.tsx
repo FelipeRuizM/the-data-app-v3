@@ -414,6 +414,122 @@ describe('WorkoutForm — free entry creates (D-52, D-53)', () => {
   })
 })
 
+describe('WorkoutForm — category pills, people, set fields (D-57 … D-60)', () => {
+  it('selects the category from pills, not a dropdown', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByRole('button', { name: 'Push' }).length)
+
+    const push = screen.getByRole('button', { name: 'Push' })
+    expect(push).toHaveAttribute('aria-pressed', 'false')
+    await user.click(push)
+    expect(push).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('writes the picked category, and nothing when it is cleared', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByRole('button', { name: 'Push' }).length)
+
+    await user.type(screen.getByLabelText('Title'), 'Leg day')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
+    await user.type(screen.getByLabelText('Set 1 reps'), '5')
+    await user.click(screen.getByRole('button', { name: 'Push' }))
+    // Tapping it again clears it — 14 of the 81 real records have no category.
+    await user.click(screen.getByRole('button', { name: 'Push' }))
+    await user.click(screen.getByRole('button', { name: /log workout/i }))
+    await waitFor(() => expect(updateCalls).toHaveLength(1))
+
+    const updates = updateCalls[0]!
+    const raw = updates[workoutPathIn(updates)] as Record<string, unknown>
+    expect('category' in raw).toBe(false)
+  })
+
+  it('has no per-set seconds field (D-60)', async () => {
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Set 1 reps').length)
+    expect(screen.queryByLabelText(/Set 1 duration/)).toBeNull()
+  })
+
+  it('PRESERVES a stored per-set duration through an edit', async () => {
+    // The field is gone from the form, not from the record — a save replaces
+    // the whole workout, so dropping it from the draft would delete it.
+    const withDuration = Object.entries(fixture.workouts).find(([, w]) => {
+      const exercises = Object.values(
+        (
+          w as unknown as {
+            exercises: Record<string, { sets?: Record<string, object> }>
+          }
+        ).exercises,
+      )
+      return exercises.some((e) =>
+        Object.values(e.sets ?? {}).some((s) => 'duration_seconds' in (s as object)),
+      )
+    })
+    if (!withDuration) throw new Error('fixture has no per-set duration')
+
+    const user = userEvent.setup()
+    renderForm('edit', withDuration[0])
+    await settled(
+      () => screen.queryAllByRole('button', { name: /save changes/i }).length,
+    )
+    await user.click(screen.getByRole('button', { name: /save changes/i }))
+    await waitFor(() => expect(updateCalls).toHaveLength(1))
+
+    const updates = updateCalls[0]!
+    const raw = updates[workoutPathIn(updates)] as {
+      exercises: { sets: { duration_seconds?: number }[] }[]
+    }
+    const kept = raw.exercises.some((e) =>
+      e.sets.some((s) => typeof s.duration_seconds === 'number'),
+    )
+    expect(kept, 'a stored duration was dropped on save').toBe(true)
+  })
+
+  it('calls a normal set a WORKING set, while still storing "normal" (D-57)', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Set 1 type').length)
+
+    const select = screen.getByLabelText('Set 1 type') as HTMLSelectElement
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      'working',
+      'warm-up',
+      'feeder',
+      'failure',
+      'drop set',
+    ])
+    // The stored value is untouched — 1,027 real sets say "normal" and §0.3
+    // forbids a migration.
+    expect([...select.options].map((o) => o.value)).toContain('normal')
+
+    await user.type(screen.getByLabelText('Title'), 'Leg day')
+    await pick(user, 'Exercise 1', 'Squat (Barbell)')
+    await user.type(screen.getByLabelText('Set 1 reps'), '5')
+    await user.click(screen.getByRole('button', { name: /log workout/i }))
+    await waitFor(() => expect(updateCalls).toHaveLength(1))
+
+    const updates = updateCalls[0]!
+    const raw = updates[workoutPathIn(updates)] as {
+      exercises: { sets: { set_type: string }[] }[]
+    }
+    expect(raw.exercises[0]!.sets[0]!.set_type).toBe('normal')
+  })
+
+  it('adds a training partner by typing, with no chip wall', async () => {
+    const user = userEvent.setup()
+    renderForm('create')
+    await settled(() => screen.queryAllByLabelText('Add a person').length)
+
+    // Every known person used to render as a toggle chip. None do now.
+    expect(screen.queryByRole('button', { name: 'Person A' })).toBeNull()
+
+    await user.type(screen.getByLabelText('Add a person'), 'Person A')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(screen.getByRole('button', { name: 'Remove Person A' })).toBeInTheDocument()
+  })
+})
+
 describe('WorkoutForm — edit', () => {
   const firstId = Object.keys(fixture.workouts)[0]!
 

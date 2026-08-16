@@ -114,6 +114,25 @@ export const SET_TYPES = ['normal', 'warmup', 'feeder', 'failure', 'dropset'] as
 export type SetType = (typeof SET_TYPES)[number]
 
 /**
+ * What each set type is CALLED. Display only (D-57).
+ *
+ * The stored values never change — 1,027 real sets say `"normal"`, and renaming
+ * that in the database would be a migration, which §0.3 forbids. `"normal"`
+ * reads as "nothing special about this one" when it is in fact the set that
+ * counts, so it is shown as **working**.
+ *
+ * Kept adjacent to `SET_TYPES` deliberately: a `Record<SetType, string>` will
+ * not compile if someone adds a type without labelling it.
+ */
+export const SET_TYPE_LABEL: Record<SetType, string> = {
+  normal: 'working',
+  warmup: 'warm-up',
+  feeder: 'feeder',
+  failure: 'failure',
+  dropset: 'drop set',
+}
+
+/**
  * `weight_kg` has three meanings, and collapsing any two of them is a bug (D-7b):
  *
  *   loaded     a real load       → counts in volume and in records

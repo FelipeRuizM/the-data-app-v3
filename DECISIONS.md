@@ -941,3 +941,65 @@ reads "vv3.0"), no patch component — never the value, which is meant to change
 Rendered at `--ink-2` with the app name rather than dimmed to `--ink-3`: that token is
 axes and disabled states only, 2.23:1 on the ground, and never text. The "v" is what
 sets it apart.
+
+## D-57 · A `normal` set is called a **working** set ✅
+`set_type: "normal"` reads as "nothing special about this one" when it is in fact the
+set that counts — the one that sets records and carries the volume.
+
+**Display only.** 1,027 real sets store `"normal"` and renaming that in the database
+would be a migration, which §0.3 forbids. `SET_TYPE_LABEL` in `src/types/index.ts`
+maps every stored value to what a human sees: working, warm-up, feeder, failure, drop
+set. It is typed `Record<SetType, string>` and kept adjacent to `SET_TYPES`, so a new
+type will not compile without a label.
+
+## D-58 · The people picker types instead of toggling ✅
+The old `PeoplePicker` rendered every known person as a toggle chip, so seven training
+partners permanently occupied the form for a field most sessions leave empty.
+
+Now: one `ComboBox` — type a name, see matches, and an unknown name is added just the
+same (§4 create-on-the-fly, §3.7 joins by name). Names already added stay visible as
+removable rows, because a name you can't see is a name you can't take off again. The
+suggestion list excludes whoever is already added.
+
+`ComboInput` keeps its own place — free entry with **no** catalog behind it, which is
+`StringListEditor` naming a brand-new global.
+
+**A real bug fell out of this.** `ComboBox` gave its listbox `aria-label={label}`, the
+same accessible name as its input, which makes the field ambiguous to a screen reader
+and to any lookup by label. Now `"{label} suggestions"`, with a regression test.
+
+## D-59 · The category is a row of pills ✅
+There are three splits. A combobox made you type and read a dropdown to answer a
+three-way question — the control was bigger than the set it selected from.
+
+Each pill carries its own category colour, so the thing you tap is the thing you see
+on the list row, the calendar cell and the chart (§4 "used consistently everywhere").
+A hairline dot rather than a filled pill, per §5.
+
+**Tapping the selected pill clears it.** 14 of the 81 real workouts have no category;
+uncategorized is a legal answer, not a mistake, and it needs a way back that isn't a
+separate control.
+
+A stored category `/config` no longer defines is appended as a `--cat-none` pill and
+stays selected — deselecting it silently would rewrite the record on the next save
+(§3.7).
+
+**Consequence:** inline category creation from the log form is gone with the combobox.
+Categories are admin vocabulary and the admin panel is where they are made. D-52's
+create-on-the-fly still holds for places, people and exercises, and for run types,
+shoes and watches on the run form.
+
+## D-60 · The per-set seconds field comes off the form — but stays in the record ✅
+Same shape as D-46. Time-based exercises are a future feature; until then the field is
+one more thing to skip on every set of every session.
+
+**Removed from the form, retained in the record.** `duration_seconds` sits on 708 of
+1,274 real sets, and `saveWorkout` replaces the whole record — so the draft still
+carries it, unrendered, and an edit writes it back untouched. A test round-trips a
+fixture workout that has one and asserts it survives.
+
+**The workout detail page still shows it.** Unlike elevation (D-46), this is real
+history on more than half the sets; a column that reads `—` only for records logged
+from now on is not the same as a column that is always empty.
+
+The set row is three fields instead of four, which is the actual win on a phone.

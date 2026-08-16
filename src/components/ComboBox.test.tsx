@@ -117,3 +117,16 @@ describe('ComboBox', () => {
     )
   })
 })
+
+describe('ComboBox — accessible names', () => {
+  it('does not give the listbox the same name as the input', async () => {
+    // Two elements answering to "Exercise" makes the field ambiguous to a
+    // screen reader, and to any lookup by label.
+    const user = userEvent.setup()
+    render(<Harness options={CATALOG} />)
+    await user.click(screen.getByLabelText('Exercise'))
+
+    expect(screen.getAllByLabelText('Exercise')).toHaveLength(1)
+    expect(screen.getByRole('listbox')).toHaveAccessibleName('Exercise suggestions')
+  })
+})
