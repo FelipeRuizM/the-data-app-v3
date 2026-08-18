@@ -86,6 +86,20 @@ export const saveWorkout = (params: SaveParams<RawWorkout>) =>
 
 export const saveRun = (params: SaveParams<RawRun>) => saveRecord('runs', params)
 
+/**
+ * Apply a `planTimeFix` result — the ONLY write in the app that patches fields
+ * inside a record rather than replacing it (D-66).
+ *
+ * That is the point: fixing a clock must not rewrite 25 sets, and a multi-path
+ * update addressed at `.../start_time` leaves every sibling untouched by
+ * construction rather than by the writer remembering to copy them.
+ */
+export async function applyTimeFix(updates: Record<string, string>): Promise<void> {
+  if (Object.keys(updates).length === 0) return
+  await update(ref(db()), updates)
+  await invalidateProfile()
+}
+
 export async function deleteWorkout(uid: string, id: string): Promise<void> {
   await remove(ref(db(), `users/${uid}/workouts/${id}`))
   await invalidateProfile()

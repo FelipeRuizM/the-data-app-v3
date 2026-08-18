@@ -42,6 +42,10 @@ const RecordDetail = lazy(() =>
 const Calculator = lazy(() =>
   import('./pages/workouts/Calculator').then((m) => ({ default: m.Calculator })),
 )
+/** Unlinked maintenance page (D-66) — reachable only by typing the URL. */
+const FixTimes = lazy(() =>
+  import('./pages/workouts/FixTimes').then((m) => ({ default: m.FixTimes })),
+)
 const RunsList = lazy(() =>
   import('./pages/runs/RunsList').then((m) => ({ default: m.RunsList })),
 )
@@ -134,6 +138,16 @@ export function App() {
               <Route path="workouts/records" element={<Records />} />
               <Route path="workouts/records/:exercise" element={<RecordDetail />} />
               <Route path="workouts/calculator" element={<Calculator />} />
+              {/* Deliberately absent from the nav and from every SubNav — a
+                  maintenance tool, not a feature (D-66). */}
+              <Route
+                path="workouts/fix-times"
+                element={
+                  <RequireWrite>
+                    <FixTimes />
+                  </RequireWrite>
+                }
+              />
               <Route path="workouts/:id" element={<WorkoutDetail />} />
               <Route
                 path="workouts/:id/edit"

@@ -35,7 +35,7 @@ fix this file in the same commit.
    `src/version.ts` holds `APP_VERSION`, rendered beside the app name in the header
    and on the login screen. **Bump it in the same commit as the deploy** — never
    after, never in a follow-up — and **state the deployed version number in the
-   report.** Currently **3.5**.
+   report.** Currently **3.6**.
    - `major.minor`, not semver: it marks deploys, not API compatibility. A normal
      phase bumps the minor (3.0 → 3.1). Bump the major only when the owner says so.
    - It is the **only** version string in the repo. `package.json` stays at `0.0.0`
@@ -562,6 +562,7 @@ stay legible; nav never hides the primary action.
 #/settings                      Per-account settings — any signed-in user
 #/admin                         Global config — admin only, hidden from nav
 #/styleguide                    Every token and component in isolation
+#/workouts/fix-times            Bulk timestamp repair — UNLINKED, typed URL only (D-66)
 ```
 
 **Every route except `#/login` requires authentication** (D-3). An unauthenticated

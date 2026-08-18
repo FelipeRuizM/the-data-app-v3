@@ -1154,3 +1154,41 @@ database permanently. The app does not ask for them, aggregate them or — excep
 per-set duration on the workout detail page — display them; it carries them through
 every edit untouched. **This is now settled, not pending:** do not propose deleting
 them, and do not write a migration that would.
+
+## D-66 · A bulk timestamp-repair page, unlinked ✅
+Some workouts carry the wrong clock time. Fixing them through the edit form means
+opening each one, expanding the date disclosure, saving, and going back — and every
+one of those saves rewrites the whole record.
+
+`#/workouts/fix-times` lists every workout newest-first with a `datetime-local` beside
+it, a search box, and one Save that writes every change in a single multi-path update.
+
+**Unlinked, deliberately.** Nothing navigates to it — not the nav, not a `SubNav`. It is
+a maintenance tool for a problem that should stop existing, and a link would advertise
+a page whose job is to become unnecessary. It is still behind `<RequireWrite>`: unlinked
+is not a security property.
+
+**It writes two paths per workout and nothing else.** `applyTimeFix` is the only write
+in the app that patches fields *inside* a record instead of replacing it, and that is
+the whole point — a targeted update addressed at `.../start_time` leaves all 25 sets
+alone by construction, not because the writer remembered to copy them. Two tests
+assert exactly this: the path count, and that no other record is touched.
+
+**Duration is preserved, not recomputed.** "This happened at 18:00, not 16:00" is the
+request; the session was still 70 minutes long. The end shifts by the same delta the
+start did. A record with no `end_time` keeps not having one — inventing a value would
+be this page writing data it was never asked to write.
+
+Two details that stop it from doing damage:
+
+- **An unchanged row writes nothing**, compared on the *formatted* strings rather than
+  the `Date` objects, since the stored format has no seconds (§3.6). Opening the page
+  and hitting Save must not rewrite 81 records with identical timestamps — there is a
+  test over the whole fixture for that.
+- **It reads the RAW records itself** rather than using the normalized profile. The app
+  type's `durationMinutes` is null for an implausible span (D-19), which is precisely
+  the kind of record this page exists to repair; the raw strings are the only honest
+  basis for the shift.
+
+Days are editable, not just times — the owner asked for that even though most days are
+already right.

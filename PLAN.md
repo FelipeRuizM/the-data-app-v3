@@ -415,3 +415,16 @@ derived — stands.
 - [x] `fix: keep warm-ups and feeders out of the set-by-set chart`
 
 **Deployed as 3.5.**
+
+## Phase 26 — Bulk timestamp repair (D-66)
+
+- [x] `planTimeFix` — a pure planner producing only `start_time` / `end_time` paths,
+      preserving each session's duration and refusing unparseable or unchanged rows
+- [x] `applyTimeFix` — the one write that patches inside a record rather than
+      replacing it
+- [x] `#/workouts/fix-times` — every workout, searchable, one atomic save.
+      **Unlinked**: no nav entry, no `SubNav`; still `<RequireWrite>`-guarded
+- [x] Tests assert the write is surgical, and that a no-op save writes nothing
+- [x] `feat: a page for fixing workout timestamps`
+
+**Deployed as 3.6.**
